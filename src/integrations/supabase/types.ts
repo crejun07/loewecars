@@ -186,6 +186,7 @@ export type Database = {
           fuel_type: Database["public"]["Enums"]["fuel_type"] | null
           id: string
           image_url: string | null
+          license_plate: string | null
           listing_status: Database["public"]["Enums"]["listing_status"]
           location: string | null
           mileage: number | null
@@ -207,6 +208,7 @@ export type Database = {
           fuel_type?: Database["public"]["Enums"]["fuel_type"] | null
           id?: string
           image_url?: string | null
+          license_plate?: string | null
           listing_status?: Database["public"]["Enums"]["listing_status"]
           location?: string | null
           mileage?: number | null
@@ -228,6 +230,7 @@ export type Database = {
           fuel_type?: Database["public"]["Enums"]["fuel_type"] | null
           id?: string
           image_url?: string | null
+          license_plate?: string | null
           listing_status?: Database["public"]["Enums"]["listing_status"]
           location?: string | null
           mileage?: number | null
