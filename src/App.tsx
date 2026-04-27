@@ -10,6 +10,7 @@ import StockPage from "./pages/databases/Stock.tsx";
 import AppraisalsPage from "./pages/databases/Appraisals.tsx";
 import SalesPage from "./pages/databases/Sales.tsx";
 import WorkshopPage from "./pages/databases/Workshop.tsx";
+import SparePartsPage from "./pages/databases/SpareParts.tsx";
 import { AppLayout } from "./components/layout/AppLayout.tsx";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
             <Route path="/sales" element={<SalesPage />} />
             <Route path="/stock" element={<StockPage />} />
             <Route path="/workshop" element={<WorkshopPage />} />
+            <Route path="/spare-parts" element={<SparePartsPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AppLayout>

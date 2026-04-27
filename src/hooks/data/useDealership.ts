@@ -70,3 +70,17 @@ export function useWorkshop() {
     },
   });
 }
+
+export function useSpareParts() {
+  return useQuery({
+    queryKey: ["spare_parts"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("spare_parts")
+        .select("*, vehicle:vehicle_stock(id, brand, model, year, license_plate)")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}

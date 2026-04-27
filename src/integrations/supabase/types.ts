@@ -110,6 +110,57 @@ export type Database = {
           },
         ]
       }
+      spare_parts: {
+        Row: {
+          cost: number | null
+          created_at: string
+          delivery_date: string | null
+          id: string
+          managed_by: string | null
+          notes: string | null
+          order_date: string | null
+          ordered_by: string | null
+          part_name: string
+          part_reference: string | null
+          status: Database["public"]["Enums"]["spare_part_status"]
+          supplier: string | null
+          updated_at: string
+          vehicle_id: string | null
+        }
+        Insert: {
+          cost?: number | null
+          created_at?: string
+          delivery_date?: string | null
+          id?: string
+          managed_by?: string | null
+          notes?: string | null
+          order_date?: string | null
+          ordered_by?: string | null
+          part_name: string
+          part_reference?: string | null
+          status?: Database["public"]["Enums"]["spare_part_status"]
+          supplier?: string | null
+          updated_at?: string
+          vehicle_id?: string | null
+        }
+        Update: {
+          cost?: number | null
+          created_at?: string
+          delivery_date?: string | null
+          id?: string
+          managed_by?: string | null
+          notes?: string | null
+          order_date?: string | null
+          ordered_by?: string | null
+          part_name?: string
+          part_reference?: string | null
+          status?: Database["public"]["Enums"]["spare_part_status"]
+          supplier?: string | null
+          updated_at?: string
+          vehicle_id?: string | null
+        }
+        Relationships: []
+      }
       vehicle_appraisals: {
         Row: {
           assigned_to: string | null
@@ -324,6 +375,13 @@ export type Database = {
         | "reserved"
         | "sold"
         | "lost"
+      spare_part_status:
+        | "pending"
+        | "ordered"
+        | "shipped"
+        | "received"
+        | "return"
+        | "refunded"
       stock_status: "preparing" | "available" | "reserved" | "sold"
       transmission_type: "manual" | "automatic"
       workshop_status: "pending" | "in_progress" | "completed" | "waiting_parts"
@@ -481,6 +539,14 @@ export const Constants = {
         "reserved",
         "sold",
         "lost",
+      ],
+      spare_part_status: [
+        "pending",
+        "ordered",
+        "shipped",
+        "received",
+        "return",
+        "refunded",
       ],
       stock_status: ["preparing", "available", "reserved", "sold"],
       transmission_type: ["manual", "automatic"],
