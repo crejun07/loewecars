@@ -186,6 +186,7 @@ export type Database = {
           fuel_type: Database["public"]["Enums"]["fuel_type"] | null
           id: string
           image_url: string | null
+          listing_status: Database["public"]["Enums"]["listing_status"]
           location: string | null
           mileage: number | null
           model: string
@@ -195,6 +196,7 @@ export type Database = {
           purchase_price: number
           selling_price: number
           status: Database["public"]["Enums"]["stock_status"]
+          transmission: Database["public"]["Enums"]["transmission_type"] | null
           updated_at: string
           year: number | null
         }
@@ -205,6 +207,7 @@ export type Database = {
           fuel_type?: Database["public"]["Enums"]["fuel_type"] | null
           id?: string
           image_url?: string | null
+          listing_status?: Database["public"]["Enums"]["listing_status"]
           location?: string | null
           mileage?: number | null
           model: string
@@ -214,6 +217,7 @@ export type Database = {
           purchase_price?: number
           selling_price?: number
           status?: Database["public"]["Enums"]["stock_status"]
+          transmission?: Database["public"]["Enums"]["transmission_type"] | null
           updated_at?: string
           year?: number | null
         }
@@ -224,6 +228,7 @@ export type Database = {
           fuel_type?: Database["public"]["Enums"]["fuel_type"] | null
           id?: string
           image_url?: string | null
+          listing_status?: Database["public"]["Enums"]["listing_status"]
           location?: string | null
           mileage?: number | null
           model?: string
@@ -233,6 +238,7 @@ export type Database = {
           purchase_price?: number
           selling_price?: number
           status?: Database["public"]["Enums"]["stock_status"]
+          transmission?: Database["public"]["Enums"]["transmission_type"] | null
           updated_at?: string
           year?: number | null
         }
@@ -298,7 +304,15 @@ export type Database = {
         | "rejected"
       client_status: "new" | "in_followup" | "closed"
       client_type: "seller" | "buyer" | "both"
-      fuel_type: "gasoline" | "diesel" | "hybrid" | "electric" | "lpg" | "other"
+      fuel_type:
+        | "gasoline"
+        | "diesel"
+        | "hybrid"
+        | "electric"
+        | "lpg"
+        | "other"
+        | "plug_in_hybrid"
+      listing_status: "listed" | "pending_listing" | "not_listed"
       sale_status:
         | "new_lead"
         | "interested"
@@ -446,7 +460,16 @@ export const Constants = {
       ],
       client_status: ["new", "in_followup", "closed"],
       client_type: ["seller", "buyer", "both"],
-      fuel_type: ["gasoline", "diesel", "hybrid", "electric", "lpg", "other"],
+      fuel_type: [
+        "gasoline",
+        "diesel",
+        "hybrid",
+        "electric",
+        "lpg",
+        "other",
+        "plug_in_hybrid",
+      ],
+      listing_status: ["listed", "pending_listing", "not_listed"],
       sale_status: [
         "new_lead",
         "interested",

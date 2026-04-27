@@ -49,6 +49,7 @@ export const fuelTypeLabels: Record<string, string> = {
   gasoline: "Gasolina",
   diesel: "Diésel",
   hybrid: "Híbrido",
+  plug_in_hybrid: "Híbrido enchufable",
   electric: "Eléctrico",
   lpg: "LPG",
   other: "Otro",
@@ -60,6 +61,20 @@ export const transmissionLabels: Record<string, string> = {
 };
 
 export const employees = ["Vicente", "Rommer", "Orlando", "Isabel", "Jose", "Edu"] as const;
+
+export const listingStatusLabels: Record<string, string> = {
+  listed: "Anunciado",
+  pending_listing: "Pendiente de anunciar",
+  not_listed: "No anunciado",
+};
+
+export const listingStatusTone: Record<string, StatusTone> = {
+  listed: "green",
+  pending_listing: "amber",
+  not_listed: "neutral",
+};
+
+export const listingStatusOrder = ["listed", "pending_listing", "not_listed"] as const;
 
 // Tone mapping: returns Tailwind classes using semantic status tokens.
 export type StatusTone = "neutral" | "blue" | "amber" | "violet" | "green" | "red";
