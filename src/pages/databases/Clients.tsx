@@ -15,6 +15,7 @@ import { toast } from "sonner";
 
 type FormState = {
   full_name: string;
+  dni: string;
   phone: string;
   email: string;
   client_type: "seller" | "buyer" | "both";
@@ -23,7 +24,7 @@ type FormState = {
   notes: string;
 };
 
-const empty: FormState = { full_name: "", phone: "", email: "", client_type: "buyer", status: "new", last_contact_date: "", notes: "" };
+const empty: FormState = { full_name: "", dni: "", phone: "", email: "", client_type: "buyer", status: "new", last_contact_date: "", notes: "" };
 
 export default function ClientsPage() {
   const { data: clients = [] } = useClients();
@@ -36,7 +37,7 @@ export default function ClientsPage() {
   const filtered = useMemo(() => {
     const s = search.toLowerCase();
     return clients.filter((c: any) =>
-      [c.full_name, c.email, c.phone].filter(Boolean).join(" ").toLowerCase().includes(s),
+      [c.full_name, c.email, c.phone, c.dni].filter(Boolean).join(" ").toLowerCase().includes(s),
     );
   }, [clients, search]);
 
@@ -49,6 +50,7 @@ export default function ClientsPage() {
     setEditing(c);
     setForm({
       full_name: c.full_name ?? "",
+      dni: c.dni ?? "",
       phone: c.phone ?? "",
       email: c.email ?? "",
       client_type: c.client_type,
@@ -60,7 +62,7 @@ export default function ClientsPage() {
   }
 
   async function save() {
-    const payload = { ...form, last_contact_date: form.last_contact_date || null };
+    const payload = { ...form, dni: form.dni || null, last_contact_date: form.last_contact_date || null };
     const { error } = editing
       ? await supabase.from("clients").update(payload).eq("id", editing.id)
       : await supabase.from("clients").insert(payload);
@@ -99,6 +101,7 @@ export default function ClientsPage() {
             <thead>
               <tr className="border-b border-border bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
                 <th className="px-4 py-2.5 font-medium">Nombre</th>
+                <th className="px-4 py-2.5 font-medium">DNI</th>
                 <th className="px-4 py-2.5 font-medium">Tipo</th>
                 <th className="px-4 py-2.5 font-medium">Estado</th>
                 <th className="px-4 py-2.5 font-medium">Teléfono</th>
@@ -109,11 +112,12 @@ export default function ClientsPage() {
             </thead>
             <tbody className="divide-y divide-border">
               {filtered.length === 0 && (
-                <tr><td colSpan={7} className="px-4 py-10 text-center text-xs text-muted-foreground">Aún no hay clientes.</td></tr>
+                <tr><td colSpan={8} className="px-4 py-10 text-center text-xs text-muted-foreground">Aún no hay clientes.</td></tr>
               )}
               {filtered.map((c: any) => (
                 <tr key={c.id} className="hover:bg-muted/30">
                   <td className="px-4 py-2.5 font-medium">{c.full_name}</td>
+                  <td className="px-4 py-2.5 text-muted-foreground">{c.dni || "—"}</td>
                   <td className="px-4 py-2.5 text-muted-foreground">{clientTypeLabels[c.client_type]}</td>
                   <td className="px-4 py-2.5"><StatusBadge label={clientStatusLabels[c.status]} tone={clientStatusTone[c.status]} /></td>
                   <td className="px-4 py-2.5 text-muted-foreground">{c.phone || "—"}</td>
@@ -138,6 +142,7 @@ export default function ClientsPage() {
         onSubmit={save}
       >
         <Field label="Nombre completo" full><Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} required /></Field>
+        <Field label="DNI"><Input value={form.dni} onChange={(e) => setForm({ ...form, dni: e.target.value })} placeholder="12345678A" /></Field>
         <Field label="Teléfono"><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></Field>
         <Field label="Email"><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></Field>
         <Field label="Tipo">
