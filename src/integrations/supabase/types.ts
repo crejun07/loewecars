@@ -159,7 +159,15 @@ export type Database = {
           updated_at?: string
           vehicle_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "spare_parts_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicle_stock"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       vehicle_appraisals: {
         Row: {
