@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           client_type: Database["public"]["Enums"]["client_type"]
           created_at: string
+          dni: string | null
           email: string | null
           full_name: string
           id: string
@@ -30,6 +31,7 @@ export type Database = {
         Insert: {
           client_type?: Database["public"]["Enums"]["client_type"]
           created_at?: string
+          dni?: string | null
           email?: string | null
           full_name: string
           id?: string
@@ -42,6 +44,7 @@ export type Database = {
         Update: {
           client_type?: Database["public"]["Enums"]["client_type"]
           created_at?: string
+          dni?: string | null
           email?: string | null
           full_name?: string
           id?: string
