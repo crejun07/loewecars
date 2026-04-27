@@ -18,7 +18,7 @@ import {
 import { toast } from "sonner";
 
 const emptyForm = {
-  brand: "", model: "", year: "" as any, mileage: "" as any, fuel_type: "gasoline", transmission: "manual",
+  brand: "", model: "", license_plate: "", year: "" as any, mileage: "" as any, fuel_type: "gasoline", transmission: "manual",
   purchase_price: "" as any, selling_price: "" as any, status: "preparing",
   listing_status: "pending_listing",
   entry_date: new Date().toISOString().slice(0, 10), next_itv_date: "", location: "", image_url: "", notes: "",
@@ -42,7 +42,7 @@ export default function StockPage() {
   function openEdit(s: any) {
     setEditing(s);
     setForm({
-      brand: s.brand, model: s.model, year: s.year ?? "", mileage: s.mileage ?? "",
+      brand: s.brand, model: s.model, license_plate: s.license_plate ?? "", year: s.year ?? "", mileage: s.mileage ?? "",
       fuel_type: s.fuel_type ?? "gasoline", transmission: s.transmission ?? "manual",
       purchase_price: s.purchase_price ?? 0, selling_price: s.selling_price ?? 0,
       status: s.status, listing_status: s.listing_status ?? "pending_listing",
@@ -54,6 +54,7 @@ export default function StockPage() {
   async function save() {
     const payload = {
       ...form,
+      license_plate: form.license_plate?.trim() || null,
       year: form.year ? Number(form.year) : null,
       mileage: form.mileage ? Number(form.mileage) : null,
       purchase_price: Number(form.purchase_price) || 0,
@@ -222,6 +223,7 @@ export default function StockPage() {
       <RecordDialog open={open} onOpenChange={setOpen} trigger={null as any} title={editing ? "Editar vehículo" : "Añadir vehículo"} onSubmit={save}>
         <Field label="Marca"><Input required value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} /></Field>
         <Field label="Modelo"><Input required value={form.model} onChange={(e) => setForm({ ...form, model: e.target.value })} /></Field>
+        <Field label="Matrícula" full><Input value={form.license_plate} onChange={(e) => setForm({ ...form, license_plate: e.target.value.toUpperCase() })} placeholder="2354LHB" maxLength={10} /></Field>
         <Field label="Año"><Input type="number" value={form.year} onChange={(e) => setForm({ ...form, year: e.target.value })} /></Field>
         <Field label="Kilómetros"><Input type="number" value={form.mileage} onChange={(e) => setForm({ ...form, mileage: e.target.value })} /></Field>
         <Field label="Combustible">
