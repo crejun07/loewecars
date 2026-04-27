@@ -2,56 +2,56 @@
 // Keeps naming professional + consistent across views.
 
 export const clientTypeLabels: Record<string, string> = {
-  seller: "Seller",
-  buyer: "Buyer",
-  both: "Both",
+  seller: "Vendedor",
+  buyer: "Comprador",
+  both: "Ambos",
 };
 
 export const clientStatusLabels: Record<string, string> = {
-  new: "New",
-  in_followup: "In follow-up",
-  closed: "Closed",
+  new: "Nuevo",
+  in_followup: "En seguimiento",
+  closed: "Cerrado",
 };
 
 export const appraisalStatusLabels: Record<string, string> = {
-  pending: "Pending",
-  offer_sent: "Offer sent",
-  negotiating: "Negotiating",
-  purchased: "Purchased",
-  rejected: "Rejected",
+  pending: "Pendiente",
+  offer_sent: "Oferta enviada",
+  negotiating: "Negociando",
+  purchased: "Comprado",
+  rejected: "Rechazado",
 };
 
 export const saleStatusLabels: Record<string, string> = {
-  new_lead: "New lead",
-  interested: "Interested",
-  test_drive: "Test drive done",
-  negotiating: "Negotiating",
-  reserved: "Reserved",
-  sold: "Sold",
-  lost: "Lost",
+  new_lead: "Nuevo lead",
+  interested: "Interesado",
+  test_drive: "Prueba realizada",
+  negotiating: "Negociando",
+  reserved: "Reservado",
+  sold: "Vendido",
+  lost: "Perdido",
 };
 
 export const stockStatusLabels: Record<string, string> = {
-  preparing: "Preparing",
-  available: "Available",
-  reserved: "Reserved",
-  sold: "Sold",
+  preparing: "En preparación",
+  available: "Disponible",
+  reserved: "Reservado",
+  sold: "Vendido",
 };
 
 export const workshopStatusLabels: Record<string, string> = {
-  pending: "Pending",
-  in_progress: "In progress",
-  completed: "Completed",
-  waiting_parts: "Waiting for parts",
+  pending: "Pendiente",
+  in_progress: "En curso",
+  completed: "Completado",
+  waiting_parts: "Esperando piezas",
 };
 
 export const fuelTypeLabels: Record<string, string> = {
-  gasoline: "Gasoline",
-  diesel: "Diesel",
-  hybrid: "Hybrid",
-  electric: "Electric",
+  gasoline: "Gasolina",
+  diesel: "Diésel",
+  hybrid: "Híbrido",
+  electric: "Eléctrico",
   lpg: "LPG",
-  other: "Other",
+  other: "Otro",
 };
 
 // Tone mapping: returns Tailwind classes using semantic status tokens.
@@ -121,7 +121,7 @@ export const stockStatusOrder = ["preparing", "available", "reserved", "sold"] a
 
 export function formatCurrency(value: number | null | undefined) {
   if (value === null || value === undefined) return "—";
-  return new Intl.NumberFormat("en-US", {
+  return new Intl.NumberFormat("es-ES", {
     style: "currency",
     currency: "EUR",
     maximumFractionDigits: 0,
@@ -132,7 +132,7 @@ export function formatDate(value: string | null | undefined) {
   if (!value) return "—";
   const d = new Date(value);
   if (isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString("en-US", { day: "2-digit", month: "short", year: "numeric" });
+  return d.toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" });
 }
 
 export function daysUntil(dateStr: string | null | undefined): number | null {

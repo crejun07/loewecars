@@ -15,12 +15,12 @@ import {
 } from "@/components/ui/sidebar";
 
 const items = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
-  { title: "Clients", url: "/clients", icon: Users },
-  { title: "Appraisals", url: "/appraisals", icon: ClipboardList },
-  { title: "Sales", url: "/sales", icon: ShoppingCart },
+  { title: "Panel", url: "/", icon: LayoutDashboard },
+  { title: "Clientes", url: "/clients", icon: Users },
+  { title: "Tasaciones", url: "/appraisals", icon: ClipboardList },
+  { title: "Ventas", url: "/sales", icon: ShoppingCart },
   { title: "Stock", url: "/stock", icon: Car },
-  { title: "Workshop", url: "/workshop", icon: Wrench },
+  { title: "Taller", url: "/workshop", icon: Wrench },
 ];
 
 export function AppSidebar() {
@@ -38,7 +38,7 @@ export function AppSidebar() {
           {!collapsed && (
             <div className="flex flex-col leading-tight">
               <span className="text-sm font-semibold text-sidebar-foreground">Driveline</span>
-              <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Dealership OS</span>
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Gestión Concesionario</span>
             </div>
           )}
         </div>
@@ -46,7 +46,7 @@ export function AppSidebar() {
 
       <SidebarContent>
         <SidebarGroup>
-          {!collapsed && <SidebarGroupLabel>Workspace</SidebarGroupLabel>}
+          {!collapsed && <SidebarGroupLabel>Espacio de trabajo</SidebarGroupLabel>}
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => {

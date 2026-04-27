@@ -57,11 +57,11 @@ export default function StockPage() {
       ? await supabase.from("vehicle_stock").update(payload).eq("id", editing.id)
       : await supabase.from("vehicle_stock").insert(payload);
     if (error) { toast.error(error.message); return; }
-    toast.success(editing ? "Vehicle updated" : "Vehicle added");
+    toast.success(editing ? "Vehículo actualizado" : "Vehículo añadido");
     qc.invalidateQueries({ queryKey: ["vehicle_stock"] });
   }
   async function remove(id: string) {
-    if (!confirm("Delete this vehicle?")) return;
+    if (!confirm("¿Eliminar este vehículo?")) return;
     const { error } = await supabase.from("vehicle_stock").delete().eq("id", id);
     if (error) { toast.error(error.message); return; }
     qc.invalidateQueries({ queryKey: ["vehicle_stock"] });
@@ -70,12 +70,12 @@ export default function StockPage() {
   return (
     <div>
       <PageHeader
-        title="Vehicle stock"
-        description={`${stock.length} vehicles`}
+        title="Stock de vehículos"
+        description={`${stock.length} vehículos`}
         actions={
           <>
             <Button size="sm" variant={onlyAvailable ? "secondary" : "ghost"} onClick={() => setOnlyAvailable((v) => !v)}>
-              <Filter className="mr-1 h-3.5 w-3.5" />Available only
+              <Filter className="mr-1 h-3.5 w-3.5" />Solo disponibles
             </Button>
             <div className="flex rounded-md border border-border">
               <Button size="sm" variant={view === "gallery" ? "secondary" : "ghost"} className="rounded-r-none" onClick={() => setView("gallery")}>
@@ -85,13 +85,13 @@ export default function StockPage() {
                 <TableIcon className="h-3.5 w-3.5" />
               </Button>
             </div>
-            <Button size="sm" onClick={openNew}><Plus className="mr-1 h-4 w-4" />Add vehicle</Button>
+            <Button size="sm" onClick={openNew}><Plus className="mr-1 h-4 w-4" />Añadir vehículo</Button>
           </>
         }
       />
       <div className="p-6">
         {items.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-border bg-card p-12 text-center text-sm text-muted-foreground">No vehicles.</div>
+          <div className="rounded-lg border border-dashed border-border bg-card p-12 text-center text-sm text-muted-foreground">Sin vehículos.</div>
         ) : view === "gallery" ? (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {items.map((s: any) => {
@@ -110,12 +110,12 @@ export default function StockPage() {
                       <StatusBadge label={stockStatusLabels[s.status]} tone={stockStatusTone[s.status]} />
                     </div>
                     <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-                      <div><div className="text-muted-foreground">Selling</div><div className="font-medium">{formatCurrency(s.selling_price)}</div></div>
-                      <div><div className="text-muted-foreground">Margin</div><div className="font-medium text-success">{formatCurrency(s.profit_margin)}</div></div>
+                      <div><div className="text-muted-foreground">Venta</div><div className="font-medium">{formatCurrency(s.selling_price)}</div></div>
+                      <div><div className="text-muted-foreground">Margen</div><div className="font-medium text-success">{formatCurrency(s.profit_margin)}</div></div>
                     </div>
                     {itvDays !== null && itvDays <= 30 && (
                       <div className={`mt-2 rounded px-2 py-1 text-[11px] font-medium ${itvDays < 0 ? "bg-status-red text-status-red-fg" : itvDays <= 7 ? "bg-status-amber text-status-amber-fg" : "bg-status-blue text-status-blue-fg"}`}>
-                        ITV {itvDays < 0 ? `${Math.abs(itvDays)}d overdue` : `in ${itvDays}d`}
+                        ITV {itvDays < 0 ? `vencida ${Math.abs(itvDays)}d` : `en ${itvDays}d`}
                       </div>
                     )}
                     <div className="mt-2 flex justify-end gap-1">
@@ -131,9 +131,9 @@ export default function StockPage() {
           <div className="overflow-hidden rounded-lg border border-border bg-card">
             <table className="w-full text-sm">
               <thead><tr className="border-b border-border bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
-                <th className="px-4 py-2.5 font-medium">Vehicle</th><th className="px-4 py-2.5 font-medium">Year</th><th className="px-4 py-2.5 font-medium">Km</th>
-                <th className="px-4 py-2.5 font-medium">Purchase</th><th className="px-4 py-2.5 font-medium">Selling</th><th className="px-4 py-2.5 font-medium">Margin</th>
-                <th className="px-4 py-2.5 font-medium">ITV</th><th className="px-4 py-2.5 font-medium">Status</th><th></th>
+                <th className="px-4 py-2.5 font-medium">Vehículo</th><th className="px-4 py-2.5 font-medium">Año</th><th className="px-4 py-2.5 font-medium">Km</th>
+                <th className="px-4 py-2.5 font-medium">Compra</th><th className="px-4 py-2.5 font-medium">Venta</th><th className="px-4 py-2.5 font-medium">Margen</th>
+                <th className="px-4 py-2.5 font-medium">ITV</th><th className="px-4 py-2.5 font-medium">Estado</th><th></th>
               </tr></thead>
               <tbody className="divide-y divide-border">
                 {items.map((s: any) => (
@@ -158,30 +158,30 @@ export default function StockPage() {
         )}
       </div>
 
-      <RecordDialog open={open} onOpenChange={setOpen} trigger={null as any} title={editing ? "Edit vehicle" : "Add vehicle"} onSubmit={save}>
-        <Field label="Brand"><Input required value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} /></Field>
-        <Field label="Model"><Input required value={form.model} onChange={(e) => setForm({ ...form, model: e.target.value })} /></Field>
-        <Field label="Year"><Input type="number" value={form.year} onChange={(e) => setForm({ ...form, year: e.target.value })} /></Field>
-        <Field label="Mileage (km)"><Input type="number" value={form.mileage} onChange={(e) => setForm({ ...form, mileage: e.target.value })} /></Field>
-        <Field label="Fuel">
+      <RecordDialog open={open} onOpenChange={setOpen} trigger={null as any} title={editing ? "Editar vehículo" : "Añadir vehículo"} onSubmit={save}>
+        <Field label="Marca"><Input required value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} /></Field>
+        <Field label="Modelo"><Input required value={form.model} onChange={(e) => setForm({ ...form, model: e.target.value })} /></Field>
+        <Field label="Año"><Input type="number" value={form.year} onChange={(e) => setForm({ ...form, year: e.target.value })} /></Field>
+        <Field label="Kilómetros"><Input type="number" value={form.mileage} onChange={(e) => setForm({ ...form, mileage: e.target.value })} /></Field>
+        <Field label="Combustible">
           <Select value={form.fuel_type} onValueChange={(v) => setForm({ ...form, fuel_type: v })}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>{Object.entries(fuelTypeLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
           </Select>
         </Field>
-        <Field label="Status">
+        <Field label="Estado">
           <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>{Object.entries(stockStatusLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
           </Select>
         </Field>
-        <Field label="Purchase price (€)"><Input type="number" step="0.01" value={form.purchase_price} onChange={(e) => setForm({ ...form, purchase_price: e.target.value })} /></Field>
-        <Field label="Selling price (€)"><Input type="number" step="0.01" value={form.selling_price} onChange={(e) => setForm({ ...form, selling_price: e.target.value })} /></Field>
-        <Field label="Entry date"><Input type="date" value={form.entry_date} onChange={(e) => setForm({ ...form, entry_date: e.target.value })} /></Field>
-        <Field label="Next ITV"><Input type="date" value={form.next_itv_date} onChange={(e) => setForm({ ...form, next_itv_date: e.target.value })} /></Field>
-        <Field label="Location" full><Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} /></Field>
-        <Field label="Image URL" full><Input value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })} placeholder="https://…" /></Field>
-        <Field label="Notes" full><Textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></Field>
+        <Field label="Precio de compra (€)"><Input type="number" step="0.01" value={form.purchase_price} onChange={(e) => setForm({ ...form, purchase_price: e.target.value })} /></Field>
+        <Field label="Precio de venta (€)"><Input type="number" step="0.01" value={form.selling_price} onChange={(e) => setForm({ ...form, selling_price: e.target.value })} /></Field>
+        <Field label="Fecha de entrada"><Input type="date" value={form.entry_date} onChange={(e) => setForm({ ...form, entry_date: e.target.value })} /></Field>
+        <Field label="Próxima ITV"><Input type="date" value={form.next_itv_date} onChange={(e) => setForm({ ...form, next_itv_date: e.target.value })} /></Field>
+        <Field label="Ubicación" full><Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} /></Field>
+        <Field label="URL de imagen" full><Input value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })} placeholder="https://…" /></Field>
+        <Field label="Notas" full><Textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></Field>
       </RecordDialog>
     </div>
   );

@@ -18,11 +18,11 @@ import {
 } from "@/lib/labels";
 
 const dbCards = [
-  { title: "Clients", url: "/clients", icon: Users, desc: "Buyers, sellers, contacts" },
-  { title: "Appraisals", url: "/appraisals", icon: ClipboardList, desc: "Cars offered to buy" },
-  { title: "Sales", url: "/sales", icon: ShoppingCart, desc: "Customer purchases" },
-  { title: "Stock", url: "/stock", icon: Car, desc: "Available inventory" },
-  { title: "Workshop", url: "/workshop", icon: Wrench, desc: "Repairs & prep" },
+  { title: "Clientes", url: "/clients", icon: Users, desc: "Compradores, vendedores, contactos" },
+  { title: "Tasaciones", url: "/appraisals", icon: ClipboardList, desc: "Vehículos ofrecidos para compra" },
+  { title: "Ventas", url: "/sales", icon: ShoppingCart, desc: "Operaciones con clientes" },
+  { title: "Stock", url: "/stock", icon: Car, desc: "Inventario disponible" },
+  { title: "Taller", url: "/workshop", icon: Wrench, desc: "Reparaciones y preparación" },
 ];
 
 function Kpi({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
@@ -63,7 +63,7 @@ export default function Dashboard() {
     ...appraisals
       .filter((a: any) => !["purchased", "rejected"].includes(a.deal_status))
       .map((a: any) => ({
-        kind: "Acquisition",
+        kind: "Compra",
         id: a.id,
         title: `${a.brand} ${a.model}`,
         sub: a.client?.full_name ?? "—",
@@ -75,9 +75,9 @@ export default function Dashboard() {
     ...sales
       .filter((s: any) => !["sold", "lost"].includes(s.sale_status))
       .map((s: any) => ({
-        kind: "Sale",
+        kind: "Venta",
         id: s.id,
-        title: s.vehicle ? `${s.vehicle.brand} ${s.vehicle.model}` : "Unassigned vehicle",
+        title: s.vehicle ? `${s.vehicle.brand} ${s.vehicle.model}` : "Vehículo sin asignar",
         sub: s.client?.full_name ?? "—",
         statusLabel: saleStatusLabels[s.sale_status],
         tone: saleStatusTone[s.sale_status],
@@ -89,8 +89,8 @@ export default function Dashboard() {
   return (
     <div>
       <PageHeader
-        title="Dashboard"
-        description="Operational overview of your dealership."
+        title="Panel"
+        description="Visión general operativa del concesionario."
       />
 
       <div className="space-y-6 p-6">
@@ -116,10 +116,10 @@ export default function Dashboard() {
 
         {/* KPIs */}
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          <Kpi label="Available stock" value={available.length} sub={`${stock.length} total vehicles`} />
-          <Kpi label="Active sales" value={sales.filter((s: any) => !["sold", "lost"].includes(s.sale_status)).length} sub={`${sales.filter((s: any) => s.sale_status === "sold").length} closed`} />
-          <Kpi label="Pending workshop" value={pendingTasks.length} sub={`${workshop.length} total tasks`} />
-          <Kpi label="Profit (sold)" value={formatCurrency(totalMargin)} sub="Lifetime margin" />
+          <Kpi label="Stock disponible" value={available.length} sub={`${stock.length} vehículos en total`} />
+          <Kpi label="Ventas activas" value={sales.filter((s: any) => !["sold", "lost"].includes(s.sale_status)).length} sub={`${sales.filter((s: any) => s.sale_status === "sold").length} cerradas`} />
+          <Kpi label="Taller pendiente" value={pendingTasks.length} sub={`${workshop.length} tareas totales`} />
+          <Kpi label="Beneficio (vendidos)" value={formatCurrency(totalMargin)} sub="Margen acumulado" />
         </div>
 
         <div className="grid gap-4 lg:grid-cols-3">
@@ -128,13 +128,13 @@ export default function Dashboard() {
             <div className="flex items-center justify-between border-b border-border px-4 py-3">
               <div className="flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4 text-warning" />
-                <h2 className="text-sm font-semibold">ITV alerts</h2>
+                <h2 className="text-sm font-semibold">Alertas ITV</h2>
               </div>
-              <span className="text-xs text-muted-foreground">≤ 30 days</span>
+              <span className="text-xs text-muted-foreground">≤ 30 días</span>
             </div>
             <div className="divide-y divide-border">
               {itvAlerts.length === 0 ? (
-                <div className="px-4 py-6 text-center text-xs text-muted-foreground">All inspections up to date</div>
+                <div className="px-4 py-6 text-center text-xs text-muted-foreground">Todas las ITV al día</div>
               ) : (
                 itvAlerts.slice(0, 6).map((s: any) => (
                   <Link key={s.id} to="/stock" className="flex items-center justify-between px-4 py-2.5 hover:bg-muted/40">
@@ -143,7 +143,7 @@ export default function Dashboard() {
                       <div className="text-xs text-muted-foreground">{formatDate(s.next_itv_date)}</div>
                     </div>
                     <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${s.days < 0 ? "bg-status-red text-status-red-fg" : s.days <= 7 ? "bg-status-amber text-status-amber-fg" : "bg-status-blue text-status-blue-fg"}`}>
-                      {s.days < 0 ? `${Math.abs(s.days)}d overdue` : `${s.days}d left`}
+                      {s.days < 0 ? `${Math.abs(s.days)}d vencida` : `${s.days}d restantes`}
                     </span>
                   </Link>
                 ))
@@ -156,19 +156,19 @@ export default function Dashboard() {
             <div className="flex items-center justify-between border-b border-border px-4 py-3">
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-info" />
-                <h2 className="text-sm font-semibold">Follow-ups needed</h2>
+                <h2 className="text-sm font-semibold">Seguimientos pendientes</h2>
               </div>
               <span className="text-xs text-muted-foreground">{followups.length}</span>
             </div>
             <div className="divide-y divide-border">
               {followups.length === 0 ? (
-                <div className="px-4 py-6 text-center text-xs text-muted-foreground">No overdue contacts</div>
+                <div className="px-4 py-6 text-center text-xs text-muted-foreground">Sin contactos atrasados</div>
               ) : (
                 followups.slice(0, 6).map((c: any) => (
                   <Link key={c.id} to="/clients" className="flex items-center justify-between px-4 py-2.5 hover:bg-muted/40">
                     <div className="min-w-0">
                       <div className="truncate text-sm font-medium">{c.full_name}</div>
-                      <div className="text-xs text-muted-foreground">{c.phone || c.email || "No contact info"}</div>
+                      <div className="text-xs text-muted-foreground">{c.phone || c.email || "Sin datos de contacto"}</div>
                     </div>
                     <span className="text-xs text-muted-foreground">{formatDate(c.last_contact_date)}</span>
                   </Link>
@@ -182,19 +182,19 @@ export default function Dashboard() {
             <div className="flex items-center justify-between border-b border-border px-4 py-3">
               <div className="flex items-center gap-2">
                 <Wrench className="h-4 w-4 text-foreground" />
-                <h2 className="text-sm font-semibold">Pending workshop</h2>
+                <h2 className="text-sm font-semibold">Taller pendiente</h2>
               </div>
               <span className="text-xs text-muted-foreground">{pendingTasks.length}</span>
             </div>
             <div className="divide-y divide-border">
               {pendingTasks.length === 0 ? (
-                <div className="px-4 py-6 text-center text-xs text-muted-foreground">Nothing pending</div>
+                <div className="px-4 py-6 text-center text-xs text-muted-foreground">Nada pendiente</div>
               ) : (
                 pendingTasks.slice(0, 6).map((w: any) => (
                   <Link key={w.id} to="/workshop" className="flex items-center justify-between px-4 py-2.5 hover:bg-muted/40">
                     <div className="min-w-0">
                       <div className="truncate text-sm font-medium">{w.task}</div>
-                      <div className="truncate text-xs text-muted-foreground">{w.vehicle ? `${w.vehicle.brand} ${w.vehicle.model}` : "Unassigned"}</div>
+                      <div className="truncate text-xs text-muted-foreground">{w.vehicle ? `${w.vehicle.brand} ${w.vehicle.model}` : "Sin asignar"}</div>
                     </div>
                     <StatusBadge label={workshopStatusLabels[w.status]} tone={workshopStatusTone[w.status]} />
                   </Link>
@@ -209,12 +209,12 @@ export default function Dashboard() {
           <div className="flex items-center justify-between border-b border-border px-4 py-3">
             <div className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-foreground" />
-              <h2 className="text-sm font-semibold">Active deals</h2>
+              <h2 className="text-sm font-semibold">Operaciones activas</h2>
             </div>
             <span className="text-xs text-muted-foreground">{activeDeals.length}</span>
           </div>
           {activeDeals.length === 0 ? (
-            <div className="px-4 py-8 text-center text-xs text-muted-foreground">No active deals</div>
+            <div className="px-4 py-8 text-center text-xs text-muted-foreground">Sin operaciones activas</div>
           ) : (
             <div className="divide-y divide-border">
               {activeDeals.map((d) => (
@@ -235,12 +235,12 @@ export default function Dashboard() {
           <div className="flex items-center justify-between border-b border-border px-4 py-3">
             <div className="flex items-center gap-2">
               <Car className="h-4 w-4 text-foreground" />
-              <h2 className="text-sm font-semibold">Available stock</h2>
+              <h2 className="text-sm font-semibold">Stock disponible</h2>
             </div>
-            <Link to="/stock" className="text-xs text-muted-foreground hover:text-foreground">View all →</Link>
+            <Link to="/stock" className="text-xs text-muted-foreground hover:text-foreground">Ver todo →</Link>
           </div>
           {available.length === 0 ? (
-            <div className="px-4 py-8 text-center text-xs text-muted-foreground">No vehicles available</div>
+            <div className="px-4 py-8 text-center text-xs text-muted-foreground">No hay vehículos disponibles</div>
           ) : (
             <div className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-2 lg:grid-cols-4">
               {available.slice(0, 8).map((s: any) => (

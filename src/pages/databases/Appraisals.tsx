@@ -54,11 +54,11 @@ export default function AppraisalsPage() {
       ? await supabase.from("vehicle_appraisals").update(payload).eq("id", editing.id)
       : await supabase.from("vehicle_appraisals").insert(payload);
     if (error) { toast.error(error.message); return; }
-    toast.success("Saved");
+    toast.success("Guardado");
     qc.invalidateQueries({ queryKey: ["vehicle_appraisals"] });
   }
   async function remove(id: string) {
-    if (!confirm("Delete?")) return;
+    if (!confirm("¿Eliminar?")) return;
     await supabase.from("vehicle_appraisals").delete().eq("id", id);
     qc.invalidateQueries({ queryKey: ["vehicle_appraisals"] });
   }
@@ -66,15 +66,15 @@ export default function AppraisalsPage() {
   return (
     <div>
       <PageHeader
-        title="Vehicle appraisals"
-        description="Cars clients want to sell us"
+        title="Tasaciones de vehículos"
+        description="Vehículos que los clientes quieren vendernos"
         actions={
           <>
             <div className="flex rounded-md border border-border">
               <Button size="sm" variant={view === "kanban" ? "secondary" : "ghost"} className="rounded-r-none" onClick={() => setView("kanban")}><LayoutGrid className="h-3.5 w-3.5" /></Button>
               <Button size="sm" variant={view === "table" ? "secondary" : "ghost"} className="rounded-l-none" onClick={() => setView("table")}><TableIcon className="h-3.5 w-3.5" /></Button>
             </div>
-            <Button size="sm" onClick={openNew}><Plus className="mr-1 h-4 w-4" />New appraisal</Button>
+            <Button size="sm" onClick={openNew}><Plus className="mr-1 h-4 w-4" />Nueva tasación</Button>
           </>
         }
       />
@@ -86,12 +86,12 @@ export default function AppraisalsPage() {
               appraisals.filter((a: any) => a.deal_status === col).map((a: any) => (
                 <button key={a.id} onClick={() => openEdit(a)} className="rounded-md border border-border bg-card p-3 text-left transition-colors hover:border-foreground/20">
                   <div className="text-sm font-medium">{a.brand} {a.model}</div>
-                  <div className="text-xs text-muted-foreground">{a.client?.full_name ?? "Unknown client"}</div>
+                  <div className="text-xs text-muted-foreground">{a.client?.full_name ?? "Cliente desconocido"}</div>
                   <div className="mt-2 flex items-center justify-between text-xs">
                     <span className="text-muted-foreground">{a.year ?? "—"}</span>
                     <span className="font-medium">{formatCurrency(a.offered_price ?? a.estimated_price)}</span>
                   </div>
-                  {a.follow_up_date && <div className="mt-1 text-[11px] text-muted-foreground">Follow-up {formatDate(a.follow_up_date)}</div>}
+                  {a.follow_up_date && <div className="mt-1 text-[11px] text-muted-foreground">Seguimiento {formatDate(a.follow_up_date)}</div>}
                 </button>
               ))
             }
@@ -100,9 +100,9 @@ export default function AppraisalsPage() {
           <div className="overflow-hidden rounded-lg border border-border bg-card">
             <table className="w-full text-sm">
               <thead><tr className="border-b border-border bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
-                <th className="px-4 py-2.5 font-medium">Vehicle</th><th className="px-4 py-2.5 font-medium">Client</th>
-                <th className="px-4 py-2.5 font-medium">Estimated</th><th className="px-4 py-2.5 font-medium">Offered</th>
-                <th className="px-4 py-2.5 font-medium">Status</th><th className="px-4 py-2.5 font-medium">Follow-up</th><th></th>
+                <th className="px-4 py-2.5 font-medium">Vehículo</th><th className="px-4 py-2.5 font-medium">Cliente</th>
+                <th className="px-4 py-2.5 font-medium">Estimado</th><th className="px-4 py-2.5 font-medium">Ofrecido</th>
+                <th className="px-4 py-2.5 font-medium">Estado</th><th className="px-4 py-2.5 font-medium">Seguimiento</th><th></th>
               </tr></thead>
               <tbody className="divide-y divide-border">
                 {appraisals.map((a: any) => (
@@ -125,37 +125,37 @@ export default function AppraisalsPage() {
         )}
       </div>
 
-      <RecordDialog open={open} onOpenChange={setOpen} trigger={null as any} title={editing ? "Edit appraisal" : "New appraisal"} onSubmit={save}>
-        <Field label="Client" full>
+      <RecordDialog open={open} onOpenChange={setOpen} trigger={null as any} title={editing ? "Editar tasación" : "Nueva tasación"} onSubmit={save}>
+        <Field label="Cliente" full>
           <Select value={form.client_id || "none"} onValueChange={(v) => setForm({ ...form, client_id: v === "none" ? "" : v })}>
-            <SelectTrigger><SelectValue placeholder="Select client" /></SelectTrigger>
+            <SelectTrigger><SelectValue placeholder="Selecciona cliente" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="none">— None —</SelectItem>
+              <SelectItem value="none">— Ninguno —</SelectItem>
               {clients.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.full_name}</SelectItem>)}
             </SelectContent>
           </Select>
         </Field>
-        <Field label="Brand"><Input required value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} /></Field>
-        <Field label="Model"><Input required value={form.model} onChange={(e) => setForm({ ...form, model: e.target.value })} /></Field>
-        <Field label="Year"><Input type="number" value={form.year} onChange={(e) => setForm({ ...form, year: e.target.value })} /></Field>
-        <Field label="Mileage"><Input type="number" value={form.mileage} onChange={(e) => setForm({ ...form, mileage: e.target.value })} /></Field>
-        <Field label="Fuel">
+        <Field label="Marca"><Input required value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} /></Field>
+        <Field label="Modelo"><Input required value={form.model} onChange={(e) => setForm({ ...form, model: e.target.value })} /></Field>
+        <Field label="Año"><Input type="number" value={form.year} onChange={(e) => setForm({ ...form, year: e.target.value })} /></Field>
+        <Field label="Kilómetros"><Input type="number" value={form.mileage} onChange={(e) => setForm({ ...form, mileage: e.target.value })} /></Field>
+        <Field label="Combustible">
           <Select value={form.fuel_type} onValueChange={(v) => setForm({ ...form, fuel_type: v })}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>{Object.entries(fuelTypeLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
           </Select>
         </Field>
-        <Field label="Condition"><Input value={form.vehicle_condition} onChange={(e) => setForm({ ...form, vehicle_condition: e.target.value })} placeholder="Excellent / Good / Fair…" /></Field>
-        <Field label="Estimated price (€)"><Input type="number" value={form.estimated_price} onChange={(e) => setForm({ ...form, estimated_price: e.target.value })} /></Field>
-        <Field label="Offered price (€)"><Input type="number" value={form.offered_price} onChange={(e) => setForm({ ...form, offered_price: e.target.value })} /></Field>
-        <Field label="Deal status">
+        <Field label="Estado del vehículo"><Input value={form.vehicle_condition} onChange={(e) => setForm({ ...form, vehicle_condition: e.target.value })} placeholder="Excelente / Bueno / Regular…" /></Field>
+        <Field label="Precio estimado (€)"><Input type="number" value={form.estimated_price} onChange={(e) => setForm({ ...form, estimated_price: e.target.value })} /></Field>
+        <Field label="Precio ofrecido (€)"><Input type="number" value={form.offered_price} onChange={(e) => setForm({ ...form, offered_price: e.target.value })} /></Field>
+        <Field label="Estado de la operación">
           <Select value={form.deal_status} onValueChange={(v) => setForm({ ...form, deal_status: v })}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>{Object.entries(appraisalStatusLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
           </Select>
         </Field>
-        <Field label="Follow-up date"><Input type="date" value={form.follow_up_date} onChange={(e) => setForm({ ...form, follow_up_date: e.target.value })} /></Field>
-        <Field label="Notes" full><Textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></Field>
+        <Field label="Fecha de seguimiento"><Input type="date" value={form.follow_up_date} onChange={(e) => setForm({ ...form, follow_up_date: e.target.value })} /></Field>
+        <Field label="Notas" full><Textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></Field>
       </RecordDialog>
     </div>
   );

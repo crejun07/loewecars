@@ -65,30 +65,30 @@ export default function ClientsPage() {
       ? await supabase.from("clients").update(payload).eq("id", editing.id)
       : await supabase.from("clients").insert(payload);
     if (error) { toast.error(error.message); return; }
-    toast.success(editing ? "Client updated" : "Client created");
+    toast.success(editing ? "Cliente actualizado" : "Cliente creado");
     qc.invalidateQueries({ queryKey: ["clients"] });
   }
 
   async function remove(id: string) {
-    if (!confirm("Delete this client?")) return;
+    if (!confirm("¿Eliminar este cliente?")) return;
     const { error } = await supabase.from("clients").delete().eq("id", id);
     if (error) { toast.error(error.message); return; }
-    toast.success("Client deleted");
+    toast.success("Cliente eliminado");
     qc.invalidateQueries({ queryKey: ["clients"] });
   }
 
   return (
     <div>
       <PageHeader
-        title="Clients"
-        description={`${clients.length} contacts`}
+        title="Clientes"
+        description={`${clients.length} contactos`}
         actions={
           <>
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-              <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search…" className="h-9 w-56 pl-8" />
+              <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar…" className="h-9 w-56 pl-8" />
             </div>
-            <Button size="sm" onClick={openNew}><Plus className="mr-1 h-4 w-4" />New client</Button>
+            <Button size="sm" onClick={openNew}><Plus className="mr-1 h-4 w-4" />Nuevo cliente</Button>
           </>
         }
       />
@@ -98,18 +98,18 @@ export default function ClientsPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
-                <th className="px-4 py-2.5 font-medium">Name</th>
-                <th className="px-4 py-2.5 font-medium">Type</th>
-                <th className="px-4 py-2.5 font-medium">Status</th>
-                <th className="px-4 py-2.5 font-medium">Phone</th>
+                <th className="px-4 py-2.5 font-medium">Nombre</th>
+                <th className="px-4 py-2.5 font-medium">Tipo</th>
+                <th className="px-4 py-2.5 font-medium">Estado</th>
+                <th className="px-4 py-2.5 font-medium">Teléfono</th>
                 <th className="px-4 py-2.5 font-medium">Email</th>
-                <th className="px-4 py-2.5 font-medium">Last contact</th>
+                <th className="px-4 py-2.5 font-medium">Último contacto</th>
                 <th className="px-4 py-2.5"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {filtered.length === 0 && (
-                <tr><td colSpan={7} className="px-4 py-10 text-center text-xs text-muted-foreground">No clients yet.</td></tr>
+                <tr><td colSpan={7} className="px-4 py-10 text-center text-xs text-muted-foreground">Aún no hay clientes.</td></tr>
               )}
               {filtered.map((c: any) => (
                 <tr key={c.id} className="hover:bg-muted/30">
@@ -134,26 +134,26 @@ export default function ClientsPage() {
         open={open}
         onOpenChange={setOpen}
         trigger={null as any}
-        title={editing ? "Edit client" : "New client"}
+        title={editing ? "Editar cliente" : "Nuevo cliente"}
         onSubmit={save}
       >
-        <Field label="Full name" full><Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} required /></Field>
-        <Field label="Phone"><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></Field>
+        <Field label="Nombre completo" full><Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} required /></Field>
+        <Field label="Teléfono"><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></Field>
         <Field label="Email"><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></Field>
-        <Field label="Type">
+        <Field label="Tipo">
           <Select value={form.client_type} onValueChange={(v) => setForm({ ...form, client_type: v as any })}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>{Object.entries(clientTypeLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
           </Select>
         </Field>
-        <Field label="Status">
+        <Field label="Estado">
           <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as any })}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>{Object.entries(clientStatusLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
           </Select>
         </Field>
-        <Field label="Last contact" full><Input type="date" value={form.last_contact_date} onChange={(e) => setForm({ ...form, last_contact_date: e.target.value })} /></Field>
-        <Field label="Notes" full><Textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></Field>
+        <Field label="Último contacto" full><Input type="date" value={form.last_contact_date} onChange={(e) => setForm({ ...form, last_contact_date: e.target.value })} /></Field>
+        <Field label="Notas" full><Textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></Field>
       </RecordDialog>
     </div>
   );

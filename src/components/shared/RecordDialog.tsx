@@ -13,7 +13,7 @@ interface Props {
   onOpenChange?: (open: boolean) => void;
 }
 
-export function RecordDialog({ trigger, title, description, onSubmit, children, submitLabel = "Save", open, onOpenChange }: Props) {
+export function RecordDialog({ trigger, title, description, onSubmit, children, submitLabel = "Guardar", open, onOpenChange }: Props) {
   const [internalOpen, setInternalOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const isControlled = open !== undefined;
@@ -43,8 +43,8 @@ export function RecordDialog({ trigger, title, description, onSubmit, children, 
         >
           <div className="grid grid-cols-2 gap-3">{children}</div>
           <DialogFooter className="pt-2">
-            <Button type="button" variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button type="submit" disabled={busy}>{busy ? "Saving…" : submitLabel}</Button>
+            <Button type="button" variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button>
+            <Button type="submit" disabled={busy}>{busy ? "Guardando…" : submitLabel}</Button>
           </DialogFooter>
         </form>
       </DialogContent>
