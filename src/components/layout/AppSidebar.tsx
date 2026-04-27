@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, ClipboardList, ShoppingCart, Car, Wrench, Package } from "lucide-react";
+import { LayoutDashboard, Users, ClipboardList, ShoppingCart, Car, Wrench, Package, FileText } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import {
@@ -22,6 +22,7 @@ const items = [
   { title: "Stock", url: "/stock", icon: Car },
   { title: "Taller", url: "/workshop", icon: Wrench },
   { title: "Recambios", url: "/spare-parts", icon: Package },
+  { title: "Informes", url: "/reports", icon: FileText },
 ];
 
 export function AppSidebar() {
