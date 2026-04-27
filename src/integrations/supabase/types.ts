@@ -1,0 +1,453 @@
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
+
+export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.5"
+  }
+  public: {
+    Tables: {
+      clients: {
+        Row: {
+          client_type: Database["public"]["Enums"]["client_type"]
+          created_at: string
+          email: string | null
+          full_name: string
+          id: string
+          last_contact_date: string | null
+          notes: string | null
+          phone: string | null
+          status: Database["public"]["Enums"]["client_status"]
+          updated_at: string
+        }
+        Insert: {
+          client_type?: Database["public"]["Enums"]["client_type"]
+          created_at?: string
+          email?: string | null
+          full_name: string
+          id?: string
+          last_contact_date?: string | null
+          notes?: string | null
+          phone?: string | null
+          status?: Database["public"]["Enums"]["client_status"]
+          updated_at?: string
+        }
+        Update: {
+          client_type?: Database["public"]["Enums"]["client_type"]
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          id?: string
+          last_contact_date?: string | null
+          notes?: string | null
+          phone?: string | null
+          status?: Database["public"]["Enums"]["client_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      sales: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          customer_budget: number | null
+          id: string
+          next_contact_date: string | null
+          notes: string | null
+          payment_method: string | null
+          sale_status: Database["public"]["Enums"]["sale_status"]
+          updated_at: string
+          vehicle_id: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          customer_budget?: number | null
+          id?: string
+          next_contact_date?: string | null
+          notes?: string | null
+          payment_method?: string | null
+          sale_status?: Database["public"]["Enums"]["sale_status"]
+          updated_at?: string
+          vehicle_id?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          customer_budget?: number | null
+          id?: string
+          next_contact_date?: string | null
+          notes?: string | null
+          payment_method?: string | null
+          sale_status?: Database["public"]["Enums"]["sale_status"]
+          updated_at?: string
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicle_stock"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vehicle_appraisals: {
+        Row: {
+          brand: string
+          client_id: string | null
+          created_at: string
+          deal_status: Database["public"]["Enums"]["appraisal_status"]
+          estimated_price: number | null
+          follow_up_date: string | null
+          fuel_type: Database["public"]["Enums"]["fuel_type"] | null
+          id: string
+          mileage: number | null
+          model: string
+          notes: string | null
+          offered_price: number | null
+          updated_at: string
+          vehicle_condition: string | null
+          year: number | null
+        }
+        Insert: {
+          brand: string
+          client_id?: string | null
+          created_at?: string
+          deal_status?: Database["public"]["Enums"]["appraisal_status"]
+          estimated_price?: number | null
+          follow_up_date?: string | null
+          fuel_type?: Database["public"]["Enums"]["fuel_type"] | null
+          id?: string
+          mileage?: number | null
+          model: string
+          notes?: string | null
+          offered_price?: number | null
+          updated_at?: string
+          vehicle_condition?: string | null
+          year?: number | null
+        }
+        Update: {
+          brand?: string
+          client_id?: string | null
+          created_at?: string
+          deal_status?: Database["public"]["Enums"]["appraisal_status"]
+          estimated_price?: number | null
+          follow_up_date?: string | null
+          fuel_type?: Database["public"]["Enums"]["fuel_type"] | null
+          id?: string
+          mileage?: number | null
+          model?: string
+          notes?: string | null
+          offered_price?: number | null
+          updated_at?: string
+          vehicle_condition?: string | null
+          year?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_appraisals_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vehicle_stock: {
+        Row: {
+          brand: string
+          created_at: string
+          entry_date: string
+          fuel_type: Database["public"]["Enums"]["fuel_type"] | null
+          id: string
+          image_url: string | null
+          location: string | null
+          mileage: number | null
+          model: string
+          next_itv_date: string | null
+          notes: string | null
+          profit_margin: number | null
+          purchase_price: number
+          selling_price: number
+          status: Database["public"]["Enums"]["stock_status"]
+          updated_at: string
+          year: number | null
+        }
+        Insert: {
+          brand: string
+          created_at?: string
+          entry_date?: string
+          fuel_type?: Database["public"]["Enums"]["fuel_type"] | null
+          id?: string
+          image_url?: string | null
+          location?: string | null
+          mileage?: number | null
+          model: string
+          next_itv_date?: string | null
+          notes?: string | null
+          profit_margin?: number | null
+          purchase_price?: number
+          selling_price?: number
+          status?: Database["public"]["Enums"]["stock_status"]
+          updated_at?: string
+          year?: number | null
+        }
+        Update: {
+          brand?: string
+          created_at?: string
+          entry_date?: string
+          fuel_type?: Database["public"]["Enums"]["fuel_type"] | null
+          id?: string
+          image_url?: string | null
+          location?: string | null
+          mileage?: number | null
+          model?: string
+          next_itv_date?: string | null
+          notes?: string | null
+          profit_margin?: number | null
+          purchase_price?: number
+          selling_price?: number
+          status?: Database["public"]["Enums"]["stock_status"]
+          updated_at?: string
+          year?: number | null
+        }
+        Relationships: []
+      }
+      workshop: {
+        Row: {
+          cost: number | null
+          created_at: string
+          description: string | null
+          id: string
+          status: Database["public"]["Enums"]["workshop_status"]
+          task: string
+          task_date: string
+          updated_at: string
+          vehicle_id: string | null
+        }
+        Insert: {
+          cost?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["workshop_status"]
+          task: string
+          task_date?: string
+          updated_at?: string
+          vehicle_id?: string | null
+        }
+        Update: {
+          cost?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["workshop_status"]
+          task?: string
+          task_date?: string
+          updated_at?: string
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workshop_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicle_stock"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      [_ in never]: never
+    }
+    Enums: {
+      appraisal_status:
+        | "pending"
+        | "offer_sent"
+        | "negotiating"
+        | "purchased"
+        | "rejected"
+      client_status: "new" | "in_followup" | "closed"
+      client_type: "seller" | "buyer" | "both"
+      fuel_type: "gasoline" | "diesel" | "hybrid" | "electric" | "lpg" | "other"
+      sale_status:
+        | "new_lead"
+        | "interested"
+        | "test_drive"
+        | "negotiating"
+        | "reserved"
+        | "sold"
+        | "lost"
+      stock_status: "preparing" | "available" | "reserved" | "sold"
+      workshop_status: "pending" | "in_progress" | "completed" | "waiting_parts"
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
+}
+
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {
+      appraisal_status: [
+        "pending",
+        "offer_sent",
+        "negotiating",
+        "purchased",
+        "rejected",
+      ],
+      client_status: ["new", "in_followup", "closed"],
+      client_type: ["seller", "buyer", "both"],
+      fuel_type: ["gasoline", "diesel", "hybrid", "electric", "lpg", "other"],
+      sale_status: [
+        "new_lead",
+        "interested",
+        "test_drive",
+        "negotiating",
+        "reserved",
+        "sold",
+        "lost",
+      ],
+      stock_status: ["preparing", "available", "reserved", "sold"],
+      workshop_status: ["pending", "in_progress", "completed", "waiting_parts"],
+    },
+  },
+} as const

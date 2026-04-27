@@ -1,0 +1,269 @@
+import { Link } from "react-router-dom";
+import { Users, ClipboardList, ShoppingCart, Car, Wrench, AlertTriangle, Clock, TrendingUp, ArrowRight } from "lucide-react";
+import { PageHeader } from "@/components/shared/PageHeader";
+import { StatusBadge } from "@/components/shared/StatusBadge";
+import { useAppraisals, useClients, useSales, useStock, useWorkshop } from "@/hooks/data/useDealership";
+import {
+  appraisalStatusLabels,
+  appraisalStatusTone,
+  daysUntil,
+  formatCurrency,
+  formatDate,
+  saleStatusLabels,
+  saleStatusTone,
+  stockStatusLabels,
+  stockStatusTone,
+  workshopStatusLabels,
+  workshopStatusTone,
+} from "@/lib/labels";
+
+const dbCards = [
+  { title: "Clients", url: "/clients", icon: Users, desc: "Buyers, sellers, contacts" },
+  { title: "Appraisals", url: "/appraisals", icon: ClipboardList, desc: "Cars offered to buy" },
+  { title: "Sales", url: "/sales", icon: ShoppingCart, desc: "Customer purchases" },
+  { title: "Stock", url: "/stock", icon: Car, desc: "Available inventory" },
+  { title: "Workshop", url: "/workshop", icon: Wrench, desc: "Repairs & prep" },
+];
+
+function Kpi({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
+  return (
+    <div className="rounded-lg border border-border bg-card p-4">
+      <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</div>
+      <div className="mt-1 text-2xl font-semibold tracking-tight text-foreground">{value}</div>
+      {sub && <div className="mt-0.5 text-xs text-muted-foreground">{sub}</div>}
+    </div>
+  );
+}
+
+export default function Dashboard() {
+  const { data: clients = [] } = useClients();
+  const { data: stock = [] } = useStock();
+  const { data: appraisals = [] } = useAppraisals();
+  const { data: sales = [] } = useSales();
+  const { data: workshop = [] } = useWorkshop();
+
+  const available = stock.filter((s: any) => s.status === "available");
+  const totalMargin = stock
+    .filter((s: any) => s.status === "sold")
+    .reduce((sum: number, s: any) => sum + Number(s.profit_margin || 0), 0);
+
+  const itvAlerts = stock
+    .map((s: any) => ({ ...s, days: daysUntil(s.next_itv_date) }))
+    .filter((s: any) => s.days !== null && s.days <= 30)
+    .sort((a: any, b: any) => a.days - b.days);
+
+  const followups = clients.filter((c: any) => {
+    const days = daysUntil(c.last_contact_date);
+    return c.status === "in_followup" || (days !== null && days < -7);
+  });
+
+  const pendingTasks = workshop.filter((w: any) => w.status !== "completed");
+
+  const activeDeals = [
+    ...appraisals
+      .filter((a: any) => !["purchased", "rejected"].includes(a.deal_status))
+      .map((a: any) => ({
+        kind: "Acquisition",
+        id: a.id,
+        title: `${a.brand} ${a.model}`,
+        sub: a.client?.full_name ?? "—",
+        statusLabel: appraisalStatusLabels[a.deal_status],
+        tone: appraisalStatusTone[a.deal_status],
+        amount: a.offered_price ?? a.estimated_price,
+        url: "/appraisals",
+      })),
+    ...sales
+      .filter((s: any) => !["sold", "lost"].includes(s.sale_status))
+      .map((s: any) => ({
+        kind: "Sale",
+        id: s.id,
+        title: s.vehicle ? `${s.vehicle.brand} ${s.vehicle.model}` : "Unassigned vehicle",
+        sub: s.client?.full_name ?? "—",
+        statusLabel: saleStatusLabels[s.sale_status],
+        tone: saleStatusTone[s.sale_status],
+        amount: s.customer_budget,
+        url: "/sales",
+      })),
+  ].slice(0, 8);
+
+  return (
+    <div>
+      <PageHeader
+        title="Dashboard"
+        description="Operational overview of your dealership."
+      />
+
+      <div className="space-y-6 p-6">
+        {/* Quick access */}
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+          {dbCards.map((c) => (
+            <Link
+              key={c.title}
+              to={c.url}
+              className="group rounded-lg border border-border bg-card p-4 transition-colors hover:border-foreground/20 hover:bg-muted/40"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex h-8 w-8 items-center justify-center rounded-md bg-muted text-foreground">
+                  <c.icon className="h-4 w-4" />
+                </div>
+                <ArrowRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+              </div>
+              <div className="mt-3 text-sm font-medium text-foreground">{c.title}</div>
+              <div className="text-xs text-muted-foreground">{c.desc}</div>
+            </Link>
+          ))}
+        </div>
+
+        {/* KPIs */}
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          <Kpi label="Available stock" value={available.length} sub={`${stock.length} total vehicles`} />
+          <Kpi label="Active sales" value={sales.filter((s: any) => !["sold", "lost"].includes(s.sale_status)).length} sub={`${sales.filter((s: any) => s.sale_status === "sold").length} closed`} />
+          <Kpi label="Pending workshop" value={pendingTasks.length} sub={`${workshop.length} total tasks`} />
+          <Kpi label="Profit (sold)" value={formatCurrency(totalMargin)} sub="Lifetime margin" />
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-3">
+          {/* Alerts */}
+          <div className="rounded-lg border border-border bg-card lg:col-span-1">
+            <div className="flex items-center justify-between border-b border-border px-4 py-3">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-warning" />
+                <h2 className="text-sm font-semibold">ITV alerts</h2>
+              </div>
+              <span className="text-xs text-muted-foreground">≤ 30 days</span>
+            </div>
+            <div className="divide-y divide-border">
+              {itvAlerts.length === 0 ? (
+                <div className="px-4 py-6 text-center text-xs text-muted-foreground">All inspections up to date</div>
+              ) : (
+                itvAlerts.slice(0, 6).map((s: any) => (
+                  <Link key={s.id} to="/stock" className="flex items-center justify-between px-4 py-2.5 hover:bg-muted/40">
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-medium">{s.brand} {s.model}</div>
+                      <div className="text-xs text-muted-foreground">{formatDate(s.next_itv_date)}</div>
+                    </div>
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${s.days < 0 ? "bg-status-red text-status-red-fg" : s.days <= 7 ? "bg-status-amber text-status-amber-fg" : "bg-status-blue text-status-blue-fg"}`}>
+                      {s.days < 0 ? `${Math.abs(s.days)}d overdue` : `${s.days}d left`}
+                    </span>
+                  </Link>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Follow-ups */}
+          <div className="rounded-lg border border-border bg-card lg:col-span-1">
+            <div className="flex items-center justify-between border-b border-border px-4 py-3">
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-info" />
+                <h2 className="text-sm font-semibold">Follow-ups needed</h2>
+              </div>
+              <span className="text-xs text-muted-foreground">{followups.length}</span>
+            </div>
+            <div className="divide-y divide-border">
+              {followups.length === 0 ? (
+                <div className="px-4 py-6 text-center text-xs text-muted-foreground">No overdue contacts</div>
+              ) : (
+                followups.slice(0, 6).map((c: any) => (
+                  <Link key={c.id} to="/clients" className="flex items-center justify-between px-4 py-2.5 hover:bg-muted/40">
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-medium">{c.full_name}</div>
+                      <div className="text-xs text-muted-foreground">{c.phone || c.email || "No contact info"}</div>
+                    </div>
+                    <span className="text-xs text-muted-foreground">{formatDate(c.last_contact_date)}</span>
+                  </Link>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Pending workshop tasks */}
+          <div className="rounded-lg border border-border bg-card lg:col-span-1">
+            <div className="flex items-center justify-between border-b border-border px-4 py-3">
+              <div className="flex items-center gap-2">
+                <Wrench className="h-4 w-4 text-foreground" />
+                <h2 className="text-sm font-semibold">Pending workshop</h2>
+              </div>
+              <span className="text-xs text-muted-foreground">{pendingTasks.length}</span>
+            </div>
+            <div className="divide-y divide-border">
+              {pendingTasks.length === 0 ? (
+                <div className="px-4 py-6 text-center text-xs text-muted-foreground">Nothing pending</div>
+              ) : (
+                pendingTasks.slice(0, 6).map((w: any) => (
+                  <Link key={w.id} to="/workshop" className="flex items-center justify-between px-4 py-2.5 hover:bg-muted/40">
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-medium">{w.task}</div>
+                      <div className="truncate text-xs text-muted-foreground">{w.vehicle ? `${w.vehicle.brand} ${w.vehicle.model}` : "Unassigned"}</div>
+                    </div>
+                    <StatusBadge label={workshopStatusLabels[w.status]} tone={workshopStatusTone[w.status]} />
+                  </Link>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Active deals */}
+        <div className="rounded-lg border border-border bg-card">
+          <div className="flex items-center justify-between border-b border-border px-4 py-3">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-foreground" />
+              <h2 className="text-sm font-semibold">Active deals</h2>
+            </div>
+            <span className="text-xs text-muted-foreground">{activeDeals.length}</span>
+          </div>
+          {activeDeals.length === 0 ? (
+            <div className="px-4 py-8 text-center text-xs text-muted-foreground">No active deals</div>
+          ) : (
+            <div className="divide-y divide-border">
+              {activeDeals.map((d) => (
+                <Link key={`${d.kind}-${d.id}`} to={d.url} className="grid grid-cols-12 items-center gap-2 px-4 py-2.5 hover:bg-muted/40">
+                  <div className="col-span-2 text-xs font-medium text-muted-foreground">{d.kind}</div>
+                  <div className="col-span-4 truncate text-sm font-medium">{d.title}</div>
+                  <div className="col-span-3 truncate text-xs text-muted-foreground">{d.sub}</div>
+                  <div className="col-span-2"><StatusBadge label={d.statusLabel} tone={d.tone} /></div>
+                  <div className="col-span-1 text-right text-xs font-medium">{formatCurrency(d.amount as any)}</div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Available stock preview */}
+        <div className="rounded-lg border border-border bg-card">
+          <div className="flex items-center justify-between border-b border-border px-4 py-3">
+            <div className="flex items-center gap-2">
+              <Car className="h-4 w-4 text-foreground" />
+              <h2 className="text-sm font-semibold">Available stock</h2>
+            </div>
+            <Link to="/stock" className="text-xs text-muted-foreground hover:text-foreground">View all →</Link>
+          </div>
+          {available.length === 0 ? (
+            <div className="px-4 py-8 text-center text-xs text-muted-foreground">No vehicles available</div>
+          ) : (
+            <div className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-2 lg:grid-cols-4">
+              {available.slice(0, 8).map((s: any) => (
+                <Link key={s.id} to="/stock" className="group rounded-md border border-border bg-background p-3 hover:border-foreground/20">
+                  <div className="flex h-24 items-center justify-center rounded bg-muted text-muted-foreground">
+                    {s.image_url ? (
+                      <img src={s.image_url} alt={`${s.brand} ${s.model}`} className="h-full w-full rounded object-cover" />
+                    ) : (
+                      <Car className="h-8 w-8 opacity-50" />
+                    )}
+                  </div>
+                  <div className="mt-2.5 text-sm font-medium">{s.brand} {s.model}</div>
+                  <div className="text-xs text-muted-foreground">{s.year ?? "—"} · {s.mileage ? `${s.mileage.toLocaleString()} km` : "—"}</div>
+                  <div className="mt-1 flex items-center justify-between">
+                    <StatusBadge label={stockStatusLabels[s.status]} tone={stockStatusTone[s.status]} />
+                    <span className="text-xs font-semibold">{formatCurrency(s.selling_price)}</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
