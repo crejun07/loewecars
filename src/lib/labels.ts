@@ -76,6 +76,24 @@ export const listingStatusTone: Record<string, StatusTone> = {
 
 export const listingStatusOrder = ["listed", "pending_listing", "not_listed"] as const;
 
+export const sparePartStatusLabels: Record<string, string> = {
+  pending: "Pendiente",
+  ordered: "Pedido",
+  shipped: "Enviado",
+  received: "Recibido",
+  return: "Devolver",
+  refunded: "Reembolsado",
+};
+
+export const sparePartStatusOrder = [
+  "pending",
+  "ordered",
+  "shipped",
+  "received",
+  "return",
+  "refunded",
+] as const;
+
 // Tone mapping: returns Tailwind classes using semantic status tokens.
 export type StatusTone = "neutral" | "blue" | "amber" | "violet" | "green" | "red";
 
@@ -133,6 +151,15 @@ export const workshopStatusTone: Record<string, StatusTone> = {
   in_progress: "blue",
   completed: "green",
   waiting_parts: "amber",
+};
+
+export const sparePartStatusTone: Record<string, StatusTone> = {
+  pending: "neutral",
+  ordered: "blue",
+  shipped: "violet",
+  received: "green",
+  return: "amber",
+  refunded: "red",
 };
 
 // Pipeline column orderings
