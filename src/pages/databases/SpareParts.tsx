@@ -220,12 +220,11 @@ export default function SparePartsPage() {
         <Field label="Vehículo" full>
           <SearchableSelect
             value={form.vehicle_id}
-            onValueChange={(v) => setForm({ ...form, vehicle_id: v })}
+            onChange={(v) => setForm({ ...form, vehicle_id: v })}
             options={vehicleOptions}
             placeholder="Selecciona vehículo"
             searchPlaceholder="Buscar por marca, modelo o matrícula…"
             emptyText="Sin vehículos"
-            allowClear
           />
         </Field>
         <Field label="Nombre de la pieza" full>
