@@ -49,7 +49,7 @@ export function useSales() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("sales")
-        .select("*, client:clients(id, full_name), vehicle:vehicle_stock(id, brand, model, year)")
+        .select("*, client:clients(id, full_name), vehicle:vehicle_stock(id, brand, model, year, license_plate)")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data ?? [];
@@ -63,7 +63,7 @@ export function useWorkshop() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("workshop")
-        .select("*, vehicle:vehicle_stock(id, brand, model, year)")
+        .select("*, vehicle:vehicle_stock(id, brand, model, year, license_plate)")
         .order("task_date", { ascending: false });
       if (error) throw error;
       return data ?? [];
