@@ -96,6 +96,12 @@ export default function AppraisalsPage() {
                     <span className="text-muted-foreground">{a.year ?? "—"}</span>
                     <span className="font-medium">{formatCurrency(a.offered_price ?? a.estimated_price)}</span>
                   </div>
+                  {(a.transmission || a.assigned_to) && (
+                    <div className="mt-1 flex items-center justify-between text-[11px] text-muted-foreground">
+                      <span>{a.transmission ? transmissionLabels[a.transmission] : ""}</span>
+                      {a.assigned_to && <span>· {a.assigned_to}</span>}
+                    </div>
+                  )}
                   {a.follow_up_date && <div className="mt-1 text-[11px] text-muted-foreground">Seguimiento {formatDate(a.follow_up_date)}</div>}
                 </button>
               ))
@@ -107,7 +113,7 @@ export default function AppraisalsPage() {
               <thead><tr className="border-b border-border bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
                 <th className="px-4 py-2.5 font-medium">Vehículo</th><th className="px-4 py-2.5 font-medium">Cliente</th>
                 <th className="px-4 py-2.5 font-medium">Estimado</th><th className="px-4 py-2.5 font-medium">Ofrecido</th>
-                <th className="px-4 py-2.5 font-medium">Estado</th><th className="px-4 py-2.5 font-medium">Seguimiento</th><th></th>
+                <th className="px-4 py-2.5 font-medium">Estado</th><th className="px-4 py-2.5 font-medium">Responsable</th><th className="px-4 py-2.5 font-medium">Seguimiento</th><th></th>
               </tr></thead>
               <tbody className="divide-y divide-border">
                 {appraisals.map((a: any) => (
@@ -117,6 +123,7 @@ export default function AppraisalsPage() {
                     <td className="px-4 py-2.5">{formatCurrency(a.estimated_price)}</td>
                     <td className="px-4 py-2.5">{formatCurrency(a.offered_price)}</td>
                     <td className="px-4 py-2.5"><StatusBadge label={appraisalStatusLabels[a.deal_status]} tone={appraisalStatusTone[a.deal_status]} /></td>
+                    <td className="px-4 py-2.5 text-muted-foreground">{a.assigned_to ?? "—"}</td>
                     <td className="px-4 py-2.5 text-muted-foreground">{formatDate(a.follow_up_date)}</td>
                     <td className="px-4 py-2.5 text-right">
                       <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEdit(a)}><Pencil className="h-3.5 w-3.5" /></Button>
