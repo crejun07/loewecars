@@ -54,6 +54,13 @@ export const fuelTypeLabels: Record<string, string> = {
   other: "Otro",
 };
 
+export const transmissionLabels: Record<string, string> = {
+  manual: "Manual",
+  automatic: "Automático",
+};
+
+export const employees = ["Vicente", "Rommer", "Orlando", "Isabel", "Jose", "Edu"] as const;
+
 // Tone mapping: returns Tailwind classes using semantic status tokens.
 export type StatusTone = "neutral" | "blue" | "amber" | "violet" | "green" | "red";
 
