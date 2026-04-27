@@ -79,7 +79,11 @@ export default function WorkshopPage() {
               tasks.filter((t: any) => t.status === col).map((t: any) => (
                 <button key={t.id} onClick={() => openEdit(t)} className="rounded-md border border-border bg-card p-3 text-left hover:border-foreground/20">
                   <div className="text-sm font-medium">{t.task}</div>
-                  <div className="text-xs text-muted-foreground">{t.vehicle ? `${t.vehicle.brand} ${t.vehicle.model}` : "Sin asignar"}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {t.vehicle
+                      ? `${t.vehicle.brand} ${t.vehicle.model}${t.vehicle.license_plate ? ` — ${t.vehicle.license_plate}` : ""}`
+                      : "Sin asignar"}
+                  </div>
                   <div className="mt-2 flex items-center justify-between text-xs">
                     <span className="text-muted-foreground">{formatDate(t.task_date)}</span>
                     <span className="font-medium">{formatCurrency(t.cost)}</span>
@@ -98,7 +102,11 @@ export default function WorkshopPage() {
                   <button key={t.id} onClick={() => openEdit(t)} className="grid w-full grid-cols-12 items-center gap-3 px-4 py-3 text-left hover:bg-muted/30">
                     <div className="col-span-2 text-xs text-muted-foreground">{formatDate(t.task_date)}</div>
                     <div className="col-span-4 text-sm font-medium">{t.task}</div>
-                    <div className="col-span-3 truncate text-xs text-muted-foreground">{t.vehicle ? `${t.vehicle.brand} ${t.vehicle.model}` : "Sin asignar"}</div>
+                    <div className="col-span-3 truncate text-xs text-muted-foreground">
+                      {t.vehicle
+                        ? `${t.vehicle.brand} ${t.vehicle.model}${t.vehicle.license_plate ? ` — ${t.vehicle.license_plate}` : ""}`
+                        : "Sin asignar"}
+                    </div>
                     <div className="col-span-2"><StatusBadge label={workshopStatusLabels[t.status]} tone={workshopStatusTone[t.status]} /></div>
                     <div className="col-span-1 text-right text-xs font-medium">{formatCurrency(t.cost)}</div>
                   </button>
@@ -115,7 +123,11 @@ export default function WorkshopPage() {
             <SelectTrigger><SelectValue placeholder="Selecciona vehículo" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="none">— Ninguno —</SelectItem>
-              {stock.map((v: any) => <SelectItem key={v.id} value={v.id}>{v.brand} {v.model} {v.year ? `(${v.year})` : ""}</SelectItem>)}
+              {stock.map((v: any) => (
+                <SelectItem key={v.id} value={v.id}>
+                  {v.brand} {v.model}{v.license_plate ? ` — ${v.license_plate}` : v.year ? ` (${v.year})` : ""}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </Field>
