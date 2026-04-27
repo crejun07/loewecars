@@ -63,7 +63,7 @@ export default function Dashboard() {
     ...appraisals
       .filter((a: any) => !["purchased", "rejected"].includes(a.deal_status))
       .map((a: any) => ({
-        kind: "Acquisition",
+        kind: "Compra",
         id: a.id,
         title: `${a.brand} ${a.model}`,
         sub: a.client?.full_name ?? "—",
@@ -75,9 +75,9 @@ export default function Dashboard() {
     ...sales
       .filter((s: any) => !["sold", "lost"].includes(s.sale_status))
       .map((s: any) => ({
-        kind: "Sale",
+        kind: "Venta",
         id: s.id,
-        title: s.vehicle ? `${s.vehicle.brand} ${s.vehicle.model}` : "Unassigned vehicle",
+        title: s.vehicle ? `${s.vehicle.brand} ${s.vehicle.model}` : "Vehículo sin asignar",
         sub: s.client?.full_name ?? "—",
         statusLabel: saleStatusLabels[s.sale_status],
         tone: saleStatusTone[s.sale_status],
