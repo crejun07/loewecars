@@ -10,13 +10,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Field, RecordDialog } from "@/components/shared/RecordDialog";
 import { KanbanBoard } from "@/components/shared/KanbanBoard";
+import { SearchableSelect } from "@/components/shared/SearchableSelect";
 import { useAppraisals, useClients } from "@/hooks/data/useDealership";
-import { appraisalStatusLabels, appraisalStatusOrder, appraisalStatusTone, formatCurrency, formatDate, fuelTypeLabels } from "@/lib/labels";
+import { appraisalStatusLabels, appraisalStatusOrder, appraisalStatusTone, employees, formatCurrency, formatDate, fuelTypeLabels, transmissionLabels } from "@/lib/labels";
 import { toast } from "sonner";
 
 const empty = {
   client_id: "", brand: "", model: "", year: "" as any, mileage: "" as any, fuel_type: "gasoline",
-  vehicle_condition: "", estimated_price: "" as any, offered_price: "" as any,
+  transmission: "manual", vehicle_condition: "", estimated_price: "" as any, offered_price: "" as any,
+  assigned_to: "",
   deal_status: "pending", follow_up_date: "", notes: "",
 };
 
@@ -35,6 +37,8 @@ export default function AppraisalsPage() {
     setForm({
       client_id: a.client_id ?? "", brand: a.brand, model: a.model, year: a.year ?? "",
       mileage: a.mileage ?? "", fuel_type: a.fuel_type ?? "gasoline", vehicle_condition: a.vehicle_condition ?? "",
+      transmission: a.transmission ?? "manual",
+      assigned_to: a.assigned_to ?? "",
       estimated_price: a.estimated_price ?? "", offered_price: a.offered_price ?? "",
       deal_status: a.deal_status, follow_up_date: a.follow_up_date ?? "", notes: a.notes ?? "",
     });
@@ -44,6 +48,7 @@ export default function AppraisalsPage() {
     const payload = {
       ...form,
       client_id: form.client_id || null,
+      assigned_to: form.assigned_to || null,
       year: form.year ? Number(form.year) : null,
       mileage: form.mileage ? Number(form.mileage) : null,
       estimated_price: form.estimated_price === "" ? null : Number(form.estimated_price),
@@ -91,6 +96,12 @@ export default function AppraisalsPage() {
                     <span className="text-muted-foreground">{a.year ?? "—"}</span>
                     <span className="font-medium">{formatCurrency(a.offered_price ?? a.estimated_price)}</span>
                   </div>
+                  {(a.transmission || a.assigned_to) && (
+                    <div className="mt-1 flex items-center justify-between text-[11px] text-muted-foreground">
+                      <span>{a.transmission ? transmissionLabels[a.transmission] : ""}</span>
+                      {a.assigned_to && <span>· {a.assigned_to}</span>}
+                    </div>
+                  )}
                   {a.follow_up_date && <div className="mt-1 text-[11px] text-muted-foreground">Seguimiento {formatDate(a.follow_up_date)}</div>}
                 </button>
               ))
@@ -102,7 +113,7 @@ export default function AppraisalsPage() {
               <thead><tr className="border-b border-border bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
                 <th className="px-4 py-2.5 font-medium">Vehículo</th><th className="px-4 py-2.5 font-medium">Cliente</th>
                 <th className="px-4 py-2.5 font-medium">Estimado</th><th className="px-4 py-2.5 font-medium">Ofrecido</th>
-                <th className="px-4 py-2.5 font-medium">Estado</th><th className="px-4 py-2.5 font-medium">Seguimiento</th><th></th>
+                <th className="px-4 py-2.5 font-medium">Estado</th><th className="px-4 py-2.5 font-medium">Responsable</th><th className="px-4 py-2.5 font-medium">Seguimiento</th><th></th>
               </tr></thead>
               <tbody className="divide-y divide-border">
                 {appraisals.map((a: any) => (
@@ -112,6 +123,7 @@ export default function AppraisalsPage() {
                     <td className="px-4 py-2.5">{formatCurrency(a.estimated_price)}</td>
                     <td className="px-4 py-2.5">{formatCurrency(a.offered_price)}</td>
                     <td className="px-4 py-2.5"><StatusBadge label={appraisalStatusLabels[a.deal_status]} tone={appraisalStatusTone[a.deal_status]} /></td>
+                    <td className="px-4 py-2.5 text-muted-foreground">{a.assigned_to ?? "—"}</td>
                     <td className="px-4 py-2.5 text-muted-foreground">{formatDate(a.follow_up_date)}</td>
                     <td className="px-4 py-2.5 text-right">
                       <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEdit(a)}><Pencil className="h-3.5 w-3.5" /></Button>
@@ -127,13 +139,18 @@ export default function AppraisalsPage() {
 
       <RecordDialog open={open} onOpenChange={setOpen} trigger={null as any} title={editing ? "Editar tasación" : "Nueva tasación"} onSubmit={save}>
         <Field label="Cliente" full>
-          <Select value={form.client_id || "none"} onValueChange={(v) => setForm({ ...form, client_id: v === "none" ? "" : v })}>
-            <SelectTrigger><SelectValue placeholder="Selecciona cliente" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">— Ninguno —</SelectItem>
-              {clients.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.full_name}</SelectItem>)}
-            </SelectContent>
-          </Select>
+          <SearchableSelect
+            value={form.client_id}
+            onChange={(v) => setForm({ ...form, client_id: v })}
+            options={clients.map((c: any) => ({
+              value: c.id,
+              label: c.full_name,
+              hint: [c.dni, c.phone].filter(Boolean).join(" · "),
+            }))}
+            placeholder="Selecciona cliente"
+            searchPlaceholder="Buscar por nombre, DNI o teléfono…"
+            emptyText="Sin clientes"
+          />
         </Field>
         <Field label="Marca"><Input required value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} /></Field>
         <Field label="Modelo"><Input required value={form.model} onChange={(e) => setForm({ ...form, model: e.target.value })} /></Field>
@@ -145,6 +162,12 @@ export default function AppraisalsPage() {
             <SelectContent>{Object.entries(fuelTypeLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
           </Select>
         </Field>
+        <Field label="Transmisión">
+          <Select value={form.transmission} onValueChange={(v) => setForm({ ...form, transmission: v })}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>{Object.entries(transmissionLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
+          </Select>
+        </Field>
         <Field label="Estado del vehículo"><Input value={form.vehicle_condition} onChange={(e) => setForm({ ...form, vehicle_condition: e.target.value })} placeholder="Excelente / Bueno / Regular…" /></Field>
         <Field label="Precio estimado (€)"><Input type="number" value={form.estimated_price} onChange={(e) => setForm({ ...form, estimated_price: e.target.value })} /></Field>
         <Field label="Precio ofrecido (€)"><Input type="number" value={form.offered_price} onChange={(e) => setForm({ ...form, offered_price: e.target.value })} /></Field>
@@ -152,6 +175,15 @@ export default function AppraisalsPage() {
           <Select value={form.deal_status} onValueChange={(v) => setForm({ ...form, deal_status: v })}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>{Object.entries(appraisalStatusLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
+          </Select>
+        </Field>
+        <Field label="Responsable">
+          <Select value={form.assigned_to || "none"} onValueChange={(v) => setForm({ ...form, assigned_to: v === "none" ? "" : v })}>
+            <SelectTrigger><SelectValue placeholder="Sin asignar" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">— Sin asignar —</SelectItem>
+              {employees.map((e) => <SelectItem key={e} value={e}>{e}</SelectItem>)}
+            </SelectContent>
           </Select>
         </Field>
         <Field label="Fecha de seguimiento"><Input type="date" value={form.follow_up_date} onChange={(e) => setForm({ ...form, follow_up_date: e.target.value })} /></Field>

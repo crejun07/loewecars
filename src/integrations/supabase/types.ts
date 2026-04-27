@@ -112,6 +112,7 @@ export type Database = {
       }
       vehicle_appraisals: {
         Row: {
+          assigned_to: string | null
           brand: string
           client_id: string | null
           created_at: string
@@ -124,11 +125,13 @@ export type Database = {
           model: string
           notes: string | null
           offered_price: number | null
+          transmission: Database["public"]["Enums"]["transmission_type"] | null
           updated_at: string
           vehicle_condition: string | null
           year: number | null
         }
         Insert: {
+          assigned_to?: string | null
           brand: string
           client_id?: string | null
           created_at?: string
@@ -141,11 +144,13 @@ export type Database = {
           model: string
           notes?: string | null
           offered_price?: number | null
+          transmission?: Database["public"]["Enums"]["transmission_type"] | null
           updated_at?: string
           vehicle_condition?: string | null
           year?: number | null
         }
         Update: {
+          assigned_to?: string | null
           brand?: string
           client_id?: string | null
           created_at?: string
@@ -158,6 +163,7 @@ export type Database = {
           model?: string
           notes?: string | null
           offered_price?: number | null
+          transmission?: Database["public"]["Enums"]["transmission_type"] | null
           updated_at?: string
           vehicle_condition?: string | null
           year?: number | null
@@ -302,6 +308,7 @@ export type Database = {
         | "sold"
         | "lost"
       stock_status: "preparing" | "available" | "reserved" | "sold"
+      transmission_type: "manual" | "automatic"
       workshop_status: "pending" | "in_progress" | "completed" | "waiting_parts"
     }
     CompositeTypes: {
@@ -450,6 +457,7 @@ export const Constants = {
         "lost",
       ],
       stock_status: ["preparing", "available", "reserved", "sold"],
+      transmission_type: ["manual", "automatic"],
       workshop_status: ["pending", "in_progress", "completed", "waiting_parts"],
     },
   },
