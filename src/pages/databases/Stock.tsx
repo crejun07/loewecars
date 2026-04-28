@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Plus, LayoutGrid, Table as TableIcon, Pencil, Trash2, Car, Filter, Globe } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import { Plus, LayoutGrid, Table as TableIcon, Pencil, Trash2, Car, Filter, Globe, Upload, X, Loader2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/shared/PageHeader";
@@ -32,6 +32,31 @@ export default function StockPage() {
   const [editing, setEditing] = useState<any | null>(null);
   const [form, setForm] = useState<any>(emptyForm);
   const [open, setOpen] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  async function handleImageUpload(file: File) {
+    if (!file.type.startsWith("image/")) {
+      toast.error("El archivo debe ser una imagen");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("La imagen no puede superar los 5 MB");
+      return;
+    }
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop() || "jpg";
+      const path = `${crypto.randomUUID()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("vehicle-images").upload(path, file, { upsert: false });
+      if (upErr) { toast.error(upErr.message); return; }
+      const { data } = supabase.storage.from("vehicle-images").getPublicUrl(path);
+      setForm((f: any) => ({ ...f, image_url: data.publicUrl }));
+      toast.success("Imagen subida");
+    } finally {
+      setUploading(false);
+    }
+  }
 
   const items = useMemo(
     () => (onlyAvailable ? stock.filter((s: any) => s.status === "available") : stock),
@@ -255,7 +280,46 @@ export default function StockPage() {
         <Field label="Fecha de entrada"><Input type="date" value={form.entry_date} onChange={(e) => setForm({ ...form, entry_date: e.target.value })} /></Field>
         <Field label="Próxima ITV"><Input type="date" value={form.next_itv_date} onChange={(e) => setForm({ ...form, next_itv_date: e.target.value })} /></Field>
         <Field label="Ubicación" full><Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} /></Field>
-        <Field label="URL de imagen" full><Input value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })} placeholder="https://…" /></Field>
+        <Field label="Imagen del vehículo" full>
+          <div className="space-y-2">
+            {form.image_url ? (
+              <div className="relative inline-block">
+                <img src={form.image_url} alt="Vehículo" className="h-32 w-auto rounded-md border border-border object-cover" />
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="secondary"
+                  className="absolute -right-2 -top-2 h-6 w-6 rounded-full"
+                  onClick={() => setForm({ ...form, image_url: "" })}
+                >
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="flex h-32 w-full flex-col items-center justify-center gap-1 rounded-md border border-dashed border-border bg-muted/30 text-xs text-muted-foreground transition-colors hover:border-foreground/30 hover:bg-muted/50"
+              >
+                {uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Upload className="h-5 w-5" />}
+                <span>{uploading ? "Subiendo…" : "Haz clic para subir una imagen"}</span>
+                <span className="text-[10px]">JPG, PNG · máx. 5 MB</span>
+              </button>
+            )}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleImageUpload(file);
+                e.target.value = "";
+              }}
+            />
+          </div>
+        </Field>
         <Field label="Notas" full><Textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></Field>
       </RecordDialog>
     </div>
