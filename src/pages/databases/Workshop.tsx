@@ -11,10 +11,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Field, RecordDialog } from "@/components/shared/RecordDialog";
 import { KanbanBoard } from "@/components/shared/KanbanBoard";
 import { useStock, useWorkshop } from "@/hooks/data/useDealership";
-import { formatCurrency, formatDate, workshopStatusLabels, workshopStatusOrder, workshopStatusTone } from "@/lib/labels";
+import { formatCurrency, formatDate, workshopStatusLabels, workshopStatusOrder, workshopStatusTone, workshopPriorityLabels, workshopPriorityTone } from "@/lib/labels";
 import { toast } from "sonner";
 
-const empty = { vehicle_id: "", task: "", task_date: new Date().toISOString().slice(0, 10), status: "pending", cost: "" as any, description: "" };
+const empty = { vehicle_id: "", task: "", task_date: new Date().toISOString().slice(0, 10), status: "pending", priority: 3, cost: "" as any, description: "" };
 
 export default function WorkshopPage() {
   const { data: tasks = [] } = useWorkshop();
@@ -30,7 +30,7 @@ export default function WorkshopPage() {
     setEditing(t);
     setForm({
       vehicle_id: t.vehicle_id ?? "", task: t.task, task_date: t.task_date, status: t.status,
-      cost: t.cost ?? "", description: t.description ?? "",
+      priority: t.priority ?? 3, cost: t.cost ?? "", description: t.description ?? "",
     });
     setOpen(true);
   }
@@ -38,6 +38,7 @@ export default function WorkshopPage() {
     const payload = {
       ...form,
       vehicle_id: form.vehicle_id || null,
+      priority: Number(form.priority) || 3,
       cost: form.cost === "" ? 0 : Number(form.cost),
     };
     const { error } = editing
@@ -53,8 +54,17 @@ export default function WorkshopPage() {
     qc.invalidateQueries({ queryKey: ["workshop"] });
   }
 
-  // Timeline: group by date
-  const timeline = [...tasks].sort((a: any, b: any) => b.task_date.localeCompare(a.task_date));
+  // Sort helper: priority desc, then date desc
+  const sortByPriority = (list: any[]) =>
+    [...list].sort((a, b) => {
+      const pa = a.priority ?? 3;
+      const pb = b.priority ?? 3;
+      if (pb !== pa) return pb - pa;
+      return (b.task_date ?? "").localeCompare(a.task_date ?? "");
+    });
+
+  // Timeline ordered by priority then date
+  const timeline = sortByPriority(tasks);
 
   return (
     <div>
@@ -76,9 +86,12 @@ export default function WorkshopPage() {
           <KanbanBoard
             columns={workshopStatusOrder.map((s) => ({ id: s, title: workshopStatusLabels[s], count: tasks.filter((t: any) => t.status === s).length }))}
             renderCards={(col) =>
-              tasks.filter((t: any) => t.status === col).map((t: any) => (
+              sortByPriority(tasks.filter((t: any) => t.status === col)).map((t: any) => (
                 <button key={t.id} onClick={() => openEdit(t)} className="rounded-md border border-border bg-card p-3 text-left hover:border-foreground/20">
-                  <div className="text-sm font-medium">{t.task}</div>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="text-sm font-medium">{t.task}</div>
+                    <StatusBadge label={`P${t.priority ?? 3}`} tone={workshopPriorityTone[t.priority ?? 3]} />
+                  </div>
                   <div className="text-xs text-muted-foreground">
                     {t.vehicle
                       ? `${t.vehicle.brand} ${t.vehicle.model}${t.vehicle.license_plate ? ` — ${t.vehicle.license_plate}` : ""}`
@@ -101,7 +114,8 @@ export default function WorkshopPage() {
                 {timeline.map((t: any) => (
                   <button key={t.id} onClick={() => openEdit(t)} className="grid w-full grid-cols-12 items-center gap-3 px-4 py-3 text-left hover:bg-muted/30">
                     <div className="col-span-2 text-xs text-muted-foreground">{formatDate(t.task_date)}</div>
-                    <div className="col-span-4 text-sm font-medium">{t.task}</div>
+                    <div className="col-span-3 text-sm font-medium">{t.task}</div>
+                    <div className="col-span-1"><StatusBadge label={`P${t.priority ?? 3}`} tone={workshopPriorityTone[t.priority ?? 3]} /></div>
                     <div className="col-span-3 truncate text-xs text-muted-foreground">
                       {t.vehicle
                         ? `${t.vehicle.brand} ${t.vehicle.model}${t.vehicle.license_plate ? ` — ${t.vehicle.license_plate}` : ""}`
@@ -137,6 +151,16 @@ export default function WorkshopPage() {
           <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>{Object.entries(workshopStatusLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
+          </Select>
+        </Field>
+        <Field label="Prioridad" full>
+          <Select value={String(form.priority)} onValueChange={(v) => setForm({ ...form, priority: Number(v) })}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {[5, 4, 3, 2, 1].map((p) => (
+                <SelectItem key={p} value={String(p)}>P{p} — {workshopPriorityLabels[p]}</SelectItem>
+              ))}
+            </SelectContent>
           </Select>
         </Field>
         <Field label="Coste (€)" full><Input type="number" step="0.01" value={form.cost} onChange={(e) => setForm({ ...form, cost: e.target.value })} /></Field>
