@@ -1,0 +1,1 @@
+ALTER TABLE public.workshop ADD COLUMN IF NOT EXISTS priority integer NOT NULL DEFAULT 3 CHECK (priority BETWEEN 1 AND 5);
