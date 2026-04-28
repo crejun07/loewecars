@@ -168,6 +168,23 @@ export const saleStatusOrder = ["new_lead", "interested", "test_drive", "negotia
 export const workshopStatusOrder = ["pending", "in_progress", "waiting_parts", "completed"] as const;
 export const stockStatusOrder = ["preparing", "available", "reserved", "sold"] as const;
 
+// Workshop priority (1 low - 5 max)
+export const workshopPriorityLabels: Record<number, string> = {
+  1: "Muy baja",
+  2: "Baja",
+  3: "Media",
+  4: "Alta",
+  5: "Máxima",
+};
+
+export const workshopPriorityTone: Record<number, StatusTone> = {
+  1: "neutral",
+  2: "blue",
+  3: "violet",
+  4: "amber",
+  5: "red",
+};
+
 export function formatCurrency(value: number | null | undefined) {
   if (value === null || value === undefined) return "—";
   return new Intl.NumberFormat("es-ES", {
