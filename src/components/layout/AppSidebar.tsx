@@ -1,7 +1,8 @@
-import { LayoutDashboard, Users, ClipboardList, ShoppingCart, Car, Wrench, Package, FileText, LogOut } from "lucide-react";
+import { LayoutDashboard, Users, ClipboardList, ShoppingCart, Car, Wrench, Package, FileText, LogOut, Settings } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { usePermissions, type Workspace } from "@/hooks/usePermissions";
 import {
   Sidebar,
   SidebarContent,
@@ -16,15 +17,16 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
-const items = [
-  { title: "Panel", url: "/", icon: LayoutDashboard },
-  { title: "Clientes", url: "/clients", icon: Users },
-  { title: "Tasaciones", url: "/appraisals", icon: ClipboardList },
-  { title: "Ventas", url: "/sales", icon: ShoppingCart },
-  { title: "Stock", url: "/stock", icon: Car },
-  { title: "Taller", url: "/workshop", icon: Wrench },
-  { title: "Recambios", url: "/spare-parts", icon: Package },
-  { title: "Informes", url: "/reports", icon: FileText },
+const items: { title: string; url: string; icon: any; ws: Workspace }[] = [
+  { title: "Panel", url: "/", icon: LayoutDashboard, ws: "dashboard" },
+  { title: "Clientes", url: "/clients", icon: Users, ws: "clients" },
+  { title: "Tasaciones", url: "/appraisals", icon: ClipboardList, ws: "appraisals" },
+  { title: "Ventas", url: "/sales", icon: ShoppingCart, ws: "sales" },
+  { title: "Stock", url: "/stock", icon: Car, ws: "stock" },
+  { title: "Taller", url: "/workshop", icon: Wrench, ws: "workshop" },
+  { title: "Recambios", url: "/spare-parts", icon: Package, ws: "spare-parts" },
+  { title: "Informes", url: "/reports", icon: FileText, ws: "reports" },
+  { title: "Ajustes", url: "/settings", icon: Settings, ws: "settings" },
 ];
 
 export function AppSidebar() {
@@ -32,6 +34,8 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const location = useLocation();
   const { user, signOut } = useAuth();
+  const { canView } = usePermissions();
+  const visibleItems = items.filter((it) => it.ws === "dashboard" || canView(it.ws));
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
@@ -54,7 +58,7 @@ export function AppSidebar() {
           {!collapsed && <SidebarGroupLabel>Espacio de trabajo</SidebarGroupLabel>}
           <SidebarGroupContent>
             <SidebarMenu>
-              {items.map((item) => {
+              {visibleItems.map((item) => {
                 const active =
                   item.url === "/"
                     ? location.pathname === "/"
