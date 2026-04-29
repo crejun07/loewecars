@@ -1,11 +1,21 @@
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { Loader2 } from "lucide-react";
+import { Loader2, UserPlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { usePermissions, type AppRole, type Workspace, type PermissionRow } from "@/hooks/usePermissions";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -46,6 +56,15 @@ export default function SettingsPage() {
   const [perms, setPerms] = useState<PermissionRow[]>([]);
   const [users, setUsers] = useState<UserRow[]>([]);
   const [saving, setSaving] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [newUser, setNewUser] = useState({
+    email: "",
+    password: "",
+    full_name: "",
+    username: "",
+    role: "comercial" as AppRole,
+  });
 
   useEffect(() => {
     setPerms(permissions);
@@ -131,6 +150,30 @@ export default function SettingsPage() {
     loadUsers();
   }
 
+  async function createUser() {
+    if (!newUser.email || !newUser.password) {
+      toast.error("Email y contraseña son obligatorios");
+      return;
+    }
+    if (newUser.password.length < 6) {
+      toast.error("La contraseña debe tener al menos 6 caracteres");
+      return;
+    }
+    setCreating(true);
+    const { data, error } = await supabase.functions.invoke("admin-create-user", {
+      body: newUser,
+    });
+    setCreating(false);
+    if (error || (data as any)?.error) {
+      toast.error((data as any)?.error || error?.message || "Error al crear usuario");
+      return;
+    }
+    toast.success("Usuario creado");
+    setCreateOpen(false);
+    setNewUser({ email: "", password: "", full_name: "", username: "", role: "comercial" });
+    loadUsers();
+  }
+
   return (
     <div>
       <PageHeader title="Ajustes" description="Gestión de permisos y roles de usuarios" />
@@ -194,6 +237,78 @@ export default function SettingsPage() {
           </TabsContent>
 
           <TabsContent value="users" className="mt-4">
+            <div className="mb-3 flex justify-end">
+              <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm">
+                    <UserPlus className="mr-2 h-4 w-4" /> Añadir usuario
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Nuevo usuario</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-3">
+                    <div>
+                      <Label>Nombre completo</Label>
+                      <Input
+                        value={newUser.full_name}
+                        onChange={(e) => setNewUser({ ...newUser, full_name: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <Label>Usuario</Label>
+                      <Input
+                        value={newUser.username}
+                        onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
+                        placeholder="opcional, para login"
+                      />
+                    </div>
+                    <div>
+                      <Label>Email *</Label>
+                      <Input
+                        type="email"
+                        value={newUser.email}
+                        onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <Label>Contraseña *</Label>
+                      <Input
+                        type="password"
+                        value={newUser.password}
+                        onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                        placeholder="mínimo 6 caracteres"
+                      />
+                    </div>
+                    <div>
+                      <Label>Rol *</Label>
+                      <Select
+                        value={newUser.role}
+                        onValueChange={(v) => setNewUser({ ...newUser, role: v as AppRole })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {ROLES.map((r) => (
+                            <SelectItem key={r} value={r}>{ROLE_LABEL[r]}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setCreateOpen(false)} disabled={creating}>
+                      Cancelar
+                    </Button>
+                    <Button onClick={createUser} disabled={creating}>
+                      {creating ? "Creando..." : "Crear"}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </div>
             <div className="rounded-md border border-border">
               <Table>
                 <TableHeader>
