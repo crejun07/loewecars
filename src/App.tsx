@@ -12,10 +12,13 @@ import SalesPage from "./pages/databases/Sales.tsx";
 import WorkshopPage from "./pages/databases/Workshop.tsx";
 import SparePartsPage from "./pages/databases/SpareParts.tsx";
 import ReportsPage from "./pages/databases/Reports.tsx";
+import SettingsPage from "./pages/Settings.tsx";
 import AuthPage from "./pages/Auth.tsx";
 import { AppLayout } from "./components/layout/AppLayout.tsx";
 import { AuthProvider } from "./hooks/useAuth";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { PermissionsProvider } from "./hooks/usePermissions";
+import { PermissionGuard } from "./components/PermissionGuard";
 
 const queryClient = new QueryClient();
 
@@ -32,19 +35,22 @@ const App = () => (
               path="*"
               element={
                 <ProtectedRoute>
-                  <AppLayout>
-                    <Routes>
-                      <Route path="/" element={<Dashboard />} />
-                      <Route path="/clients" element={<ClientsPage />} />
-                      <Route path="/appraisals" element={<AppraisalsPage />} />
-                      <Route path="/sales" element={<SalesPage />} />
-                      <Route path="/stock" element={<StockPage />} />
-                      <Route path="/workshop" element={<WorkshopPage />} />
-                      <Route path="/spare-parts" element={<SparePartsPage />} />
-                      <Route path="/reports" element={<ReportsPage />} />
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
-                  </AppLayout>
+                  <PermissionsProvider>
+                    <AppLayout>
+                      <Routes>
+                        <Route path="/" element={<Dashboard />} />
+                        <Route path="/clients" element={<PermissionGuard workspace="clients"><ClientsPage /></PermissionGuard>} />
+                        <Route path="/appraisals" element={<PermissionGuard workspace="appraisals"><AppraisalsPage /></PermissionGuard>} />
+                        <Route path="/sales" element={<PermissionGuard workspace="sales"><SalesPage /></PermissionGuard>} />
+                        <Route path="/stock" element={<PermissionGuard workspace="stock"><StockPage /></PermissionGuard>} />
+                        <Route path="/workshop" element={<PermissionGuard workspace="workshop"><WorkshopPage /></PermissionGuard>} />
+                        <Route path="/spare-parts" element={<PermissionGuard workspace="spare-parts"><SparePartsPage /></PermissionGuard>} />
+                        <Route path="/reports" element={<PermissionGuard workspace="reports"><ReportsPage /></PermissionGuard>} />
+                        <Route path="/settings" element={<PermissionGuard workspace="settings"><SettingsPage /></PermissionGuard>} />
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
+                    </AppLayout>
+                  </PermissionsProvider>
                 </ProtectedRoute>
               }
             />
