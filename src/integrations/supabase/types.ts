@@ -23,6 +23,7 @@ export type Database = {
           full_name: string
           id: string
           last_contact_date: string | null
+          managed_by: string | null
           notes: string | null
           phone: string | null
           status: Database["public"]["Enums"]["client_status"]
@@ -36,6 +37,7 @@ export type Database = {
           full_name: string
           id?: string
           last_contact_date?: string | null
+          managed_by?: string | null
           notes?: string | null
           phone?: string | null
           status?: Database["public"]["Enums"]["client_status"]
@@ -49,6 +51,7 @@ export type Database = {
           full_name?: string
           id?: string
           last_contact_date?: string | null
+          managed_by?: string | null
           notes?: string | null
           phone?: string | null
           status?: Database["public"]["Enums"]["client_status"]
