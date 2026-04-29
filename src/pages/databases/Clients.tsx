@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Field, RecordDialog } from "@/components/shared/RecordDialog";
-import { useClients } from "@/hooks/data/useDealership";
+import { useClients, useEmployees } from "@/hooks/data/useDealership";
 import { clientStatusLabels, clientStatusTone, clientTypeLabels, formatDate } from "@/lib/labels";
 import { toast } from "sonner";
 
@@ -22,24 +22,35 @@ type FormState = {
   status: "new" | "in_followup" | "closed";
   last_contact_date: string;
   notes: string;
+  managed_by: string;
 };
 
-const empty: FormState = { full_name: "", dni: "", phone: "", email: "", client_type: "buyer", status: "new", last_contact_date: "", notes: "" };
+const empty: FormState = { full_name: "", dni: "", phone: "", email: "", client_type: "buyer", status: "new", last_contact_date: "", notes: "", managed_by: "" };
 
 export default function ClientsPage() {
   const { data: clients = [] } = useClients();
+  const { data: employees = [] } = useEmployees();
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
+  const [managerFilter, setManagerFilter] = useState<string>("all");
   const [editing, setEditing] = useState<any | null>(null);
   const [form, setForm] = useState<FormState>(empty);
   const [open, setOpen] = useState(false);
 
+  const employeeName = (id?: string | null) => {
+    if (!id) return "—";
+    const e = employees.find((p: any) => p.id === id);
+    return e?.full_name || e?.username || "—";
+  };
+
   const filtered = useMemo(() => {
     const s = search.toLowerCase();
-    return clients.filter((c: any) =>
-      [c.full_name, c.email, c.phone, c.dni].filter(Boolean).join(" ").toLowerCase().includes(s),
-    );
-  }, [clients, search]);
+    return clients.filter((c: any) => {
+      const matchesSearch = [c.full_name, c.email, c.phone, c.dni].filter(Boolean).join(" ").toLowerCase().includes(s);
+      const matchesManager = managerFilter === "all" ? true : c.managed_by === managerFilter;
+      return matchesSearch && matchesManager;
+    });
+  }, [clients, search, managerFilter]);
 
   function openNew() {
     setEditing(null);
@@ -57,12 +68,18 @@ export default function ClientsPage() {
       status: c.status,
       last_contact_date: c.last_contact_date ?? "",
       notes: c.notes ?? "",
+      managed_by: c.managed_by ?? "",
     });
     setOpen(true);
   }
 
   async function save() {
-    const payload = { ...form, dni: form.dni || null, last_contact_date: form.last_contact_date || null };
+    const payload = {
+      ...form,
+      dni: form.dni || null,
+      last_contact_date: form.last_contact_date || null,
+      managed_by: form.managed_by || null,
+    };
     const { error } = editing
       ? await supabase.from("clients").update(payload).eq("id", editing.id)
       : await supabase.from("clients").insert(payload);
@@ -86,6 +103,16 @@ export default function ClientsPage() {
         description={`${clients.length} contactos`}
         actions={
           <>
+            <Select value={managerFilter} onValueChange={setManagerFilter}>
+              <SelectTrigger className="h-9 w-48"><SelectValue placeholder="Empleado" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos los empleados</SelectItem>
+                <SelectItem value="__none__" disabled className="hidden" />
+                {employees.map((e: any) => (
+                  <SelectItem key={e.id} value={e.id}>{e.full_name || e.username || "Sin nombre"}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
               <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar…" className="h-9 w-56 pl-8" />
@@ -106,13 +133,14 @@ export default function ClientsPage() {
                 <th className="px-4 py-2.5 font-medium">Estado</th>
                 <th className="px-4 py-2.5 font-medium">Teléfono</th>
                 <th className="px-4 py-2.5 font-medium">Email</th>
+                <th className="px-4 py-2.5 font-medium">Gestor</th>
                 <th className="px-4 py-2.5 font-medium">Último contacto</th>
                 <th className="px-4 py-2.5"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {filtered.length === 0 && (
-                <tr><td colSpan={8} className="px-4 py-10 text-center text-xs text-muted-foreground">Aún no hay clientes.</td></tr>
+                <tr><td colSpan={9} className="px-4 py-10 text-center text-xs text-muted-foreground">Aún no hay clientes.</td></tr>
               )}
               {filtered.map((c: any) => (
                 <tr key={c.id} className="hover:bg-muted/30">
@@ -122,6 +150,7 @@ export default function ClientsPage() {
                   <td className="px-4 py-2.5"><StatusBadge label={clientStatusLabels[c.status]} tone={clientStatusTone[c.status]} /></td>
                   <td className="px-4 py-2.5 text-muted-foreground">{c.phone || "—"}</td>
                   <td className="px-4 py-2.5 text-muted-foreground">{c.email || "—"}</td>
+                  <td className="px-4 py-2.5 text-muted-foreground">{employeeName(c.managed_by)}</td>
                   <td className="px-4 py-2.5 text-muted-foreground">{formatDate(c.last_contact_date)}</td>
                   <td className="px-4 py-2.5 text-right">
                     <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEdit(c)}><Pencil className="h-3.5 w-3.5" /></Button>
@@ -158,6 +187,17 @@ export default function ClientsPage() {
           </Select>
         </Field>
         <Field label="Último contacto" full><Input type="date" value={form.last_contact_date} onChange={(e) => setForm({ ...form, last_contact_date: e.target.value })} /></Field>
+        <Field label="Gestionado por" full>
+          <Select value={form.managed_by || "__none__"} onValueChange={(v) => setForm({ ...form, managed_by: v === "__none__" ? "" : v })}>
+            <SelectTrigger><SelectValue placeholder="Sin asignar" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__none__">— Sin asignar —</SelectItem>
+              {employees.map((e: any) => (
+                <SelectItem key={e.id} value={e.id}>{e.full_name || e.username || "Sin nombre"}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Field>
         <Field label="Notas" full><Textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></Field>
       </RecordDialog>
     </div>
