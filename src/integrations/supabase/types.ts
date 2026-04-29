@@ -83,6 +83,36 @@ export type Database = {
         }
         Relationships: []
       }
+      role_permissions: {
+        Row: {
+          can_edit: boolean
+          can_view: boolean
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+          workspace: string
+        }
+        Insert: {
+          can_edit?: boolean
+          can_view?: boolean
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+          workspace: string
+        }
+        Update: {
+          can_edit?: boolean
+          can_view?: boolean
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+          workspace?: string
+        }
+        Relationships: []
+      }
       sales: {
         Row: {
           client_id: string | null
@@ -416,7 +446,14 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "employee"
+      app_role:
+        | "admin"
+        | "employee"
+        | "comercial"
+        | "mecanico"
+        | "administracion"
+        | "informatica"
+        | "gerente"
       appraisal_status:
         | "pending"
         | "offer_sent"
@@ -579,7 +616,15 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "employee"],
+      app_role: [
+        "admin",
+        "employee",
+        "comercial",
+        "mecanico",
+        "administracion",
+        "informatica",
+        "gerente",
+      ],
       appraisal_status: [
         "pending",
         "offer_sent",
