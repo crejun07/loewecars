@@ -37,12 +37,14 @@ export default function AuthPage() {
       let email = identifier.trim();
       // If it doesn't look like an email, treat as username and resolve
       if (!email.includes("@")) {
-        const { data, error } = await supabase.rpc("get_email_by_username", { _username: email });
-        if (error || !data) {
+        const { data, error } = await supabase.functions.invoke("resolve-username", {
+          body: { username: email },
+        });
+        if (error || !data?.email) {
           toast.error("Usuario o contraseña incorrectos");
           return;
         }
-        email = data;
+        email = data.email as string;
       }
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
