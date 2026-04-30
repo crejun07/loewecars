@@ -444,6 +444,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      user_can_edit_workspace: {
+        Args: { _user_id: string; _workspace: string }
+        Returns: boolean
+      }
+      user_can_view_workspace: {
+        Args: { _user_id: string; _workspace: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role:
