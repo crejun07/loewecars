@@ -1,1 +1,7 @@
 project_id = "bfhnhfybdqecsugyastu"
+
+[functions.resolve-username]
+verify_jwt = false
+
+[functions.admin-create-user]
+verify_jwt = true
