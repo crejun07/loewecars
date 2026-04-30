@@ -55,12 +55,23 @@ export function PermissionsProvider({ children }: { children: ReactNode }) {
       return;
     }
     setLoading(true);
-    const [{ data: roleRows }, { data: permRows }] = await Promise.all([
-      supabase.from("user_roles").select("role").eq("user_id", user.id),
-      supabase.from("role_permissions").select("role,workspace,can_view,can_edit"),
-    ]);
-    setRoles((roleRows ?? []).map((r: any) => r.role as AppRole));
-    setPermissions((permRows ?? []) as PermissionRow[]);
+    // Retry up to 3 times with backoff to survive transient backend issues
+    let attempt = 0;
+    while (attempt < 3) {
+      const [rolesRes, permsRes] = await Promise.all([
+        supabase.from("user_roles").select("role").eq("user_id", user.id),
+        supabase.from("role_permissions").select("role,workspace,can_view,can_edit"),
+      ]);
+      if (!rolesRes.error && !permsRes.error) {
+        setRoles((rolesRes.data ?? []).map((r: any) => r.role as AppRole));
+        setPermissions((permsRes.data ?? []) as PermissionRow[]);
+        setLoading(false);
+        return;
+      }
+      attempt++;
+      await new Promise((r) => setTimeout(r, 400 * attempt));
+    }
+    // Final attempt failed — keep previous state but stop loading
     setLoading(false);
   }
 
