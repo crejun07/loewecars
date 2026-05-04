@@ -74,16 +74,28 @@ export default function ClientsPage() {
   }
 
   async function save() {
+    const dni = (form.dni || "").trim();
+    if (dni) {
+      const { data: dup } = await supabase
+        .from("clients")
+        .select("id, full_name")
+        .ilike("dni", dni)
+        .maybeSingle();
+      if (dup && (!editing || dup.id !== editing.id)) {
+        toast.error(`Ya existe un cliente con ese DNI: ${dup.full_name}`);
+        throw new Error("duplicate_dni");
+      }
+    }
     const payload = {
       ...form,
-      dni: form.dni || null,
+      dni: dni || null,
       last_contact_date: form.last_contact_date || null,
       managed_by: form.managed_by || null,
     };
     const { error } = editing
       ? await supabase.from("clients").update(payload).eq("id", editing.id)
       : await supabase.from("clients").insert(payload);
-    if (error) { toast.error(error.message); return; }
+    if (error) { toast.error(error.message); throw error; }
     toast.success(editing ? "Cliente actualizado" : "Cliente creado");
     qc.invalidateQueries({ queryKey: ["clients"] });
   }
