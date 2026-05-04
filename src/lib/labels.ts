@@ -36,6 +36,7 @@ export const stockStatusLabels: Record<string, string> = {
   available: "Disponible",
   reserved: "Reservado",
   sold: "Vendido",
+  own_lot: "Parque propio",
 };
 
 export const workshopStatusLabels: Record<string, string> = {
@@ -144,6 +145,7 @@ export const stockStatusTone: Record<string, StatusTone> = {
   available: "green",
   reserved: "violet",
   sold: "neutral",
+  own_lot: "blue",
 };
 
 export const workshopStatusTone: Record<string, StatusTone> = {
@@ -166,7 +168,7 @@ export const sparePartStatusTone: Record<string, StatusTone> = {
 export const appraisalStatusOrder = ["pending", "offer_sent", "negotiating", "purchased", "rejected"] as const;
 export const saleStatusOrder = ["new_lead", "interested", "test_drive", "negotiating", "reserved", "sold", "lost"] as const;
 export const workshopStatusOrder = ["pending", "in_progress", "waiting_parts", "completed"] as const;
-export const stockStatusOrder = ["preparing", "available", "reserved", "sold"] as const;
+export const stockStatusOrder = ["preparing", "available", "reserved", "sold", "own_lot"] as const;
 
 // Workshop priority (1 low - 5 max)
 export const workshopPriorityLabels: Record<number, string> = {
