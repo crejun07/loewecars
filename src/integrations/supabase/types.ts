@@ -494,7 +494,7 @@ export type Database = {
         | "received"
         | "return"
         | "refunded"
-      stock_status: "preparing" | "available" | "reserved" | "sold"
+      stock_status: "preparing" | "available" | "reserved" | "sold" | "own_lot"
       transmission_type: "manual" | "automatic"
       workshop_status: "pending" | "in_progress" | "completed" | "waiting_parts"
     }
@@ -669,7 +669,7 @@ export const Constants = {
         "return",
         "refunded",
       ],
-      stock_status: ["preparing", "available", "reserved", "sold"],
+      stock_status: ["preparing", "available", "reserved", "sold", "own_lot"],
       transmission_type: ["manual", "automatic"],
       workshop_status: ["pending", "in_progress", "completed", "waiting_parts"],
     },
