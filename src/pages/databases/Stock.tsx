@@ -77,9 +77,21 @@ export default function StockPage() {
     setOpen(true);
   }
   async function save() {
+    const plate = (form.license_plate || "").trim().toUpperCase();
+    if (plate) {
+      const { data: dup } = await supabase
+        .from("vehicle_stock")
+        .select("id, brand, model")
+        .ilike("license_plate", plate)
+        .maybeSingle();
+      if (dup && (!editing || dup.id !== editing.id)) {
+        toast.error(`Ya existe un vehículo con esa matrícula: ${dup.brand} ${dup.model}`);
+        throw new Error("duplicate_plate");
+      }
+    }
     const payload = {
       ...form,
-      license_plate: form.license_plate?.trim() || null,
+      license_plate: plate || null,
       year: form.year ? Number(form.year) : null,
       mileage: form.mileage ? Number(form.mileage) : null,
       purchase_price: Number(form.purchase_price) || 0,
@@ -89,7 +101,7 @@ export default function StockPage() {
     const { error } = editing
       ? await supabase.from("vehicle_stock").update(payload).eq("id", editing.id)
       : await supabase.from("vehicle_stock").insert(payload);
-    if (error) { toast.error(error.message); return; }
+    if (error) { toast.error(error.message); throw error; }
     toast.success(editing ? "Vehículo actualizado" : "Vehículo añadido");
     qc.invalidateQueries({ queryKey: ["vehicle_stock"] });
   }
