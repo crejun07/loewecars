@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_log: {
+        Row: {
+          action: string
+          changes: Json | null
+          created_at: string
+          id: string
+          record_id: string | null
+          summary: string
+          table_name: string
+          user_id: string | null
+          user_name: string | null
+        }
+        Insert: {
+          action: string
+          changes?: Json | null
+          created_at?: string
+          id?: string
+          record_id?: string | null
+          summary: string
+          table_name: string
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Update: {
+          action?: string
+          changes?: Json | null
+          created_at?: string
+          id?: string
+          record_id?: string | null
+          summary?: string
+          table_name?: string
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Relationships: []
+      }
       clients: {
         Row: {
           client_type: Database["public"]["Enums"]["client_type"]
@@ -436,6 +472,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      audit_get_user_name: { Args: { _user_id: string }; Returns: string }
       get_email_by_username: { Args: { _username: string }; Returns: string }
       has_role: {
         Args: {
