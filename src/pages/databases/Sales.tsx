@@ -138,7 +138,10 @@ export default function SalesPage() {
             <SelectTrigger><SelectValue placeholder="Selecciona vehículo" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="none">— Ninguno —</SelectItem>
-              {stock.map((v: any) => <SelectItem key={v.id} value={v.id}>{v.brand} {v.model} {v.year ? `(${v.year})` : ""}</SelectItem>)}
+              {stock.map((v: any) => {
+                const meta = [v.year, v.license_plate].filter(Boolean).join(" - ");
+                return <SelectItem key={v.id} value={v.id}>{v.brand} {v.model}{meta ? ` (${meta})` : ""}</SelectItem>;
+              })}
             </SelectContent>
           </Select>
         </Field>

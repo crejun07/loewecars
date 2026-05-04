@@ -152,7 +152,10 @@ export default function StockPage() {
                   <div className="p-3">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <div className="truncate text-sm font-semibold">{s.brand} {s.model}</div>
+                        <div className="truncate text-sm font-semibold">
+                          {s.brand} {s.model}
+                          {s.license_plate && <span className="ml-1 font-mono text-xs text-muted-foreground">· {s.license_plate}</span>}
+                        </div>
                         <div className="text-xs text-muted-foreground">
                           {s.year ?? "—"} · {s.mileage ? `${Number(s.mileage).toLocaleString()} km` : "—"}
                           {s.transmission ? ` · ${transmissionLabels[s.transmission]}` : ""}
@@ -197,7 +200,10 @@ export default function StockPage() {
               <tbody className="divide-y divide-border">
                 {items.map((s: any) => (
                   <tr key={s.id} className="hover:bg-muted/30">
-                    <td className="px-4 py-2.5 font-medium">{s.brand} {s.model}</td>
+                    <td className="px-4 py-2.5 font-medium">
+                      {s.brand} {s.model}
+                      {s.license_plate && <span className="ml-1 font-mono text-xs text-muted-foreground">· {s.license_plate}</span>}
+                    </td>
                     <td className="px-4 py-2.5 text-muted-foreground">{s.year ?? "—"}</td>
                     <td className="px-4 py-2.5 text-muted-foreground">{s.mileage ? Number(s.mileage).toLocaleString() : "—"}</td>
                     <td className="px-4 py-2.5 text-muted-foreground">{s.fuel_type ? fuelTypeLabels[s.fuel_type] : "—"}</td>
@@ -236,7 +242,10 @@ export default function StockPage() {
                       <button key={s.id} onClick={() => openEdit(s)} className="rounded-md border border-border bg-card p-3 text-left hover:border-foreground/20">
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0">
-                            <div className="truncate text-sm font-medium">{s.brand} {s.model}</div>
+                            <div className="truncate text-sm font-medium">
+                              {s.brand} {s.model}
+                              {s.license_plate && <span className="ml-1 font-mono text-[11px] text-muted-foreground">· {s.license_plate}</span>}
+                            </div>
                             <div className="truncate text-xs text-muted-foreground">
                               {s.year ?? "—"}{s.mileage ? ` · ${Number(s.mileage).toLocaleString()} km` : ""}
                             </div>
