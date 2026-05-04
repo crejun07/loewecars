@@ -13,6 +13,7 @@ import WorkshopPage from "./pages/databases/Workshop.tsx";
 import SparePartsPage from "./pages/databases/SpareParts.tsx";
 import ReportsPage from "./pages/databases/Reports.tsx";
 import SettingsPage from "./pages/Settings.tsx";
+import HistoryPage from "./pages/History.tsx";
 import AuthPage from "./pages/Auth.tsx";
 import { AppLayout } from "./components/layout/AppLayout.tsx";
 import { AuthProvider } from "./hooks/useAuth";
@@ -46,6 +47,7 @@ const App = () => (
                         <Route path="/workshop" element={<PermissionGuard workspace="workshop"><WorkshopPage /></PermissionGuard>} />
                         <Route path="/spare-parts" element={<PermissionGuard workspace="spare-parts"><SparePartsPage /></PermissionGuard>} />
                         <Route path="/reports" element={<PermissionGuard workspace="reports"><ReportsPage /></PermissionGuard>} />
+                        <Route path="/history" element={<HistoryPage />} />
                         <Route path="/settings" element={<PermissionGuard workspace="settings"><SettingsPage /></PermissionGuard>} />
                         <Route path="*" element={<NotFound />} />
                       </Routes>
