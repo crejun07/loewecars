@@ -295,6 +295,15 @@ export default function StockPage() {
             <SelectContent>{Object.entries(stockStatusLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
           </Select>
         </Field>
+        <Field label="Titularidad">
+          <Select value={form.holder || "__none__"} onValueChange={(v) => setForm({ ...form, holder: v === "__none__" ? "" : v })}>
+            <SelectTrigger><SelectValue placeholder="Sin asignar" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__none__">— Sin asignar —</SelectItem>
+              {Object.entries(vehicleHolderLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </Field>
         <Field label="Anuncio web">
           <Select value={form.listing_status} onValueChange={(v) => setForm({ ...form, listing_status: v })}>
             <SelectTrigger><SelectValue /></SelectTrigger>
