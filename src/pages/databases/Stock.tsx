@@ -357,6 +357,49 @@ export default function StockPage() {
         </Field>
         <Field label="Notas" full><Textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></Field>
       </RecordDialog>
+
+      <Dialog open={!!viewing} onOpenChange={(o) => !o && setViewing(null)}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{viewing?.brand} {viewing?.model}{viewing?.license_plate ? ` · ${viewing.license_plate}` : ""}</DialogTitle>
+          </DialogHeader>
+          {viewing && (
+            <div className="space-y-3 text-sm">
+              {viewing.image_url && <img src={viewing.image_url} alt="" className="w-full rounded-md border border-border object-cover" />}
+              <div className="grid grid-cols-2 gap-2">
+                <Detail label="Año" value={viewing.year ?? "—"} />
+                <Detail label="Kilómetros" value={viewing.mileage ? Number(viewing.mileage).toLocaleString() : "—"} />
+                <Detail label="Combustible" value={viewing.fuel_type ? fuelTypeLabels[viewing.fuel_type] : "—"} />
+                <Detail label="Transmisión" value={viewing.transmission ? transmissionLabels[viewing.transmission] : "—"} />
+                <Detail label="Estado" value={stockStatusLabels[viewing.status] ?? viewing.status} />
+                <Detail label="Anuncio web" value={listingStatusLabels[viewing.listing_status ?? "pending_listing"]} />
+                <Detail label="Titularidad" value={viewing.holder ? vehicleHolderLabels[viewing.holder] ?? viewing.holder : "—"} />
+                <Detail label="Ubicación" value={viewing.location || "—"} />
+                <Detail label="Precio compra" value={formatCurrency(viewing.purchase_price)} />
+                <Detail label="Precio venta" value={formatCurrency(viewing.selling_price)} />
+                <Detail label="Margen" value={formatCurrency(viewing.profit_margin)} />
+                <Detail label="Fecha entrada" value={formatDate(viewing.entry_date)} />
+                <Detail label="Próxima ITV" value={formatDate(viewing.next_itv_date)} />
+              </div>
+              {viewing.notes && (
+                <div>
+                  <div className="text-xs font-medium text-muted-foreground">Notas</div>
+                  <div className="whitespace-pre-wrap rounded-md border border-border bg-muted/30 p-2 text-sm">{viewing.notes}</div>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function Detail({ label, value }: { label: string; value: any }) {
+  return (
+    <div>
+      <div className="text-xs font-medium text-muted-foreground">{label}</div>
+      <div className="text-sm">{value}</div>
     </div>
   );
 }
