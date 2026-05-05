@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { Plus, LayoutGrid, Table as TableIcon, Pencil, Trash2, Car, Filter, Globe, Upload, X, Loader2 } from "lucide-react";
+import { Plus, LayoutGrid, Table as TableIcon, Pencil, Trash2, Car, Filter, Globe, Upload, X, Loader2, Eye } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/shared/PageHeader";
@@ -13,14 +13,15 @@ import { useStock } from "@/hooks/data/useDealership";
 import {
   daysUntil, formatCurrency, formatDate, fuelTypeLabels,
   listingStatusLabels, listingStatusOrder, listingStatusTone,
-  stockStatusLabels, stockStatusTone, transmissionLabels,
+  stockStatusLabels, stockStatusTone, transmissionLabels, vehicleHolderLabels,
 } from "@/lib/labels";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
 const emptyForm = {
   brand: "", model: "", license_plate: "", year: "" as any, mileage: "" as any, fuel_type: "gasoline", transmission: "manual",
   purchase_price: "" as any, selling_price: "" as any, status: "preparing",
-  listing_status: "pending_listing",
+  listing_status: "pending_listing", holder: "",
   entry_date: new Date().toISOString().slice(0, 10), next_itv_date: "", location: "", image_url: "", notes: "",
 };
 
@@ -32,6 +33,7 @@ export default function StockPage() {
   const [editing, setEditing] = useState<any | null>(null);
   const [form, setForm] = useState<any>(emptyForm);
   const [open, setOpen] = useState(false);
+  const [viewing, setViewing] = useState<any | null>(null);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -70,7 +72,7 @@ export default function StockPage() {
       brand: s.brand, model: s.model, license_plate: s.license_plate ?? "", year: s.year ?? "", mileage: s.mileage ?? "",
       fuel_type: s.fuel_type ?? "gasoline", transmission: s.transmission ?? "manual",
       purchase_price: s.purchase_price ?? 0, selling_price: s.selling_price ?? 0,
-      status: s.status, listing_status: s.listing_status ?? "pending_listing",
+      status: s.status, listing_status: s.listing_status ?? "pending_listing", holder: s.holder ?? "",
       entry_date: s.entry_date, next_itv_date: s.next_itv_date ?? "",
       location: s.location ?? "", image_url: s.image_url ?? "", notes: s.notes ?? "",
     });
@@ -92,6 +94,7 @@ export default function StockPage() {
     const payload = {
       ...form,
       license_plate: plate || null,
+      holder: form.holder || null,
       year: form.year ? Number(form.year) : null,
       mileage: form.mileage ? Number(form.mileage) : null,
       purchase_price: Number(form.purchase_price) || 0,
