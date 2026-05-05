@@ -183,6 +183,7 @@ export default function StockPage() {
                       </div>
                     )}
                     <div className="mt-2 flex justify-end gap-1">
+                      <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setViewing(s)} title="Ver detalles"><Eye className="h-3.5 w-3.5" /></Button>
                       <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEdit(s)}><Pencil className="h-3.5 w-3.5" /></Button>
                       <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => remove(s.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
                     </div>
@@ -218,6 +219,7 @@ export default function StockPage() {
                     <td className="px-4 py-2.5"><StatusBadge label={stockStatusLabels[s.status]} tone={stockStatusTone[s.status]} /></td>
                     <td className="px-4 py-2.5"><StatusBadge label={listingStatusLabels[s.listing_status ?? "pending_listing"]} tone={listingStatusTone[s.listing_status ?? "pending_listing"]} /></td>
                     <td className="px-4 py-2.5 text-right">
+                      <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setViewing(s)} title="Ver detalles"><Eye className="h-3.5 w-3.5" /></Button>
                       <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEdit(s)}><Pencil className="h-3.5 w-3.5" /></Button>
                       <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => remove(s.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
                     </td>
