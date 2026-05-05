@@ -151,7 +151,7 @@ export default function SparePartsPage() {
                     <div className="mt-1 text-xs text-muted-foreground">{vehicleLabel(p)}</div>
                     <div className="mt-2 flex items-center justify-between text-xs">
                       <span className="text-muted-foreground">{p.supplier || "Sin proveedor"}</span>
-                      <span className="font-medium">{formatCurrency(p.cost)}</span>
+                      <span className="font-medium">{formatCurrency(p.cost, 2)}</span>
                     </div>
                     {(p.managed_by || p.ordered_by) && (
                       <div className="mt-2 text-[11px] text-muted-foreground">
@@ -199,7 +199,7 @@ export default function SparePartsPage() {
                         <td className="px-3 py-2">
                           <StatusBadge label={sparePartStatusLabels[p.status]} tone={sparePartStatusTone[p.status]} />
                         </td>
-                        <td className="px-3 py-2 text-right text-xs font-medium">{formatCurrency(p.cost)}</td>
+                        <td className="px-3 py-2 text-right text-xs font-medium">{formatCurrency(p.cost, 2)}</td>
                       </tr>
                     ))}
                   </tbody>

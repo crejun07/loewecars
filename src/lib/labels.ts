@@ -197,12 +197,13 @@ export const workshopPriorityTone: Record<number, StatusTone> = {
   5: "red",
 };
 
-export function formatCurrency(value: number | null | undefined) {
+export function formatCurrency(value: number | null | undefined, decimals = 0) {
   if (value === null || value === undefined) return "—";
   return new Intl.NumberFormat("es-ES", {
     style: "currency",
     currency: "EUR",
-    maximumFractionDigits: 0,
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
   }).format(Number(value));
 }
 
