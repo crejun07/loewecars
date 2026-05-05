@@ -64,6 +64,14 @@ export const transmissionLabels: Record<string, string> = {
 
 export const employees = ["Vicente", "Rommer", "Orlando", "Isabel", "Jose", "Edu"] as const;
 
+export const vehicleHolderLabels: Record<string, string> = {
+  deposito: "Depósito",
+  orlando_cars: "Orlando Cars",
+  bate: "Bate",
+  cedente: "Cedente",
+  comprador: "Comprador",
+};
+
 export const listingStatusLabels: Record<string, string> = {
   listed: "Anunciado",
   pending_listing: "Pendiente de anunciar",

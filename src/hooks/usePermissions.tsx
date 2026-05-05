@@ -11,6 +11,7 @@ export type Workspace =
   | "workshop"
   | "spare-parts"
   | "reports"
+  | "history"
   | "settings";
 
 export type AppRole =

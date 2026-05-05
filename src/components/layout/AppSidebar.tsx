@@ -26,7 +26,7 @@ const items: { title: string; url: string; icon: any; ws: Workspace }[] = [
   { title: "Taller", url: "/workshop", icon: Wrench, ws: "workshop" },
   { title: "Recambios", url: "/spare-parts", icon: Package, ws: "spare-parts" },
   { title: "Informes", url: "/reports", icon: FileText, ws: "reports" },
-  { title: "Historial", url: "/history", icon: History, ws: "dashboard" },
+  { title: "Historial", url: "/history", icon: History, ws: "history" },
   { title: "Ajustes", url: "/settings", icon: Settings, ws: "settings" },
 ];
 

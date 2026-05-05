@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Plus, Search, Trash2, Pencil } from "lucide-react";
+import { Plus, Search, Trash2, Pencil, Eye } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/shared/PageHeader";
@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Field, RecordDialog } from "@/components/shared/RecordDialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useClients, useEmployees } from "@/hooks/data/useDealership";
 import { clientStatusLabels, clientStatusTone, clientTypeLabels, formatDate } from "@/lib/labels";
 import { toast } from "sonner";
@@ -36,6 +37,7 @@ export default function ClientsPage() {
   const [editing, setEditing] = useState<any | null>(null);
   const [form, setForm] = useState<FormState>(empty);
   const [open, setOpen] = useState(false);
+  const [viewing, setViewing] = useState<any | null>(null);
 
   const employeeName = (id?: string | null) => {
     if (!id) return "—";
@@ -165,6 +167,7 @@ export default function ClientsPage() {
                   <td className="px-4 py-2.5 text-muted-foreground">{employeeName(c.managed_by)}</td>
                   <td className="px-4 py-2.5 text-muted-foreground">{formatDate(c.last_contact_date)}</td>
                   <td className="px-4 py-2.5 text-right">
+                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setViewing(c)} title="Ver detalles"><Eye className="h-3.5 w-3.5" /></Button>
                     <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEdit(c)}><Pencil className="h-3.5 w-3.5" /></Button>
                     <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => remove(c.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
                   </td>
@@ -212,6 +215,40 @@ export default function ClientsPage() {
         </Field>
         <Field label="Notas" full><Textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></Field>
       </RecordDialog>
+
+      <Dialog open={!!viewing} onOpenChange={(o) => !o && setViewing(null)}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{viewing?.full_name}</DialogTitle>
+          </DialogHeader>
+          {viewing && (
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <Field2 label="DNI" value={viewing.dni || "—"} />
+              <Field2 label="Tipo" value={clientTypeLabels[viewing.client_type] ?? "—"} />
+              <Field2 label="Estado" value={clientStatusLabels[viewing.status] ?? "—"} />
+              <Field2 label="Teléfono" value={viewing.phone || "—"} />
+              <Field2 label="Email" value={viewing.email || "—"} />
+              <Field2 label="Gestor" value={employeeName(viewing.managed_by)} />
+              <Field2 label="Último contacto" value={formatDate(viewing.last_contact_date)} />
+              {viewing.notes && (
+                <div className="col-span-2">
+                  <div className="text-xs font-medium text-muted-foreground">Notas</div>
+                  <div className="whitespace-pre-wrap rounded-md border border-border bg-muted/30 p-2 text-sm">{viewing.notes}</div>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function Field2({ label, value }: { label: string; value: any }) {
+  return (
+    <div>
+      <div className="text-xs font-medium text-muted-foreground">{label}</div>
+      <div className="text-sm">{value}</div>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { Plus, LayoutGrid, Table as TableIcon, Pencil, Trash2, Car, Filter, Globe, Upload, X, Loader2 } from "lucide-react";
+import { Plus, LayoutGrid, Table as TableIcon, Pencil, Trash2, Car, Filter, Globe, Upload, X, Loader2, Eye } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/shared/PageHeader";
@@ -13,14 +13,15 @@ import { useStock } from "@/hooks/data/useDealership";
 import {
   daysUntil, formatCurrency, formatDate, fuelTypeLabels,
   listingStatusLabels, listingStatusOrder, listingStatusTone,
-  stockStatusLabels, stockStatusTone, transmissionLabels,
+  stockStatusLabels, stockStatusTone, transmissionLabels, vehicleHolderLabels,
 } from "@/lib/labels";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
 const emptyForm = {
   brand: "", model: "", license_plate: "", year: "" as any, mileage: "" as any, fuel_type: "gasoline", transmission: "manual",
   purchase_price: "" as any, selling_price: "" as any, status: "preparing",
-  listing_status: "pending_listing",
+  listing_status: "pending_listing", holder: "",
   entry_date: new Date().toISOString().slice(0, 10), next_itv_date: "", location: "", image_url: "", notes: "",
 };
 
@@ -32,6 +33,7 @@ export default function StockPage() {
   const [editing, setEditing] = useState<any | null>(null);
   const [form, setForm] = useState<any>(emptyForm);
   const [open, setOpen] = useState(false);
+  const [viewing, setViewing] = useState<any | null>(null);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -70,7 +72,7 @@ export default function StockPage() {
       brand: s.brand, model: s.model, license_plate: s.license_plate ?? "", year: s.year ?? "", mileage: s.mileage ?? "",
       fuel_type: s.fuel_type ?? "gasoline", transmission: s.transmission ?? "manual",
       purchase_price: s.purchase_price ?? 0, selling_price: s.selling_price ?? 0,
-      status: s.status, listing_status: s.listing_status ?? "pending_listing",
+      status: s.status, listing_status: s.listing_status ?? "pending_listing", holder: s.holder ?? "",
       entry_date: s.entry_date, next_itv_date: s.next_itv_date ?? "",
       location: s.location ?? "", image_url: s.image_url ?? "", notes: s.notes ?? "",
     });
@@ -92,6 +94,7 @@ export default function StockPage() {
     const payload = {
       ...form,
       license_plate: plate || null,
+      holder: form.holder || null,
       year: form.year ? Number(form.year) : null,
       mileage: form.mileage ? Number(form.mileage) : null,
       purchase_price: Number(form.purchase_price) || 0,
@@ -180,6 +183,7 @@ export default function StockPage() {
                       </div>
                     )}
                     <div className="mt-2 flex justify-end gap-1">
+                      <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setViewing(s)} title="Ver detalles"><Eye className="h-3.5 w-3.5" /></Button>
                       <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEdit(s)}><Pencil className="h-3.5 w-3.5" /></Button>
                       <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => remove(s.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
                     </div>
@@ -215,6 +219,7 @@ export default function StockPage() {
                     <td className="px-4 py-2.5"><StatusBadge label={stockStatusLabels[s.status]} tone={stockStatusTone[s.status]} /></td>
                     <td className="px-4 py-2.5"><StatusBadge label={listingStatusLabels[s.listing_status ?? "pending_listing"]} tone={listingStatusTone[s.listing_status ?? "pending_listing"]} /></td>
                     <td className="px-4 py-2.5 text-right">
+                      <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setViewing(s)} title="Ver detalles"><Eye className="h-3.5 w-3.5" /></Button>
                       <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEdit(s)}><Pencil className="h-3.5 w-3.5" /></Button>
                       <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => remove(s.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
                     </td>
@@ -290,6 +295,15 @@ export default function StockPage() {
             <SelectContent>{Object.entries(stockStatusLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
           </Select>
         </Field>
+        <Field label="Titularidad">
+          <Select value={form.holder || "__none__"} onValueChange={(v) => setForm({ ...form, holder: v === "__none__" ? "" : v })}>
+            <SelectTrigger><SelectValue placeholder="Sin asignar" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__none__">— Sin asignar —</SelectItem>
+              {Object.entries(vehicleHolderLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </Field>
         <Field label="Anuncio web">
           <Select value={form.listing_status} onValueChange={(v) => setForm({ ...form, listing_status: v })}>
             <SelectTrigger><SelectValue /></SelectTrigger>
@@ -343,6 +357,49 @@ export default function StockPage() {
         </Field>
         <Field label="Notas" full><Textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></Field>
       </RecordDialog>
+
+      <Dialog open={!!viewing} onOpenChange={(o) => !o && setViewing(null)}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{viewing?.brand} {viewing?.model}{viewing?.license_plate ? ` · ${viewing.license_plate}` : ""}</DialogTitle>
+          </DialogHeader>
+          {viewing && (
+            <div className="space-y-3 text-sm">
+              {viewing.image_url && <img src={viewing.image_url} alt="" className="w-full rounded-md border border-border object-cover" />}
+              <div className="grid grid-cols-2 gap-2">
+                <Detail label="Año" value={viewing.year ?? "—"} />
+                <Detail label="Kilómetros" value={viewing.mileage ? Number(viewing.mileage).toLocaleString() : "—"} />
+                <Detail label="Combustible" value={viewing.fuel_type ? fuelTypeLabels[viewing.fuel_type] : "—"} />
+                <Detail label="Transmisión" value={viewing.transmission ? transmissionLabels[viewing.transmission] : "—"} />
+                <Detail label="Estado" value={stockStatusLabels[viewing.status] ?? viewing.status} />
+                <Detail label="Anuncio web" value={listingStatusLabels[viewing.listing_status ?? "pending_listing"]} />
+                <Detail label="Titularidad" value={viewing.holder ? vehicleHolderLabels[viewing.holder] ?? viewing.holder : "—"} />
+                <Detail label="Ubicación" value={viewing.location || "—"} />
+                <Detail label="Precio compra" value={formatCurrency(viewing.purchase_price)} />
+                <Detail label="Precio venta" value={formatCurrency(viewing.selling_price)} />
+                <Detail label="Margen" value={formatCurrency(viewing.profit_margin)} />
+                <Detail label="Fecha entrada" value={formatDate(viewing.entry_date)} />
+                <Detail label="Próxima ITV" value={formatDate(viewing.next_itv_date)} />
+              </div>
+              {viewing.notes && (
+                <div>
+                  <div className="text-xs font-medium text-muted-foreground">Notas</div>
+                  <div className="whitespace-pre-wrap rounded-md border border-border bg-muted/30 p-2 text-sm">{viewing.notes}</div>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function Detail({ label, value }: { label: string; value: any }) {
+  return (
+    <div>
+      <div className="text-xs font-medium text-muted-foreground">{label}</div>
+      <div className="text-sm">{value}</div>
     </div>
   );
 }

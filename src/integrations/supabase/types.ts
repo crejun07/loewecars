@@ -357,6 +357,7 @@ export type Database = {
           created_at: string
           entry_date: string
           fuel_type: Database["public"]["Enums"]["fuel_type"] | null
+          holder: string | null
           id: string
           image_url: string | null
           license_plate: string | null
@@ -379,6 +380,7 @@ export type Database = {
           created_at?: string
           entry_date?: string
           fuel_type?: Database["public"]["Enums"]["fuel_type"] | null
+          holder?: string | null
           id?: string
           image_url?: string | null
           license_plate?: string | null
@@ -401,6 +403,7 @@ export type Database = {
           created_at?: string
           entry_date?: string
           fuel_type?: Database["public"]["Enums"]["fuel_type"] | null
+          holder?: string | null
           id?: string
           image_url?: string | null
           license_plate?: string | null
