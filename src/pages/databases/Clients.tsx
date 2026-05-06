@@ -34,6 +34,7 @@ export default function ClientsPage() {
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [managerFilter, setManagerFilter] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<string>("recent");
   const [editing, setEditing] = useState<any | null>(null);
   const [form, setForm] = useState<FormState>(empty);
   const [open, setOpen] = useState(false);
@@ -47,12 +48,24 @@ export default function ClientsPage() {
 
   const filtered = useMemo(() => {
     const s = search.toLowerCase();
-    return clients.filter((c: any) => {
+    const base = clients.filter((c: any) => {
       const matchesSearch = [c.full_name, c.email, c.phone, c.dni].filter(Boolean).join(" ").toLowerCase().includes(s);
       const matchesManager = managerFilter === "all" ? true : c.managed_by === managerFilter;
       return matchesSearch && matchesManager;
     });
-  }, [clients, search, managerFilter]);
+    const statusOrder: Record<string, number> = { new: 0, in_followup: 1, closed: 2 };
+    const sorted = [...base];
+    if (sortBy === "status") {
+      sorted.sort((a, b) => (statusOrder[a.status] ?? 99) - (statusOrder[b.status] ?? 99));
+    } else if (sortBy === "last_contact") {
+      sorted.sort((a, b) => {
+        const ta = a.last_contact_date ? new Date(a.last_contact_date).getTime() : 0;
+        const tb = b.last_contact_date ? new Date(b.last_contact_date).getTime() : 0;
+        return tb - ta;
+      });
+    }
+    return sorted;
+  }, [clients, search, managerFilter, sortBy]);
 
   function openNew() {
     setEditing(null);
@@ -125,6 +138,14 @@ export default function ClientsPage() {
                 {employees.map((e: any) => (
                   <SelectItem key={e.id} value={e.id}>{e.full_name || e.username || "Sin nombre"}</SelectItem>
                 ))}
+              </SelectContent>
+            </Select>
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="h-9 w-48"><SelectValue placeholder="Ordenar por" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="recent">Más recientes</SelectItem>
+                <SelectItem value="status">Estado</SelectItem>
+                <SelectItem value="last_contact">Último contacto</SelectItem>
               </SelectContent>
             </Select>
             <div className="relative">
