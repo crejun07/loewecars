@@ -326,6 +326,33 @@ export default function SparePartsPage() {
         <Field label="Coste (€)">
           <Input type="number" step="0.01" value={form.cost} onChange={(e) => setForm({ ...form, cost: e.target.value })} />
         </Field>
+        <Field label="Método de pago">
+          <Select
+            value={form.payment_method || "none"}
+            onValueChange={(v) => setForm({ ...form, payment_method: v === "none" ? "" : v })}
+          >
+            <SelectTrigger><SelectValue placeholder="Selecciona" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">— Ninguno —</SelectItem>
+              {Object.entries(paymentMethodLabels).map(([k, v]) => (
+                <SelectItem key={k} value={k}>{v}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Field>
+        <Field label="Estado de pago">
+          <Select
+            value={form.payment_status || "pending"}
+            onValueChange={(v) => setForm({ ...form, payment_status: v })}
+          >
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {Object.entries(paymentStatusLabels).map(([k, v]) => (
+                <SelectItem key={k} value={k}>{v}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Field>
         <Field label="Notas" full>
           <Textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
         </Field>
