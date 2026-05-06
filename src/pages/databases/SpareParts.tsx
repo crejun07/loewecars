@@ -16,6 +16,9 @@ import {
   employees,
   formatCurrency,
   formatDate,
+  paymentMethodLabels,
+  paymentStatusLabels,
+  paymentStatusTone,
   sparePartStatusLabels,
   sparePartStatusOrder,
   sparePartStatusTone,
@@ -34,10 +37,19 @@ const empty = {
   status: "pending",
   cost: "" as any,
   notes: "",
+  payment_method: "",
+  payment_status: "pending",
 };
 
 export default function SparePartsPage() {
   const { data: parts = [] } = useSpareParts();
+  const statusRank: Record<string, number> = Object.fromEntries(
+    sparePartStatusOrder.map((s, i) => [s, i]),
+  );
+  const sortedParts = [...parts].sort(
+    (a: any, b: any) =>
+      (statusRank[a.status] ?? 99) - (statusRank[b.status] ?? 99),
+  );
   const { data: stock = [] } = useStock();
   const qc = useQueryClient();
   const [view, setView] = useState<"kanban" | "table">("table");
@@ -64,6 +76,8 @@ export default function SparePartsPage() {
       status: p.status,
       cost: p.cost ?? "",
       notes: p.notes ?? "",
+      payment_method: p.payment_method ?? "",
+      payment_status: p.payment_status ?? "pending",
     });
     setOpen(true);
   }
@@ -79,6 +93,8 @@ export default function SparePartsPage() {
       supplier: form.supplier || null,
       notes: form.notes || null,
       cost: form.cost === "" ? 0 : Number(form.cost),
+      payment_method: form.payment_method || null,
+      payment_status: form.payment_status || "pending",
     };
     const { error } = editing
       ? await supabase.from("spare_parts").update(payload).eq("id", editing.id)
@@ -182,11 +198,12 @@ export default function SparePartsPage() {
                       <th className="px-3 py-2 font-medium">Recambio</th>
                       <th className="px-3 py-2 font-medium">Pedido por</th>
                       <th className="px-3 py-2 font-medium">Estado</th>
+                      <th className="px-3 py-2 font-medium">Pago</th>
                       <th className="px-3 py-2 text-right font-medium">Coste</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
-                    {parts.map((p: any) => (
+                    {sortedParts.map((p: any) => (
                       <tr key={p.id} onClick={() => openEdit(p)} className="cursor-pointer hover:bg-muted/30">
                         <td className="px-3 py-2 font-medium">{p.part_name}</td>
                         <td className="px-3 py-2 text-xs text-muted-foreground">{p.part_reference || "—"}</td>
@@ -198,6 +215,19 @@ export default function SparePartsPage() {
                         <td className="px-3 py-2 text-xs text-muted-foreground">{p.ordered_by || "—"}</td>
                         <td className="px-3 py-2">
                           <StatusBadge label={sparePartStatusLabels[p.status]} tone={sparePartStatusTone[p.status]} />
+                        </td>
+                        <td className="px-3 py-2">
+                          <div className="flex flex-col gap-1">
+                            <StatusBadge
+                              label={paymentStatusLabels[p.payment_status ?? "pending"]}
+                              tone={paymentStatusTone[p.payment_status ?? "pending"]}
+                            />
+                            {p.payment_method && (
+                              <span className="text-[11px] text-muted-foreground">
+                                {paymentMethodLabels[p.payment_method] ?? p.payment_method}
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="px-3 py-2 text-right text-xs font-medium">{formatCurrency(p.cost, 2)}</td>
                       </tr>
@@ -295,6 +325,33 @@ export default function SparePartsPage() {
         </Field>
         <Field label="Coste (€)">
           <Input type="number" step="0.01" value={form.cost} onChange={(e) => setForm({ ...form, cost: e.target.value })} />
+        </Field>
+        <Field label="Método de pago">
+          <Select
+            value={form.payment_method || "none"}
+            onValueChange={(v) => setForm({ ...form, payment_method: v === "none" ? "" : v })}
+          >
+            <SelectTrigger><SelectValue placeholder="Selecciona" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">— Ninguno —</SelectItem>
+              {Object.entries(paymentMethodLabels).map(([k, v]) => (
+                <SelectItem key={k} value={k}>{v}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Field>
+        <Field label="Estado de pago">
+          <Select
+            value={form.payment_status || "pending"}
+            onValueChange={(v) => setForm({ ...form, payment_status: v })}
+          >
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {Object.entries(paymentStatusLabels).map(([k, v]) => (
+                <SelectItem key={k} value={k}>{v}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </Field>
         <Field label="Notas" full>
           <Textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />

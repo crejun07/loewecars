@@ -104,6 +104,27 @@ export const sparePartStatusOrder = [
   "refunded",
 ] as const;
 
+export const paymentMethodLabels: Record<string, string> = {
+  cash: "Efectivo",
+  card: "Tarjeta",
+  transfer: "Transferencia",
+  voucher: "Vale",
+};
+
+export const paymentStatusLabels: Record<string, string> = {
+  pending: "Pendiente",
+  paid: "Pagado",
+  refund_pending: "Pendiente de reembolso",
+  refunded: "Reembolsado",
+};
+
+export const paymentStatusTone: Record<string, StatusTone> = {
+  pending: "neutral",
+  paid: "green",
+  refund_pending: "amber",
+  refunded: "red",
+};
+
 // Tone mapping: returns Tailwind classes using semantic status tokens.
 export type StatusTone = "neutral" | "blue" | "amber" | "violet" | "green" | "red";
 

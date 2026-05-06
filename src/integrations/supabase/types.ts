@@ -215,6 +215,8 @@ export type Database = {
           ordered_by: string | null
           part_name: string
           part_reference: string | null
+          payment_method: string | null
+          payment_status: string
           status: Database["public"]["Enums"]["spare_part_status"]
           supplier: string | null
           updated_at: string
@@ -231,6 +233,8 @@ export type Database = {
           ordered_by?: string | null
           part_name: string
           part_reference?: string | null
+          payment_method?: string | null
+          payment_status?: string
           status?: Database["public"]["Enums"]["spare_part_status"]
           supplier?: string | null
           updated_at?: string
@@ -247,6 +251,8 @@ export type Database = {
           ordered_by?: string | null
           part_name?: string
           part_reference?: string | null
+          payment_method?: string | null
+          payment_status?: string
           status?: Database["public"]["Enums"]["spare_part_status"]
           supplier?: string | null
           updated_at?: string
