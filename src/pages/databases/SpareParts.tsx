@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, LayoutGrid, List, Trash2 } from "lucide-react";
+import { Plus, LayoutGrid, List, Trash2, Search } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/shared/PageHeader";
@@ -46,16 +46,29 @@ export default function SparePartsPage() {
   const statusRank: Record<string, number> = Object.fromEntries(
     sparePartStatusOrder.map((s, i) => [s, i]),
   );
-  const sortedParts = [...parts].sort(
-    (a: any, b: any) =>
-      (statusRank[a.status] ?? 99) - (statusRank[b.status] ?? 99),
-  );
   const { data: stock = [] } = useStock();
   const qc = useQueryClient();
   const [view, setView] = useState<"kanban" | "table">("table");
+  const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
   const [form, setForm] = useState<any>(empty);
+
+  const q = search.trim().toLowerCase();
+  const filteredParts = parts.filter((p: any) => {
+    if (!q) return true;
+    return (
+      (p.part_name ?? "").toLowerCase().includes(q) ||
+      (p.part_reference ?? "").toLowerCase().includes(q) ||
+      (p.vehicle?.license_plate ?? "").toLowerCase().includes(q) ||
+      (p.vehicle?.brand ?? "").toLowerCase().includes(q) ||
+      (p.vehicle?.model ?? "").toLowerCase().includes(q)
+    );
+  });
+  const sortedParts = [...filteredParts].sort(
+    (a: any, b: any) =>
+      (statusRank[a.status] ?? 99) - (statusRank[b.status] ?? 99),
+  );
 
   function openNew() {
     setEditing(null);
@@ -144,15 +157,24 @@ export default function SparePartsPage() {
         }
       />
       <div className="p-6">
+        <div className="mb-4 relative max-w-md">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar por recambio, referencia o matrícula…"
+            className="pl-9"
+          />
+        </div>
         {view === "kanban" ? (
           <KanbanBoard
             columns={sparePartStatusOrder.map((s) => ({
               id: s,
               title: sparePartStatusLabels[s],
-              count: parts.filter((p: any) => p.status === s).length,
+              count: filteredParts.filter((p: any) => p.status === s).length,
             }))}
             renderCards={(col) =>
-              parts
+              filteredParts
                 .filter((p: any) => p.status === col)
                 .map((p: any) => (
                   <button
