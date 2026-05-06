@@ -11,9 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Field, RecordDialog } from "@/components/shared/RecordDialog";
 import { KanbanBoard } from "@/components/shared/KanbanBoard";
 import { SearchableSelect } from "@/components/shared/SearchableSelect";
-import { useSpareParts, useStock } from "@/hooks/data/useDealership";
+import { useSpareParts, useStock, useEmployees } from "@/hooks/data/useDealership";
 import {
-  employees,
   formatCurrency,
   formatDate,
   paymentMethodLabels,
@@ -43,6 +42,7 @@ const empty = {
 
 export default function SparePartsPage() {
   const { data: parts = [] } = useSpareParts();
+  const { data: employees = [] } = useEmployees();
   const statusRank: Record<string, number> = Object.fromEntries(
     sparePartStatusOrder.map((s, i) => [s, i]),
   );
@@ -315,9 +315,10 @@ export default function SparePartsPage() {
             <SelectTrigger><SelectValue placeholder="Selecciona" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="none">— Ninguno —</SelectItem>
-              {employees.map((e) => (
-                <SelectItem key={e} value={e}>{e}</SelectItem>
-              ))}
+              {employees.map((e: any) => {
+                const name = e.full_name || e.username || "Sin nombre";
+                return <SelectItem key={e.id} value={name}>{name}</SelectItem>;
+              })}
             </SelectContent>
           </Select>
         </Field>
@@ -329,9 +330,10 @@ export default function SparePartsPage() {
             <SelectTrigger><SelectValue placeholder="Selecciona" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="none">— Ninguno —</SelectItem>
-              {employees.map((e) => (
-                <SelectItem key={e} value={e}>{e}</SelectItem>
-              ))}
+              {employees.map((e: any) => {
+                const name = e.full_name || e.username || "Sin nombre";
+                return <SelectItem key={e.id} value={name}>{name}</SelectItem>;
+              })}
             </SelectContent>
           </Select>
         </Field>
