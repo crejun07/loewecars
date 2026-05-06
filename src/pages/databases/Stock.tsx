@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { Plus, LayoutGrid, Table as TableIcon, Pencil, Trash2, Car, Filter, Globe, Upload, X, Loader2, Eye } from "lucide-react";
+import { Plus, LayoutGrid, Table as TableIcon, Pencil, Trash2, Car, Filter, Globe, Upload, X, Loader2, Eye, Search } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/shared/PageHeader";
@@ -30,6 +30,7 @@ export default function StockPage() {
   const qc = useQueryClient();
   const [view, setView] = useState<"gallery" | "table" | "listings">("gallery");
   const [onlyAvailable, setOnlyAvailable] = useState(false);
+  const [search, setSearch] = useState("");
   const [editing, setEditing] = useState<any | null>(null);
   const [form, setForm] = useState<any>(emptyForm);
   const [open, setOpen] = useState(false);
@@ -60,10 +61,18 @@ export default function StockPage() {
     }
   }
 
-  const items = useMemo(
-    () => (onlyAvailable ? stock.filter((s: any) => s.status === "available") : stock),
-    [stock, onlyAvailable],
-  );
+  const items = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return stock.filter((s: any) => {
+      if (onlyAvailable && s.status !== "available") return false;
+      if (!q) return true;
+      return (
+        (s.brand ?? "").toLowerCase().includes(q) ||
+        (s.model ?? "").toLowerCase().includes(q) ||
+        (s.license_plate ?? "").toLowerCase().includes(q)
+      );
+    });
+  }, [stock, onlyAvailable, search]);
 
   function openNew() { setEditing(null); setForm(emptyForm); setOpen(true); }
   function openEdit(s: any) {
@@ -141,6 +150,15 @@ export default function StockPage() {
         }
       />
       <div className="p-6">
+        <div className="mb-4 relative max-w-md">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar por marca, modelo o matrícula…"
+            className="pl-9"
+          />
+        </div>
         {items.length === 0 ? (
           <div className="rounded-lg border border-dashed border-border bg-card p-12 text-center text-sm text-muted-foreground">Sin vehículos.</div>
         ) : view === "gallery" ? (
