@@ -127,7 +127,7 @@ export default function SettingsPage() {
     const rows = ROLES.flatMap((r) =>
       WORKSPACES.map((w) => {
         const c = getCell(r, w.key);
-        return { role: r, workspace: w.key, can_view: c.can_view, can_edit: c.can_edit };
+        return { role: r, workspace: w.key, can_view: c.can_view, can_edit: c.can_edit, can_view_sensitive: !!c.can_view_sensitive };
       }),
     );
     const { error } = await supabase
@@ -220,6 +220,13 @@ export default function SettingsPage() {
                                   onCheckedChange={(v) => setCell(r, w.key, { can_edit: !!v })}
                                 />
                                 Editar
+                              </label>
+                              <label className="flex items-center gap-1 text-xs" title="Ver datos sensibles (precio de compra, márgenes...)">
+                                <Checkbox
+                                  checked={!!c.can_view_sensitive}
+                                  onCheckedChange={(v) => setCell(r, w.key, { can_view_sensitive: !!v })}
+                                />
+                                Sensible
                               </label>
                             </div>
                           </TableCell>
