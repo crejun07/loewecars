@@ -10,7 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Field, RecordDialog } from "@/components/shared/RecordDialog";
 import { KanbanBoard } from "@/components/shared/KanbanBoard";
-import { useStock, useWorkshop } from "@/hooks/data/useDealership";
+import { useStock, useWorkshop, useSpareParts } from "@/hooks/data/useDealership";
+import { SearchableSelect } from "@/components/shared/SearchableSelect";
 import { formatCurrency, formatDate, workshopStatusLabels, workshopStatusOrder, workshopStatusTone, workshopPriorityLabels, workshopPriorityTone, sparePartStatusLabels, sparePartStatusTone } from "@/lib/labels";
 import { toast } from "sonner";
 
@@ -19,19 +20,20 @@ const empty = { vehicle_id: "", task: "", task_date: new Date().toISOString().sl
 export default function WorkshopPage() {
   const { data: tasks = [] } = useWorkshop();
   const { data: stock = [] } = useStock();
+  const { data: allParts = [] } = useSpareParts();
   const qc = useQueryClient();
   const [view, setView] = useState<"kanban" | "timeline">("kanban");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
   const [form, setForm] = useState<any>(empty);
   const [taskParts, setTaskParts] = useState<any[]>([]);
-  const [partForm, setPartForm] = useState({ part_name: "", part_reference: "", cost: "" as any, supplier: "" });
   const [showPartForm, setShowPartForm] = useState(false);
+  const [selectedPartId, setSelectedPartId] = useState("");
 
   useEffect(() => {
     setTaskParts(editing?.spare_parts ?? []);
     setShowPartForm(false);
-    setPartForm({ part_name: "", part_reference: "", cost: "", supplier: "" });
+    setSelectedPartId("");
   }, [editing, open]);
 
   function openNew() { setEditing(null); setForm(empty); setOpen(true); }
@@ -63,25 +65,17 @@ export default function WorkshopPage() {
     qc.invalidateQueries({ queryKey: ["workshop"] });
   }
 
-  async function addSparePart() {
+  async function linkSparePart() {
     if (!editing) { toast.error("Guarda la tarea antes de añadir recambios"); return; }
-    if (!partForm.part_name.trim()) { toast.error("Indica el nombre del recambio"); return; }
-    const payload = {
-      workshop_id: editing.id,
-      vehicle_id: editing.vehicle_id ?? null,
-      part_name: partForm.part_name.trim(),
-      part_reference: partForm.part_reference || null,
-      supplier: partForm.supplier || null,
-      cost: partForm.cost === "" ? 0 : Number(partForm.cost),
-    };
-    const { data, error } = await supabase.from("spare_parts").insert(payload).select().single();
+    if (!selectedPartId) { toast.error("Selecciona un recambio"); return; }
+    const { data, error } = await supabase.from("spare_parts").update({ workshop_id: editing.id }).eq("id", selectedPartId).select().single();
     if (error) { toast.error(error.message); return; }
     setTaskParts((prev) => [...prev, data]);
-    setPartForm({ part_name: "", part_reference: "", cost: "", supplier: "" });
+    setSelectedPartId("");
     setShowPartForm(false);
     qc.invalidateQueries({ queryKey: ["workshop"] });
     qc.invalidateQueries({ queryKey: ["spare_parts"] });
-    toast.success("Recambio añadido");
+    toast.success("Recambio asociado");
   }
 
   async function unlinkSparePart(id: string) {
@@ -235,15 +229,23 @@ export default function WorkshopPage() {
             )}
             {showPartForm && (
               <div className="rounded-md border border-border bg-muted/30 p-3 space-y-2">
-                <div className="grid grid-cols-2 gap-2">
-                  <Input placeholder="Nombre del recambio *" value={partForm.part_name} onChange={(e) => setPartForm({ ...partForm, part_name: e.target.value })} />
-                  <Input placeholder="Referencia" value={partForm.part_reference} onChange={(e) => setPartForm({ ...partForm, part_reference: e.target.value })} />
-                  <Input placeholder="Proveedor" value={partForm.supplier} onChange={(e) => setPartForm({ ...partForm, supplier: e.target.value })} />
-                  <Input type="number" step="0.01" placeholder="Coste (€)" value={partForm.cost} onChange={(e) => setPartForm({ ...partForm, cost: e.target.value })} />
-                </div>
+                <SearchableSelect
+                  value={selectedPartId}
+                  onChange={setSelectedPartId}
+                  options={allParts
+                    .filter((p: any) => !p.workshop_id || p.workshop_id === editing?.id)
+                    .filter((p: any) => !taskParts.some((tp) => tp.id === p.id))
+                    .map((p: any) => ({
+                      value: p.id,
+                      label: `${p.part_name}${p.part_reference ? ` (${p.part_reference})` : ""}${p.vehicle ? ` — ${p.vehicle.brand} ${p.vehicle.model}` : ""}`,
+                    }))}
+                  placeholder="Selecciona un recambio existente"
+                  searchPlaceholder="Buscar recambio…"
+                  emptyText="Sin recambios disponibles"
+                />
                 <div className="flex justify-end gap-2">
-                  <Button type="button" size="sm" variant="ghost" onClick={() => setShowPartForm(false)}>Cancelar</Button>
-                  <Button type="button" size="sm" onClick={addSparePart}>Guardar recambio</Button>
+                  <Button type="button" size="sm" variant="ghost" onClick={() => { setShowPartForm(false); setSelectedPartId(""); }}>Cancelar</Button>
+                  <Button type="button" size="sm" onClick={linkSparePart}>Asociar recambio</Button>
                 </div>
               </div>
             )}
