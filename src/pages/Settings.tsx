@@ -106,13 +106,14 @@ export default function SettingsPage() {
       workspace: ws,
       can_view: false,
       can_edit: false,
+      can_view_sensitive: false,
     };
   }
 
   function setCell(role: AppRole, ws: Workspace, patch: Partial<PermissionRow>) {
     setPerms((prev) => {
       const idx = prev.findIndex((p) => p.role === role && p.workspace === ws);
-      const base = idx >= 0 ? prev[idx] : { role, workspace: ws, can_view: false, can_edit: false };
+      const base = idx >= 0 ? prev[idx] : { role, workspace: ws, can_view: false, can_edit: false, can_view_sensitive: false };
       const next = { ...base, ...patch };
       if (next.can_edit) next.can_view = true;
       const copy = [...prev];
