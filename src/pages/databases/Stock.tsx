@@ -233,9 +233,9 @@ export default function StockPage() {
                     <td className="px-4 py-2.5 text-muted-foreground">{s.mileage ? Number(s.mileage).toLocaleString() : "—"}</td>
                     <td className="px-4 py-2.5 text-muted-foreground">{s.fuel_type ? fuelTypeLabels[s.fuel_type] : "—"}</td>
                     <td className="px-4 py-2.5 text-muted-foreground">{s.transmission ? transmissionLabels[s.transmission] : "—"}</td>
-                    <td className="px-4 py-2.5">{formatCurrency(s.purchase_price)}</td>
+                    <td className="px-4 py-2.5">{showSensitive ? formatCurrency(s.purchase_price) : "—"}</td>
                     <td className="px-4 py-2.5">{formatCurrency(s.selling_price)}</td>
-                    <td className="px-4 py-2.5 text-success">{formatCurrency(s.profit_margin)}</td>
+                    <td className="px-4 py-2.5 text-success">{showSensitive ? formatCurrency(s.profit_margin) : "—"}</td>
                     <td className="px-4 py-2.5 text-muted-foreground">{formatDate(s.next_itv_date)}</td>
                     <td className="px-4 py-2.5"><StatusBadge label={stockStatusLabels[s.status]} tone={stockStatusTone[s.status]} /></td>
                     <td className="px-4 py-2.5"><StatusBadge label={listingStatusLabels[s.listing_status ?? "pending_listing"]} tone={listingStatusTone[s.listing_status ?? "pending_listing"]} /></td>
@@ -396,9 +396,9 @@ export default function StockPage() {
                 <Detail label="Anuncio web" value={listingStatusLabels[viewing.listing_status ?? "pending_listing"]} />
                 <Detail label="Titularidad" value={viewing.holder ? vehicleHolderLabels[viewing.holder] ?? viewing.holder : "—"} />
                 <Detail label="Ubicación" value={viewing.location || "—"} />
-                <Detail label="Precio compra" value={formatCurrency(viewing.purchase_price)} />
+                <Detail label="Precio compra" value={showSensitive ? formatCurrency(viewing.purchase_price) : "—"} />
                 <Detail label="Precio venta" value={formatCurrency(viewing.selling_price)} />
-                <Detail label="Margen" value={formatCurrency(viewing.profit_margin)} />
+                <Detail label="Margen" value={showSensitive ? formatCurrency(viewing.profit_margin) : "—"} />
                 <Detail label="Fecha entrada" value={formatDate(viewing.entry_date)} />
                 <Detail label="Próxima ITV" value={formatDate(viewing.next_itv_date)} />
               </div>
