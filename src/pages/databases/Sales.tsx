@@ -10,16 +10,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Field, RecordDialog } from "@/components/shared/RecordDialog";
 import { KanbanBoard } from "@/components/shared/KanbanBoard";
-import { useClients, useSales, useStock } from "@/hooks/data/useDealership";
+import { useClients, useSales, useStock, useEmployees } from "@/hooks/data/useDealership";
 import { formatCurrency, formatDate, saleStatusLabels, saleStatusOrder, saleStatusTone } from "@/lib/labels";
 import { toast } from "sonner";
 
-const empty = { client_id: "", vehicle_id: "", customer_budget: "" as any, sale_status: "new_lead", next_contact_date: "", payment_method: "", notes: "" };
+const empty = { client_id: "", vehicle_id: "", customer_budget: "" as any, sale_status: "new_lead", next_contact_date: "", payment_method: "", notes: "", assigned_to: "" };
 
 export default function SalesPage() {
   const { data: sales = [] } = useSales();
   const { data: clients = [] } = useClients();
   const { data: stock = [] } = useStock();
+  const { data: employees = [] } = useEmployees();
   const qc = useQueryClient();
   const [view, setView] = useState<"kanban" | "calendar">("kanban");
   const [open, setOpen] = useState(false);
@@ -33,6 +34,7 @@ export default function SalesPage() {
       client_id: s.client_id ?? "", vehicle_id: s.vehicle_id ?? "",
       customer_budget: s.customer_budget ?? "", sale_status: s.sale_status,
       next_contact_date: s.next_contact_date ?? "", payment_method: s.payment_method ?? "", notes: s.notes ?? "",
+      assigned_to: s.assigned_to ?? "",
     });
     setOpen(true);
   }
@@ -43,6 +45,7 @@ export default function SalesPage() {
       vehicle_id: form.vehicle_id || null,
       customer_budget: form.customer_budget === "" ? null : Number(form.customer_budget),
       next_contact_date: form.next_contact_date || null,
+      assigned_to: form.assigned_to || null,
     };
     const { error } = editing
       ? await supabase.from("sales").update(payload).eq("id", editing.id)
@@ -86,6 +89,7 @@ export default function SalesPage() {
                 <button key={s.id} onClick={() => openEdit(s)} className="rounded-md border border-border bg-card p-3 text-left hover:border-foreground/20">
                   <div className="text-sm font-medium">{s.vehicle ? `${s.vehicle.brand} ${s.vehicle.model}` : "Vehículo sin asignar"}</div>
                   <div className="text-xs text-muted-foreground">{s.client?.full_name ?? "—"}</div>
+                  {s.assigned_to && <div className="mt-1 text-[11px] text-muted-foreground">Asignado: {s.assigned_to}</div>}
                   <div className="mt-2 flex items-center justify-between text-xs">
                     <span className="text-muted-foreground">{s.payment_method || "—"}</span>
                     <span className="font-medium">{formatCurrency(s.customer_budget)}</span>
@@ -154,6 +158,18 @@ export default function SalesPage() {
         </Field>
         <Field label="Próximo contacto"><Input type="date" value={form.next_contact_date} onChange={(e) => setForm({ ...form, next_contact_date: e.target.value })} /></Field>
         <Field label="Forma de pago"><Input value={form.payment_method} onChange={(e) => setForm({ ...form, payment_method: e.target.value })} placeholder="Contado, financiación…" /></Field>
+        <Field label="Asignado a" full>
+          <Select value={form.assigned_to || "none"} onValueChange={(v) => setForm({ ...form, assigned_to: v === "none" ? "" : v })}>
+            <SelectTrigger><SelectValue placeholder="Selecciona empleado" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">— Ninguno —</SelectItem>
+              {employees.map((e: any) => {
+                const name = e.full_name || e.username || "Sin nombre";
+                return <SelectItem key={e.id} value={name}>{name}</SelectItem>;
+              })}
+            </SelectContent>
+          </Select>
+        </Field>
         <Field label="Notas" full><Textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></Field>
         {editing && (
           <div className="col-span-2 flex justify-end">
