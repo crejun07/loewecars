@@ -275,6 +275,13 @@ export type Database = {
             referencedRelation: "vehicle_stock"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "spare_parts_workshop_id_fkey"
+            columns: ["workshop_id"]
+            isOneToOne: false
+            referencedRelation: "workshop"
+            referencedColumns: ["id"]
+          },
         ]
       }
       user_roles: {
