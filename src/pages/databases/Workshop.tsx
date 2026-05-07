@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Plus, LayoutGrid, List, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Plus, LayoutGrid, List, Trash2, Package, X } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/shared/PageHeader";
@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Field, RecordDialog } from "@/components/shared/RecordDialog";
 import { KanbanBoard } from "@/components/shared/KanbanBoard";
 import { useStock, useWorkshop } from "@/hooks/data/useDealership";
-import { formatCurrency, formatDate, workshopStatusLabels, workshopStatusOrder, workshopStatusTone, workshopPriorityLabels, workshopPriorityTone } from "@/lib/labels";
+import { formatCurrency, formatDate, workshopStatusLabels, workshopStatusOrder, workshopStatusTone, workshopPriorityLabels, workshopPriorityTone, sparePartStatusLabels, sparePartStatusTone } from "@/lib/labels";
 import { toast } from "sonner";
 
 const empty = { vehicle_id: "", task: "", task_date: new Date().toISOString().slice(0, 10), status: "pending", priority: 3, cost: "" as any, description: "" };
@@ -24,6 +24,15 @@ export default function WorkshopPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
   const [form, setForm] = useState<any>(empty);
+  const [taskParts, setTaskParts] = useState<any[]>([]);
+  const [partForm, setPartForm] = useState({ part_name: "", part_reference: "", cost: "" as any, supplier: "" });
+  const [showPartForm, setShowPartForm] = useState(false);
+
+  useEffect(() => {
+    setTaskParts(editing?.spare_parts ?? []);
+    setShowPartForm(false);
+    setPartForm({ part_name: "", part_reference: "", cost: "", supplier: "" });
+  }, [editing, open]);
 
   function openNew() { setEditing(null); setForm(empty); setOpen(true); }
   function openEdit(t: any) {
@@ -52,6 +61,35 @@ export default function WorkshopPage() {
     if (!confirm("¿Eliminar?")) return;
     await supabase.from("workshop").delete().eq("id", id);
     qc.invalidateQueries({ queryKey: ["workshop"] });
+  }
+
+  async function addSparePart() {
+    if (!editing) { toast.error("Guarda la tarea antes de añadir recambios"); return; }
+    if (!partForm.part_name.trim()) { toast.error("Indica el nombre del recambio"); return; }
+    const payload = {
+      workshop_id: editing.id,
+      vehicle_id: editing.vehicle_id ?? null,
+      part_name: partForm.part_name.trim(),
+      part_reference: partForm.part_reference || null,
+      supplier: partForm.supplier || null,
+      cost: partForm.cost === "" ? 0 : Number(partForm.cost),
+    };
+    const { data, error } = await supabase.from("spare_parts").insert(payload).select().single();
+    if (error) { toast.error(error.message); return; }
+    setTaskParts((prev) => [...prev, data]);
+    setPartForm({ part_name: "", part_reference: "", cost: "", supplier: "" });
+    setShowPartForm(false);
+    qc.invalidateQueries({ queryKey: ["workshop"] });
+    qc.invalidateQueries({ queryKey: ["spare_parts"] });
+    toast.success("Recambio añadido");
+  }
+
+  async function unlinkSparePart(id: string) {
+    const { error } = await supabase.from("spare_parts").update({ workshop_id: null }).eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    setTaskParts((prev) => prev.filter((p) => p.id !== id));
+    qc.invalidateQueries({ queryKey: ["workshop"] });
+    qc.invalidateQueries({ queryKey: ["spare_parts"] });
   }
 
   // Sort helper: priority desc, then date desc
@@ -165,6 +203,52 @@ export default function WorkshopPage() {
         </Field>
         <Field label="Coste (€)" full><Input type="number" step="0.01" value={form.cost} onChange={(e) => setForm({ ...form, cost: e.target.value })} /></Field>
         <Field label="Descripción" full><Textarea rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></Field>
+        {editing && (
+          <div className="col-span-2 space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="text-sm font-medium flex items-center gap-1.5"><Package className="h-3.5 w-3.5" />Recambios asociados ({taskParts.length})</div>
+              {!showPartForm && (
+                <Button type="button" size="sm" variant="outline" onClick={() => setShowPartForm(true)}>
+                  <Plus className="mr-1 h-3.5 w-3.5" />Añadir recambio
+                </Button>
+              )}
+            </div>
+            {taskParts.length > 0 && (
+              <div className="rounded-md border border-border divide-y divide-border">
+                {taskParts.map((p: any) => (
+                  <div key={p.id} className="flex items-center justify-between gap-2 px-3 py-2 text-sm">
+                    <div className="min-w-0 flex-1">
+                      <div className="font-medium truncate">{p.part_name}</div>
+                      <div className="text-[11px] text-muted-foreground truncate">
+                        {p.part_reference ? `Ref. ${p.part_reference}` : ""}
+                        {p.supplier ? `${p.part_reference ? " · " : ""}${p.supplier}` : ""}
+                      </div>
+                    </div>
+                    <StatusBadge label={sparePartStatusLabels[p.status] ?? p.status} tone={sparePartStatusTone[p.status]} />
+                    <span className="text-xs font-medium tabular-nums">{formatCurrency(p.cost, 2)}</span>
+                    <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => unlinkSparePart(p.id)}>
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+            {showPartForm && (
+              <div className="rounded-md border border-border bg-muted/30 p-3 space-y-2">
+                <div className="grid grid-cols-2 gap-2">
+                  <Input placeholder="Nombre del recambio *" value={partForm.part_name} onChange={(e) => setPartForm({ ...partForm, part_name: e.target.value })} />
+                  <Input placeholder="Referencia" value={partForm.part_reference} onChange={(e) => setPartForm({ ...partForm, part_reference: e.target.value })} />
+                  <Input placeholder="Proveedor" value={partForm.supplier} onChange={(e) => setPartForm({ ...partForm, supplier: e.target.value })} />
+                  <Input type="number" step="0.01" placeholder="Coste (€)" value={partForm.cost} onChange={(e) => setPartForm({ ...partForm, cost: e.target.value })} />
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button type="button" size="sm" variant="ghost" onClick={() => setShowPartForm(false)}>Cancelar</Button>
+                  <Button type="button" size="sm" onClick={addSparePart}>Guardar recambio</Button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
         {editing && (
           <div className="col-span-2 flex justify-end">
             <Button type="button" variant="ghost" size="sm" onClick={() => remove(editing.id)} className="text-destructive"><Trash2 className="mr-1 h-3.5 w-3.5" />Eliminar</Button>

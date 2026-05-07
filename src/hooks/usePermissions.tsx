@@ -28,6 +28,7 @@ export interface PermissionRow {
   workspace: Workspace;
   can_view: boolean;
   can_edit: boolean;
+  can_view_sensitive?: boolean;
 }
 
 interface PermissionsContextValue {
@@ -36,6 +37,7 @@ interface PermissionsContextValue {
   loading: boolean;
   canView: (ws: Workspace) => boolean;
   canEdit: (ws: Workspace) => boolean;
+  canViewSensitive: (ws: Workspace) => boolean;
   isInformatica: boolean;
   refresh: () => Promise<void>;
 }
@@ -61,7 +63,7 @@ export function PermissionsProvider({ children }: { children: ReactNode }) {
     while (attempt < 3) {
       const [rolesRes, permsRes] = await Promise.all([
         supabase.from("user_roles").select("role").eq("user_id", user.id),
-        supabase.from("role_permissions").select("role,workspace,can_view,can_edit"),
+        supabase.from("role_permissions").select("role,workspace,can_view,can_edit,can_view_sensitive"),
       ]);
       if (!rolesRes.error && !permsRes.error) {
         setRoles((rolesRes.data ?? []).map((r: any) => r.role as AppRole));
@@ -85,11 +87,14 @@ export function PermissionsProvider({ children }: { children: ReactNode }) {
     permissions.some((p) => roles.includes(p.role) && p.workspace === ws && p.can_view);
   const canEdit = (ws: Workspace) =>
     permissions.some((p) => roles.includes(p.role) && p.workspace === ws && p.can_edit);
+  const canViewSensitive = (ws: Workspace) =>
+    roles.includes("informatica") ||
+    permissions.some((p) => roles.includes(p.role) && p.workspace === ws && p.can_view_sensitive);
   const isInformatica = roles.includes("informatica");
 
   return (
     <PermissionsContext.Provider
-      value={{ roles, permissions, loading, canView, canEdit, isInformatica, refresh: load }}
+      value={{ roles, permissions, loading, canView, canEdit, canViewSensitive, isInformatica, refresh: load }}
     >
       {children}
     </PermissionsContext.Provider>

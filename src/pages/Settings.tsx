@@ -106,13 +106,14 @@ export default function SettingsPage() {
       workspace: ws,
       can_view: false,
       can_edit: false,
+      can_view_sensitive: false,
     };
   }
 
   function setCell(role: AppRole, ws: Workspace, patch: Partial<PermissionRow>) {
     setPerms((prev) => {
       const idx = prev.findIndex((p) => p.role === role && p.workspace === ws);
-      const base = idx >= 0 ? prev[idx] : { role, workspace: ws, can_view: false, can_edit: false };
+      const base = idx >= 0 ? prev[idx] : { role, workspace: ws, can_view: false, can_edit: false, can_view_sensitive: false };
       const next = { ...base, ...patch };
       if (next.can_edit) next.can_view = true;
       const copy = [...prev];
@@ -127,7 +128,7 @@ export default function SettingsPage() {
     const rows = ROLES.flatMap((r) =>
       WORKSPACES.map((w) => {
         const c = getCell(r, w.key);
-        return { role: r, workspace: w.key, can_view: c.can_view, can_edit: c.can_edit };
+        return { role: r, workspace: w.key, can_view: c.can_view, can_edit: c.can_edit, can_view_sensitive: !!c.can_view_sensitive };
       }),
     );
     const { error } = await supabase
@@ -220,6 +221,13 @@ export default function SettingsPage() {
                                   onCheckedChange={(v) => setCell(r, w.key, { can_edit: !!v })}
                                 />
                                 Editar
+                              </label>
+                              <label className="flex items-center gap-1 text-xs" title="Ver datos sensibles (precio de compra, márgenes...)">
+                                <Checkbox
+                                  checked={!!c.can_view_sensitive}
+                                  onCheckedChange={(v) => setCell(r, w.key, { can_view_sensitive: !!v })}
+                                />
+                                Sensible
                               </label>
                             </div>
                           </TableCell>

@@ -123,6 +123,7 @@ export type Database = {
         Row: {
           can_edit: boolean
           can_view: boolean
+          can_view_sensitive: boolean
           created_at: string
           id: string
           role: Database["public"]["Enums"]["app_role"]
@@ -132,6 +133,7 @@ export type Database = {
         Insert: {
           can_edit?: boolean
           can_view?: boolean
+          can_view_sensitive?: boolean
           created_at?: string
           id?: string
           role: Database["public"]["Enums"]["app_role"]
@@ -141,6 +143,7 @@ export type Database = {
         Update: {
           can_edit?: boolean
           can_view?: boolean
+          can_view_sensitive?: boolean
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
@@ -151,6 +154,7 @@ export type Database = {
       }
       sales: {
         Row: {
+          assigned_to: string | null
           client_id: string | null
           created_at: string
           customer_budget: number | null
@@ -163,6 +167,7 @@ export type Database = {
           vehicle_id: string | null
         }
         Insert: {
+          assigned_to?: string | null
           client_id?: string | null
           created_at?: string
           customer_budget?: number | null
@@ -175,6 +180,7 @@ export type Database = {
           vehicle_id?: string | null
         }
         Update: {
+          assigned_to?: string | null
           client_id?: string | null
           created_at?: string
           customer_budget?: number | null
@@ -221,6 +227,7 @@ export type Database = {
           supplier: string | null
           updated_at: string
           vehicle_id: string | null
+          workshop_id: string | null
         }
         Insert: {
           cost?: number | null
@@ -239,6 +246,7 @@ export type Database = {
           supplier?: string | null
           updated_at?: string
           vehicle_id?: string | null
+          workshop_id?: string | null
         }
         Update: {
           cost?: number | null
@@ -257,6 +265,7 @@ export type Database = {
           supplier?: string | null
           updated_at?: string
           vehicle_id?: string | null
+          workshop_id?: string | null
         }
         Relationships: [
           {
@@ -264,6 +273,13 @@ export type Database = {
             columns: ["vehicle_id"]
             isOneToOne: false
             referencedRelation: "vehicle_stock"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "spare_parts_workshop_id_fkey"
+            columns: ["workshop_id"]
+            isOneToOne: false
+            referencedRelation: "workshop"
             referencedColumns: ["id"]
           },
         ]

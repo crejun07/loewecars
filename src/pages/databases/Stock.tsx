@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Field, RecordDialog } from "@/components/shared/RecordDialog";
 import { useStock } from "@/hooks/data/useDealership";
+import { usePermissions } from "@/hooks/usePermissions";
 import {
   daysUntil, formatCurrency, formatDate, fuelTypeLabels,
   listingStatusLabels, listingStatusOrder, listingStatusTone,
@@ -27,6 +28,8 @@ const emptyForm = {
 
 export default function StockPage() {
   const { data: stock = [] } = useStock();
+  const { canViewSensitive } = usePermissions();
+  const showSensitive = canViewSensitive("stock");
   const qc = useQueryClient();
   const [view, setView] = useState<"gallery" | "table" | "listings">("gallery");
   const [onlyAvailable, setOnlyAvailable] = useState(false);
@@ -187,7 +190,7 @@ export default function StockPage() {
                     </div>
                     <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
                       <div><div className="text-muted-foreground">Venta</div><div className="font-medium">{formatCurrency(s.selling_price)}</div></div>
-                      <div><div className="text-muted-foreground">Margen</div><div className="font-medium text-success">{formatCurrency(s.profit_margin)}</div></div>
+                      <div><div className="text-muted-foreground">Margen</div><div className="font-medium text-success">{showSensitive ? formatCurrency(s.profit_margin) : "—"}</div></div>
                     </div>
                     <div className="mt-2 flex items-center justify-between">
                       <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
@@ -230,9 +233,9 @@ export default function StockPage() {
                     <td className="px-4 py-2.5 text-muted-foreground">{s.mileage ? Number(s.mileage).toLocaleString() : "—"}</td>
                     <td className="px-4 py-2.5 text-muted-foreground">{s.fuel_type ? fuelTypeLabels[s.fuel_type] : "—"}</td>
                     <td className="px-4 py-2.5 text-muted-foreground">{s.transmission ? transmissionLabels[s.transmission] : "—"}</td>
-                    <td className="px-4 py-2.5">{formatCurrency(s.purchase_price)}</td>
+                    <td className="px-4 py-2.5">{showSensitive ? formatCurrency(s.purchase_price) : "—"}</td>
                     <td className="px-4 py-2.5">{formatCurrency(s.selling_price)}</td>
-                    <td className="px-4 py-2.5 text-success">{formatCurrency(s.profit_margin)}</td>
+                    <td className="px-4 py-2.5 text-success">{showSensitive ? formatCurrency(s.profit_margin) : "—"}</td>
                     <td className="px-4 py-2.5 text-muted-foreground">{formatDate(s.next_itv_date)}</td>
                     <td className="px-4 py-2.5"><StatusBadge label={stockStatusLabels[s.status]} tone={stockStatusTone[s.status]} /></td>
                     <td className="px-4 py-2.5"><StatusBadge label={listingStatusLabels[s.listing_status ?? "pending_listing"]} tone={listingStatusTone[s.listing_status ?? "pending_listing"]} /></td>
@@ -328,7 +331,9 @@ export default function StockPage() {
             <SelectContent>{Object.entries(listingStatusLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
           </Select>
         </Field>
-        <Field label="Precio de compra (€)"><Input type="number" step="0.01" value={form.purchase_price} onChange={(e) => setForm({ ...form, purchase_price: e.target.value })} /></Field>
+        {showSensitive && (
+          <Field label="Precio de compra (€)"><Input type="number" step="0.01" value={form.purchase_price} onChange={(e) => setForm({ ...form, purchase_price: e.target.value })} /></Field>
+        )}
         <Field label="Precio de venta (€)"><Input type="number" step="0.01" value={form.selling_price} onChange={(e) => setForm({ ...form, selling_price: e.target.value })} /></Field>
         <Field label="Fecha de entrada"><Input type="date" value={form.entry_date} onChange={(e) => setForm({ ...form, entry_date: e.target.value })} /></Field>
         <Field label="Próxima ITV"><Input type="date" value={form.next_itv_date} onChange={(e) => setForm({ ...form, next_itv_date: e.target.value })} /></Field>
@@ -393,9 +398,9 @@ export default function StockPage() {
                 <Detail label="Anuncio web" value={listingStatusLabels[viewing.listing_status ?? "pending_listing"]} />
                 <Detail label="Titularidad" value={viewing.holder ? vehicleHolderLabels[viewing.holder] ?? viewing.holder : "—"} />
                 <Detail label="Ubicación" value={viewing.location || "—"} />
-                <Detail label="Precio compra" value={formatCurrency(viewing.purchase_price)} />
+                <Detail label="Precio compra" value={showSensitive ? formatCurrency(viewing.purchase_price) : "—"} />
                 <Detail label="Precio venta" value={formatCurrency(viewing.selling_price)} />
-                <Detail label="Margen" value={formatCurrency(viewing.profit_margin)} />
+                <Detail label="Margen" value={showSensitive ? formatCurrency(viewing.profit_margin) : "—"} />
                 <Detail label="Fecha entrada" value={formatDate(viewing.entry_date)} />
                 <Detail label="Próxima ITV" value={formatDate(viewing.next_itv_date)} />
               </div>
