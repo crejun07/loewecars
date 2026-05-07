@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Field, RecordDialog } from "@/components/shared/RecordDialog";
 import { useStock } from "@/hooks/data/useDealership";
+import { usePermissions } from "@/hooks/usePermissions";
 import {
   daysUntil, formatCurrency, formatDate, fuelTypeLabels,
   listingStatusLabels, listingStatusOrder, listingStatusTone,
@@ -27,6 +28,8 @@ const emptyForm = {
 
 export default function StockPage() {
   const { data: stock = [] } = useStock();
+  const { canViewSensitive } = usePermissions();
+  const showSensitive = canViewSensitive("stock");
   const qc = useQueryClient();
   const [view, setView] = useState<"gallery" | "table" | "listings">("gallery");
   const [onlyAvailable, setOnlyAvailable] = useState(false);
@@ -187,7 +190,7 @@ export default function StockPage() {
                     </div>
                     <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
                       <div><div className="text-muted-foreground">Venta</div><div className="font-medium">{formatCurrency(s.selling_price)}</div></div>
-                      <div><div className="text-muted-foreground">Margen</div><div className="font-medium text-success">{formatCurrency(s.profit_margin)}</div></div>
+                      <div><div className="text-muted-foreground">Margen</div><div className="font-medium text-success">{showSensitive ? formatCurrency(s.profit_margin) : "—"}</div></div>
                     </div>
                     <div className="mt-2 flex items-center justify-between">
                       <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
