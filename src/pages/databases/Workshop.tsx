@@ -12,7 +12,6 @@ import { Field, RecordDialog } from "@/components/shared/RecordDialog";
 import { KanbanBoard } from "@/components/shared/KanbanBoard";
 import { useStock, useWorkshop } from "@/hooks/data/useDealership";
 import { formatCurrency, formatDate, workshopStatusLabels, workshopStatusOrder, workshopStatusTone, workshopPriorityLabels, workshopPriorityTone, sparePartStatusLabels, sparePartStatusTone } from "@/lib/labels";
-import { StatusBadge } from "@/components/shared/StatusBadge";
 import { toast } from "sonner";
 
 const empty = { vehicle_id: "", task: "", task_date: new Date().toISOString().slice(0, 10), status: "pending", priority: 3, cost: "" as any, description: "" };
@@ -225,7 +224,7 @@ export default function WorkshopPage() {
                         {p.supplier ? `${p.part_reference ? " · " : ""}${p.supplier}` : ""}
                       </div>
                     </div>
-                    <StatusBadge label={sparePartStatusLabels[p.status] ?? p.status} tone={sparePartStatusTone[p.status] ?? "gray"} />
+                    <StatusBadge label={sparePartStatusLabels[p.status] ?? p.status} tone={sparePartStatusTone[p.status]} />
                     <span className="text-xs font-medium tabular-nums">{formatCurrency(p.cost, 2)}</span>
                     <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => unlinkSparePart(p.id)}>
                       <X className="h-3.5 w-3.5" />
