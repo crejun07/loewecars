@@ -251,7 +251,13 @@ export default function SparePartsPage() {
                         <td className="px-3 py-2 text-xs text-muted-foreground">{p.managed_by || "—"}</td>
                         <td className="px-3 py-2 text-xs text-muted-foreground">{p.ordered_by || "—"}</td>
                         <td className="px-3 py-2">
-                          <StatusBadge label={sparePartStatusLabels[p.status]} tone={sparePartStatusTone[p.status]} />
+                          <QuickStatusToggle
+                            status={p.status}
+                            order={sparePartStatusOrder}
+                            labels={sparePartStatusLabels}
+                            tones={sparePartStatusTone}
+                            onChange={(next) => quickUpdateStatus(p.id, next)}
+                          />
                         </td>
                         <td className="px-3 py-2">
                           <div className="flex flex-col gap-1">
