@@ -216,6 +216,7 @@ export default function WorkshopPage() {
                       <div className="text-[11px] text-muted-foreground truncate">
                         {p.part_reference ? `Ref. ${p.part_reference}` : ""}
                         {p.supplier ? `${p.part_reference ? " · " : ""}${p.supplier}` : ""}
+                        {p.vehicle?.license_plate ? `${(p.part_reference || p.supplier) ? " · " : ""}🚗 ${p.vehicle.license_plate}` : ""}
                       </div>
                     </div>
                     <StatusBadge label={sparePartStatusLabels[p.status] ?? p.status} tone={sparePartStatusTone[p.status]} />
@@ -238,6 +239,7 @@ export default function WorkshopPage() {
                     .map((p: any) => ({
                       value: p.id,
                       label: `${p.part_name}${p.part_reference ? ` (${p.part_reference})` : ""}${p.vehicle ? ` — ${p.vehicle.brand} ${p.vehicle.model}` : ""}`,
+                      hint: p.vehicle?.license_plate ? `🚗 ${p.vehicle.license_plate}` : undefined,
                     }))}
                   placeholder="Selecciona un recambio existente"
                   searchPlaceholder="Buscar recambio…"

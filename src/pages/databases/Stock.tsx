@@ -40,6 +40,12 @@ export default function StockPage() {
   const [viewing, setViewing] = useState<any | null>(null);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [colFilters, setColFilters] = useState<{
+    yearMin: string; yearMax: string;
+    kmMax: string;
+    fuel: string; transmission: string;
+    status: string; listing: string;
+  }>({ yearMin: "", yearMax: "", kmMax: "", fuel: "all", transmission: "all", status: "all", listing: "all" });
 
   async function handleImageUpload(file: File) {
     if (!file.type.startsWith("image/")) {
@@ -68,14 +74,21 @@ export default function StockPage() {
     const q = search.trim().toLowerCase();
     return stock.filter((s: any) => {
       if (onlyAvailable && s.status !== "available") return false;
-      if (!q) return true;
-      return (
+      if (q && !(
         (s.brand ?? "").toLowerCase().includes(q) ||
         (s.model ?? "").toLowerCase().includes(q) ||
         (s.license_plate ?? "").toLowerCase().includes(q)
-      );
+      )) return false;
+      if (colFilters.yearMin && (!s.year || s.year < Number(colFilters.yearMin))) return false;
+      if (colFilters.yearMax && (!s.year || s.year > Number(colFilters.yearMax))) return false;
+      if (colFilters.kmMax && (!s.mileage || s.mileage > Number(colFilters.kmMax))) return false;
+      if (colFilters.fuel !== "all" && s.fuel_type !== colFilters.fuel) return false;
+      if (colFilters.transmission !== "all" && s.transmission !== colFilters.transmission) return false;
+      if (colFilters.status !== "all" && s.status !== colFilters.status) return false;
+      if (colFilters.listing !== "all" && (s.listing_status ?? "pending_listing") !== colFilters.listing) return false;
+      return true;
     });
-  }, [stock, onlyAvailable, search]);
+  }, [stock, onlyAvailable, search, colFilters]);
 
   function openNew() { setEditing(null); setForm(emptyForm); setOpen(true); }
   function openEdit(s: any) {
@@ -221,6 +234,59 @@ export default function StockPage() {
                 <th className="px-4 py-2.5 font-medium">Combustible</th><th className="px-4 py-2.5 font-medium">Cambio</th>
                 <th className="px-4 py-2.5 font-medium">Compra</th><th className="px-4 py-2.5 font-medium">Venta</th><th className="px-4 py-2.5 font-medium">Margen</th>
                 <th className="px-4 py-2.5 font-medium">ITV</th><th className="px-4 py-2.5 font-medium">Estado</th><th className="px-4 py-2.5 font-medium">Web</th><th></th>
+              </tr></thead>
+              <thead><tr className="border-b border-border bg-card text-left text-xs">
+                <th className="px-2 py-2"></th>
+                <th className="px-2 py-2">
+                  <div className="flex gap-1">
+                    <Input type="number" placeholder="Desde" value={colFilters.yearMin} onChange={(e) => setColFilters({ ...colFilters, yearMin: e.target.value })} className="h-7 w-20 text-xs" />
+                    <Input type="number" placeholder="Hasta" value={colFilters.yearMax} onChange={(e) => setColFilters({ ...colFilters, yearMax: e.target.value })} className="h-7 w-20 text-xs" />
+                  </div>
+                </th>
+                <th className="px-2 py-2">
+                  <Input type="number" placeholder="Máx" value={colFilters.kmMax} onChange={(e) => setColFilters({ ...colFilters, kmMax: e.target.value })} className="h-7 w-24 text-xs" />
+                </th>
+                <th className="px-2 py-2">
+                  <Select value={colFilters.fuel} onValueChange={(v) => setColFilters({ ...colFilters, fuel: v })}>
+                    <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      {Object.entries(fuelTypeLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </th>
+                <th className="px-2 py-2">
+                  <Select value={colFilters.transmission} onValueChange={(v) => setColFilters({ ...colFilters, transmission: v })}>
+                    <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      {Object.entries(transmissionLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </th>
+                <th className="px-2 py-2"></th>
+                <th className="px-2 py-2"></th>
+                <th className="px-2 py-2"></th>
+                <th className="px-2 py-2"></th>
+                <th className="px-2 py-2">
+                  <Select value={colFilters.status} onValueChange={(v) => setColFilters({ ...colFilters, status: v })}>
+                    <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      {Object.entries(stockStatusLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </th>
+                <th className="px-2 py-2">
+                  <Select value={colFilters.listing} onValueChange={(v) => setColFilters({ ...colFilters, listing: v })}>
+                    <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      {Object.entries(listingStatusLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </th>
+                <th className="px-2 py-2"></th>
               </tr></thead>
               <tbody className="divide-y divide-border">
                 {items.map((s: any) => (
