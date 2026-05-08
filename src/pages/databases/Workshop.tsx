@@ -210,6 +210,7 @@ export default function WorkshopPage() {
             {taskParts.length > 0 && (
               <div className="rounded-md border border-border divide-y divide-border">
                 {taskParts.map((p: any) => (
+                  ((): any => null)(),
                   <div key={p.id} className="flex items-center justify-between gap-2 px-3 py-2 text-sm">
                     <div className="min-w-0 flex-1">
                       <div className="font-medium truncate">{p.part_name}</div>
