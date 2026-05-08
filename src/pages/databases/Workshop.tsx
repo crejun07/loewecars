@@ -239,6 +239,7 @@ export default function WorkshopPage() {
                     .map((p: any) => ({
                       value: p.id,
                       label: `${p.part_name}${p.part_reference ? ` (${p.part_reference})` : ""}${p.vehicle ? ` — ${p.vehicle.brand} ${p.vehicle.model}` : ""}`,
+                      hint: p.vehicle?.license_plate ? `🚗 ${p.vehicle.license_plate}` : undefined,
                     }))}
                   placeholder="Selecciona un recambio existente"
                   searchPlaceholder="Buscar recambio…"
