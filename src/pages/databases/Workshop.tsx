@@ -12,6 +12,7 @@ import { Field, RecordDialog } from "@/components/shared/RecordDialog";
 import { KanbanBoard } from "@/components/shared/KanbanBoard";
 import { useStock, useWorkshop, useSpareParts } from "@/hooks/data/useDealership";
 import { SearchableSelect } from "@/components/shared/SearchableSelect";
+import { QuickStatusToggle } from "@/components/shared/QuickStatusToggle";
 import { formatCurrency, formatDate, workshopStatusLabels, workshopStatusOrder, workshopStatusTone, workshopPriorityLabels, workshopPriorityTone, sparePartStatusLabels, sparePartStatusTone } from "@/lib/labels";
 import { toast } from "sonner";
 
@@ -57,6 +58,11 @@ export default function WorkshopPage() {
       : await supabase.from("workshop").insert(payload);
     if (error) { toast.error(error.message); return; }
     toast.success("Guardado");
+    qc.invalidateQueries({ queryKey: ["workshop"] });
+  }
+  async function quickUpdateStatus(id: string, status: string) {
+    const { error } = await supabase.from("workshop").update({ status: status as any }).eq("id", id);
+    if (error) { toast.error(error.message); return; }
     qc.invalidateQueries({ queryKey: ["workshop"] });
   }
   async function remove(id: string) {
@@ -132,6 +138,15 @@ export default function WorkshopPage() {
                   <div className="mt-2 flex items-center justify-between text-xs">
                     <span className="text-muted-foreground">{formatDate(t.task_date)}</span>
                     <span className="font-medium">{formatCurrency(t.cost)}</span>
+                  </div>
+                  <div className="mt-2">
+                    <QuickStatusToggle
+                      status={t.status}
+                      order={workshopStatusOrder}
+                      labels={workshopStatusLabels}
+                      tones={workshopStatusTone}
+                      onChange={(next) => quickUpdateStatus(t.id, next)}
+                    />
                   </div>
                 </button>
               ))
