@@ -216,6 +216,7 @@ export default function WorkshopPage() {
                       <div className="text-[11px] text-muted-foreground truncate">
                         {p.part_reference ? `Ref. ${p.part_reference}` : ""}
                         {p.supplier ? `${p.part_reference ? " · " : ""}${p.supplier}` : ""}
+                        {p.vehicle?.license_plate ? `${(p.part_reference || p.supplier) ? " · " : ""}🚗 ${p.vehicle.license_plate}` : ""}
                       </div>
                     </div>
                     <StatusBadge label={sparePartStatusLabels[p.status] ?? p.status} tone={sparePartStatusTone[p.status]} />
