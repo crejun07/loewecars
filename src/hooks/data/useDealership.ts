@@ -77,7 +77,7 @@ export function useWorkshop() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("workshop")
-        .select("*, vehicle:vehicle_stock(id, brand, model, year, license_plate), spare_parts:spare_parts(id, part_name, part_reference, status, cost, supplier)")
+        .select("*, vehicle:vehicle_stock(id, brand, model, year, license_plate), spare_parts:spare_parts(id, part_name, part_reference, status, cost, supplier, vehicle:vehicle_stock(id, brand, model, license_plate))")
         .order("task_date", { ascending: false });
       if (error) throw error;
       return data ?? [];
