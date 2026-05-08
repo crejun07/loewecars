@@ -40,6 +40,12 @@ export default function StockPage() {
   const [viewing, setViewing] = useState<any | null>(null);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [colFilters, setColFilters] = useState<{
+    yearMin: string; yearMax: string;
+    kmMax: string;
+    fuel: string; transmission: string;
+    status: string; listing: string;
+  }>({ yearMin: "", yearMax: "", kmMax: "", fuel: "all", transmission: "all", status: "all", listing: "all" });
 
   async function handleImageUpload(file: File) {
     if (!file.type.startsWith("image/")) {
@@ -68,14 +74,21 @@ export default function StockPage() {
     const q = search.trim().toLowerCase();
     return stock.filter((s: any) => {
       if (onlyAvailable && s.status !== "available") return false;
-      if (!q) return true;
-      return (
+      if (q && !(
         (s.brand ?? "").toLowerCase().includes(q) ||
         (s.model ?? "").toLowerCase().includes(q) ||
         (s.license_plate ?? "").toLowerCase().includes(q)
-      );
+      )) return false;
+      if (colFilters.yearMin && (!s.year || s.year < Number(colFilters.yearMin))) return false;
+      if (colFilters.yearMax && (!s.year || s.year > Number(colFilters.yearMax))) return false;
+      if (colFilters.kmMax && (!s.mileage || s.mileage > Number(colFilters.kmMax))) return false;
+      if (colFilters.fuel !== "all" && s.fuel_type !== colFilters.fuel) return false;
+      if (colFilters.transmission !== "all" && s.transmission !== colFilters.transmission) return false;
+      if (colFilters.status !== "all" && s.status !== colFilters.status) return false;
+      if (colFilters.listing !== "all" && (s.listing_status ?? "pending_listing") !== colFilters.listing) return false;
+      return true;
     });
-  }, [stock, onlyAvailable, search]);
+  }, [stock, onlyAvailable, search, colFilters]);
 
   function openNew() { setEditing(null); setForm(emptyForm); setOpen(true); }
   function openEdit(s: any) {
