@@ -235,6 +235,59 @@ export default function StockPage() {
                 <th className="px-4 py-2.5 font-medium">Compra</th><th className="px-4 py-2.5 font-medium">Venta</th><th className="px-4 py-2.5 font-medium">Margen</th>
                 <th className="px-4 py-2.5 font-medium">ITV</th><th className="px-4 py-2.5 font-medium">Estado</th><th className="px-4 py-2.5 font-medium">Web</th><th></th>
               </tr></thead>
+              <thead><tr className="border-b border-border bg-card text-left text-xs">
+                <th className="px-2 py-2"></th>
+                <th className="px-2 py-2">
+                  <div className="flex gap-1">
+                    <Input type="number" placeholder="Desde" value={colFilters.yearMin} onChange={(e) => setColFilters({ ...colFilters, yearMin: e.target.value })} className="h-7 w-20 text-xs" />
+                    <Input type="number" placeholder="Hasta" value={colFilters.yearMax} onChange={(e) => setColFilters({ ...colFilters, yearMax: e.target.value })} className="h-7 w-20 text-xs" />
+                  </div>
+                </th>
+                <th className="px-2 py-2">
+                  <Input type="number" placeholder="Máx" value={colFilters.kmMax} onChange={(e) => setColFilters({ ...colFilters, kmMax: e.target.value })} className="h-7 w-24 text-xs" />
+                </th>
+                <th className="px-2 py-2">
+                  <Select value={colFilters.fuel} onValueChange={(v) => setColFilters({ ...colFilters, fuel: v })}>
+                    <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      {Object.entries(fuelTypeLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </th>
+                <th className="px-2 py-2">
+                  <Select value={colFilters.transmission} onValueChange={(v) => setColFilters({ ...colFilters, transmission: v })}>
+                    <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      {Object.entries(transmissionLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </th>
+                <th className="px-2 py-2"></th>
+                <th className="px-2 py-2"></th>
+                <th className="px-2 py-2"></th>
+                <th className="px-2 py-2"></th>
+                <th className="px-2 py-2">
+                  <Select value={colFilters.status} onValueChange={(v) => setColFilters({ ...colFilters, status: v })}>
+                    <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      {Object.entries(stockStatusLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </th>
+                <th className="px-2 py-2">
+                  <Select value={colFilters.listing} onValueChange={(v) => setColFilters({ ...colFilters, listing: v })}>
+                    <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      {Object.entries(listingStatusLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </th>
+                <th className="px-2 py-2"></th>
+              </tr></thead>
               <tbody className="divide-y divide-border">
                 {items.map((s: any) => (
                   <tr key={s.id} className="hover:bg-muted/30">
