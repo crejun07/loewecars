@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Field, RecordDialog } from "@/components/shared/RecordDialog";
 import { KanbanBoard } from "@/components/shared/KanbanBoard";
 import { SearchableSelect } from "@/components/shared/SearchableSelect";
+import { QuickStatusToggle } from "@/components/shared/QuickStatusToggle";
 import { useSpareParts, useStock, useEmployees } from "@/hooks/data/useDealership";
 import {
   formatCurrency,
@@ -124,6 +125,11 @@ export default function SparePartsPage() {
     await supabase.from("spare_parts").delete().eq("id", id);
     qc.invalidateQueries({ queryKey: ["spare_parts"] });
   }
+  async function quickUpdateStatus(id: string, status: string) {
+    const { error } = await supabase.from("spare_parts").update({ status: status as any }).eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    qc.invalidateQueries({ queryKey: ["spare_parts"] });
+  }
 
   const vehicleOptions = stock.map((v: any) => ({
     value: v.id,
@@ -190,6 +196,15 @@ export default function SparePartsPage() {
                     <div className="mt-2 flex items-center justify-between text-xs">
                       <span className="text-muted-foreground">{p.supplier || "Sin proveedor"}</span>
                       <span className="font-medium">{formatCurrency(p.cost, 2)}</span>
+                    </div>
+                    <div className="mt-2">
+                      <QuickStatusToggle
+                        status={p.status}
+                        order={sparePartStatusOrder}
+                        labels={sparePartStatusLabels}
+                        tones={sparePartStatusTone}
+                        onChange={(next) => quickUpdateStatus(p.id, next)}
+                      />
                     </div>
                     {(p.managed_by || p.ordered_by) && (
                       <div className="mt-2 text-[11px] text-muted-foreground">
