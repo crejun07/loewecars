@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Field, RecordDialog } from "@/components/shared/RecordDialog";
 import { KanbanBoard } from "@/components/shared/KanbanBoard";
+import { QuickStatusToggle } from "@/components/shared/QuickStatusToggle";
 import { SearchableSelect } from "@/components/shared/SearchableSelect";
 import { useAppraisals, useClients } from "@/hooks/data/useDealership";
 import { appraisalStatusLabels, appraisalStatusOrder, appraisalStatusTone, employees, formatCurrency, formatDate, fuelTypeLabels, transmissionLabels } from "@/lib/labels";
@@ -67,6 +68,11 @@ export default function AppraisalsPage() {
     await supabase.from("vehicle_appraisals").delete().eq("id", id);
     qc.invalidateQueries({ queryKey: ["vehicle_appraisals"] });
   }
+  async function quickUpdateStatus(id: string, status: string) {
+    const { error } = await supabase.from("vehicle_appraisals").update({ deal_status: status as any }).eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    qc.invalidateQueries({ queryKey: ["vehicle_appraisals"] });
+  }
 
   return (
     <div>
@@ -103,6 +109,15 @@ export default function AppraisalsPage() {
                     </div>
                   )}
                   {a.follow_up_date && <div className="mt-1 text-[11px] text-muted-foreground">Seguimiento {formatDate(a.follow_up_date)}</div>}
+                  <div className="mt-2">
+                    <QuickStatusToggle
+                      status={a.deal_status}
+                      order={appraisalStatusOrder}
+                      labels={appraisalStatusLabels}
+                      tones={appraisalStatusTone}
+                      onChange={(next) => quickUpdateStatus(a.id, next)}
+                    />
+                  </div>
                 </button>
               ))
             }
