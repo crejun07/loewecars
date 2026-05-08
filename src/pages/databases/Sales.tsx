@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Field, RecordDialog } from "@/components/shared/RecordDialog";
 import { KanbanBoard } from "@/components/shared/KanbanBoard";
+import { QuickStatusToggle } from "@/components/shared/QuickStatusToggle";
 import { useClients, useSales, useStock, useEmployees } from "@/hooks/data/useDealership";
 import { formatCurrency, formatDate, saleStatusLabels, saleStatusOrder, saleStatusTone } from "@/lib/labels";
 import { toast } from "sonner";
@@ -59,6 +60,11 @@ export default function SalesPage() {
     await supabase.from("sales").delete().eq("id", id);
     qc.invalidateQueries({ queryKey: ["sales"] });
   }
+  async function quickUpdateStatus(id: string, status: string) {
+    const { error } = await supabase.from("sales").update({ sale_status: status as any }).eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    qc.invalidateQueries({ queryKey: ["sales"] });
+  }
 
   // Group sales with next_contact_date by month
   const upcoming = sales
@@ -95,6 +101,15 @@ export default function SalesPage() {
                     <span className="font-medium">{formatCurrency(s.customer_budget)}</span>
                   </div>
                   {s.next_contact_date && <div className="mt-1 text-[11px] text-muted-foreground">Próximo: {formatDate(s.next_contact_date)}</div>}
+                  <div className="mt-2">
+                    <QuickStatusToggle
+                      status={s.sale_status}
+                      order={saleStatusOrder}
+                      labels={saleStatusLabels}
+                      tones={saleStatusTone}
+                      onChange={(next) => quickUpdateStatus(s.id, next)}
+                    />
+                  </div>
                 </button>
               ))
             }
