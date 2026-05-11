@@ -54,15 +54,23 @@ export default function StockPage() {
       toast.error("El archivo debe ser una imagen");
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("La imagen no puede superar los 5 MB");
-      return;
-    }
     setUploading(true);
     try {
-      const ext = file.name.split(".").pop() || "jpg";
+      let toUpload: Blob = file;
+      let ext = file.name.split(".").pop() || "jpg";
+      const MAX = 5 * 1024 * 1024;
+      if (file.size > MAX) {
+        try {
+          toUpload = await compressImage(file, MAX);
+          ext = "jpg";
+          toast.info("Imagen comprimida para optimizar el tamaño");
+        } catch {
+          toast.error("No se pudo comprimir la imagen");
+          return;
+        }
+      }
       const path = `${crypto.randomUUID()}.${ext}`;
-      const { error: upErr } = await supabase.storage.from("vehicle-images").upload(path, file, { upsert: false });
+      const { error: upErr } = await supabase.storage.from("vehicle-images").upload(path, toUpload, { upsert: false, contentType: toUpload.type || file.type });
       if (upErr) { toast.error(upErr.message); return; }
       const { data } = supabase.storage.from("vehicle-images").getPublicUrl(path);
       setForm((f: any) => ({ ...f, image_url: data.publicUrl }));
