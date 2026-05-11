@@ -509,6 +509,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      list_all_users: {
+        Args: never
+        Returns: {
+          full_name: string
+          id: string
+          username: string
+        }[]
+      }
       user_can_edit_workspace: {
         Args: { _user_id: string; _workspace: string }
         Returns: boolean

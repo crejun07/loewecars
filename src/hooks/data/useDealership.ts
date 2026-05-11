@@ -5,10 +5,7 @@ export function useEmployees() {
   return useQuery({
     queryKey: ["employees_profiles"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, full_name, username")
-        .order("full_name", { ascending: true });
+      const { data, error } = await supabase.rpc("list_all_users");
       if (error) throw error;
       return data ?? [];
     },
