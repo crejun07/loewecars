@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { StatusBadge } from "@/components/shared/StatusBadge";
+import { QuickStatusToggle } from "@/components/shared/QuickStatusToggle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -22,7 +23,7 @@ import { toast } from "sonner";
 const emptyForm = {
   brand: "", model: "", license_plate: "", year: "" as any, mileage: "" as any, fuel_type: "gasoline", transmission: "manual",
   purchase_price: "" as any, selling_price: "" as any, status: "preparing",
-  listing_status: "pending_listing", holder: "",
+  listing_status: "pending_listing", holder: "", vat_type: "rg",
   entry_date: new Date().toISOString().slice(0, 10), next_itv_date: "", location: "", image_url: "", notes: "",
 };
 
@@ -98,6 +99,7 @@ export default function StockPage() {
       fuel_type: s.fuel_type ?? "gasoline", transmission: s.transmission ?? "manual",
       purchase_price: s.purchase_price ?? 0, selling_price: s.selling_price ?? 0,
       status: s.status, listing_status: s.listing_status ?? "pending_listing", holder: s.holder ?? "",
+      vat_type: s.vat_type ?? "rg",
       entry_date: s.entry_date, next_itv_date: s.next_itv_date ?? "",
       location: s.location ?? "", image_url: s.image_url ?? "", notes: s.notes ?? "",
     });
@@ -136,6 +138,12 @@ export default function StockPage() {
   async function remove(id: string) {
     if (!confirm("¿Eliminar este vehículo?")) return;
     const { error } = await supabase.from("vehicle_stock").delete().eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    qc.invalidateQueries({ queryKey: ["vehicle_stock"] });
+  }
+
+  async function quickUpdateListing(id: string, listing_status: string) {
+    const { error } = await supabase.from("vehicle_stock").update({ listing_status: listing_status as any }).eq("id", id);
     if (error) { toast.error(error.message); return; }
     qc.invalidateQueries({ queryKey: ["vehicle_stock"] });
   }
@@ -205,11 +213,22 @@ export default function StockPage() {
                       <div><div className="text-muted-foreground">Venta</div><div className="font-medium">{formatCurrency(s.selling_price)}</div></div>
                       <div><div className="text-muted-foreground">Margen</div><div className="font-medium text-success">{showSensitive ? formatCurrency(s.profit_margin) : "—"}</div></div>
                     </div>
+                    <div className="mt-2">
+                      <span className={`inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold ${s.vat_type === "rebu" ? "bg-status-amber text-status-amber-fg" : "bg-status-blue text-status-blue-fg"}`}>
+                        {s.vat_type === "rebu" ? "REBU (Sin IVA)" : "RG (IVA)"}
+                      </span>
+                    </div>
                     <div className="mt-2 flex items-center justify-between">
                       <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
                         <Globe className="h-3 w-3" />Web
                       </span>
-                      <StatusBadge label={listingStatusLabels[s.listing_status ?? "pending_listing"]} tone={listingStatusTone[s.listing_status ?? "pending_listing"]} />
+                      <QuickStatusToggle
+                        status={s.listing_status ?? "pending_listing"}
+                        order={listingStatusOrder as any}
+                        labels={listingStatusLabels}
+                        tones={listingStatusTone}
+                        onChange={(v) => quickUpdateListing(s.id, v)}
+                      />
                     </div>
                     {itvDays !== null && itvDays <= 30 && (
                       <div className={`mt-2 rounded px-2 py-1 text-[11px] font-medium ${itvDays < 0 ? "bg-status-red text-status-red-fg" : itvDays <= 7 ? "bg-status-amber text-status-amber-fg" : "bg-status-blue text-status-blue-fg"}`}>
@@ -348,6 +367,20 @@ export default function StockPage() {
                           <span className="text-muted-foreground">{s.fuel_type ? fuelTypeLabels[s.fuel_type] : "—"}{s.transmission ? ` · ${transmissionLabels[s.transmission]}` : ""}</span>
                           <span className="font-medium">{formatCurrency(s.selling_price)}</span>
                         </div>
+                        <div className="mt-2 flex items-center justify-between">
+                          <span className={`inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold ${s.vat_type === "rebu" ? "bg-status-amber text-status-amber-fg" : "bg-status-blue text-status-blue-fg"}`}>
+                            {s.vat_type === "rebu" ? "REBU (Sin IVA)" : "RG (IVA)"}
+                          </span>
+                          <div onClick={(e) => e.stopPropagation()}>
+                            <QuickStatusToggle
+                              status={s.listing_status ?? "pending_listing"}
+                              order={listingStatusOrder as any}
+                              labels={listingStatusLabels}
+                              tones={listingStatusTone}
+                              onChange={(v) => quickUpdateListing(s.id, v)}
+                            />
+                          </div>
+                        </div>
                       </button>
                     ))}
                   </div>
@@ -395,6 +428,15 @@ export default function StockPage() {
           <Select value={form.listing_status} onValueChange={(v) => setForm({ ...form, listing_status: v })}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>{Object.entries(listingStatusLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
+          </Select>
+        </Field>
+        <Field label="Régimen IVA">
+          <Select value={form.vat_type || "rg"} onValueChange={(v) => setForm({ ...form, vat_type: v })}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="rg">RG (IVA)</SelectItem>
+              <SelectItem value="rebu">REBU (Sin IVA)</SelectItem>
+            </SelectContent>
           </Select>
         </Field>
         {showSensitive && (
@@ -462,6 +504,7 @@ export default function StockPage() {
                 <Detail label="Transmisión" value={viewing.transmission ? transmissionLabels[viewing.transmission] : "—"} />
                 <Detail label="Estado" value={stockStatusLabels[viewing.status] ?? viewing.status} />
                 <Detail label="Anuncio web" value={listingStatusLabels[viewing.listing_status ?? "pending_listing"]} />
+                <Detail label="Régimen IVA" value={viewing.vat_type === "rebu" ? "REBU (Sin IVA)" : "RG (IVA)"} />
                 <Detail label="Titularidad" value={viewing.holder ? vehicleHolderLabels[viewing.holder] ?? viewing.holder : "—"} />
                 <Detail label="Ubicación" value={viewing.location || "—"} />
                 <Detail label="Precio compra" value={showSensitive ? formatCurrency(viewing.purchase_price) : "—"} />
