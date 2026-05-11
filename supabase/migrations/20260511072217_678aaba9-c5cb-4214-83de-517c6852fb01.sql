@@ -1,0 +1,1 @@
+ALTER TABLE public.vehicle_stock ADD COLUMN IF NOT EXISTS vat_type text;

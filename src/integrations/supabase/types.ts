@@ -395,6 +395,7 @@ export type Database = {
           status: Database["public"]["Enums"]["stock_status"]
           transmission: Database["public"]["Enums"]["transmission_type"] | null
           updated_at: string
+          vat_type: string | null
           year: number | null
         }
         Insert: {
@@ -418,6 +419,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["stock_status"]
           transmission?: Database["public"]["Enums"]["transmission_type"] | null
           updated_at?: string
+          vat_type?: string | null
           year?: number | null
         }
         Update: {
@@ -441,6 +443,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["stock_status"]
           transmission?: Database["public"]["Enums"]["transmission_type"] | null
           updated_at?: string
+          vat_type?: string | null
           year?: number | null
         }
         Relationships: []
