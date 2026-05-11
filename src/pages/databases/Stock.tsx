@@ -42,6 +42,40 @@ export default function StockPage() {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
+
+  async function compressImage(file: File, maxBytes: number): Promise<Blob> {
+    const dataUrl: string = await new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onload = () => res(r.result as string);
+      r.onerror = () => rej(r.error);
+      r.readAsDataURL(file);
+    });
+    const img: HTMLImageElement = await new Promise((res, rej) => {
+      const i = new Image();
+      i.onload = () => res(i);
+      i.onerror = () => rej(new Error("img"));
+      i.src = dataUrl;
+    });
+    let { width, height } = img;
+    const MAX_DIM = 2400;
+    if (width > MAX_DIM || height > MAX_DIM) {
+      const r = Math.min(MAX_DIM / width, MAX_DIM / height);
+      width = Math.round(width * r);
+      height = Math.round(height * r);
+    }
+    let quality = 0.85;
+    for (let i = 0; i < 8; i++) {
+      const canvas = document.createElement("canvas");
+      canvas.width = width; canvas.height = height;
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(img, 0, 0, width, height);
+      const blob: Blob = await new Promise((res) => canvas.toBlob((b) => res(b!), "image/jpeg", quality));
+      if (blob.size <= maxBytes) return blob;
+      if (quality > 0.5) quality -= 0.1;
+      else { width = Math.round(width * 0.85); height = Math.round(height * 0.85); }
+    }
+    throw new Error("compress failed");
+  }
   const [colFilters, setColFilters] = useState<{
     yearMin: string; yearMax: string;
     kmMax: string;
