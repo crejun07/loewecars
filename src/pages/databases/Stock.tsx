@@ -41,6 +41,7 @@ export default function StockPage() {
   const [viewing, setViewing] = useState<any | null>(null);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [dragOver, setDragOver] = useState(false);
   const [colFilters, setColFilters] = useState<{
     yearMin: string; yearMax: string;
     kmMax: string;
@@ -447,7 +448,17 @@ export default function StockPage() {
         <Field label="Próxima ITV"><Input type="date" value={form.next_itv_date} onChange={(e) => setForm({ ...form, next_itv_date: e.target.value })} /></Field>
         <Field label="Ubicación" full><Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} /></Field>
         <Field label="Imagen del vehículo" full>
-          <div className="space-y-2">
+          <div
+            className="space-y-2"
+            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+            onDragLeave={(e) => { e.preventDefault(); setDragOver(false); }}
+            onDrop={(e) => {
+              e.preventDefault();
+              setDragOver(false);
+              const file = e.dataTransfer.files?.[0];
+              if (file) handleImageUpload(file);
+            }}
+          >
             {form.image_url ? (
               <div className="relative inline-block">
                 <img src={form.image_url} alt="Vehículo" className="h-32 w-auto rounded-md border border-border object-cover" />
@@ -466,10 +477,10 @@ export default function StockPage() {
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
-                className="flex h-32 w-full flex-col items-center justify-center gap-1 rounded-md border border-dashed border-border bg-muted/30 text-xs text-muted-foreground transition-colors hover:border-foreground/30 hover:bg-muted/50"
+                className={`flex h-32 w-full flex-col items-center justify-center gap-1 rounded-md border border-dashed text-xs text-muted-foreground transition-colors hover:border-foreground/30 hover:bg-muted/50 ${dragOver ? "border-primary bg-primary/10" : "border-border bg-muted/30"}`}
               >
                 {uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Upload className="h-5 w-5" />}
-                <span>{uploading ? "Subiendo…" : "Haz clic para subir una imagen"}</span>
+                <span>{uploading ? "Subiendo…" : dragOver ? "Suelta la imagen aquí" : "Haz clic o arrastra una imagen"}</span>
                 <span className="text-[10px]">JPG, PNG · máx. 5 MB</span>
               </button>
             )}
