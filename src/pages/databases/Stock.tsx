@@ -143,7 +143,7 @@ export default function StockPage() {
   }
 
   async function quickUpdateListing(id: string, listing_status: string) {
-    const { error } = await supabase.from("vehicle_stock").update({ listing_status }).eq("id", id);
+    const { error } = await supabase.from("vehicle_stock").update({ listing_status: listing_status as any }).eq("id", id);
     if (error) { toast.error(error.message); return; }
     qc.invalidateQueries({ queryKey: ["vehicle_stock"] });
   }
