@@ -42,6 +42,40 @@ export default function StockPage() {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
+
+  async function compressImage(file: File, maxBytes: number): Promise<Blob> {
+    const dataUrl: string = await new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onload = () => res(r.result as string);
+      r.onerror = () => rej(r.error);
+      r.readAsDataURL(file);
+    });
+    const img: HTMLImageElement = await new Promise((res, rej) => {
+      const i = new Image();
+      i.onload = () => res(i);
+      i.onerror = () => rej(new Error("img"));
+      i.src = dataUrl;
+    });
+    let { width, height } = img;
+    const MAX_DIM = 2400;
+    if (width > MAX_DIM || height > MAX_DIM) {
+      const r = Math.min(MAX_DIM / width, MAX_DIM / height);
+      width = Math.round(width * r);
+      height = Math.round(height * r);
+    }
+    let quality = 0.85;
+    for (let i = 0; i < 8; i++) {
+      const canvas = document.createElement("canvas");
+      canvas.width = width; canvas.height = height;
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(img, 0, 0, width, height);
+      const blob: Blob = await new Promise((res) => canvas.toBlob((b) => res(b!), "image/jpeg", quality));
+      if (blob.size <= maxBytes) return blob;
+      if (quality > 0.5) quality -= 0.1;
+      else { width = Math.round(width * 0.85); height = Math.round(height * 0.85); }
+    }
+    throw new Error("compress failed");
+  }
   const [colFilters, setColFilters] = useState<{
     yearMin: string; yearMax: string;
     kmMax: string;
@@ -54,15 +88,23 @@ export default function StockPage() {
       toast.error("El archivo debe ser una imagen");
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("La imagen no puede superar los 5 MB");
-      return;
-    }
     setUploading(true);
     try {
-      const ext = file.name.split(".").pop() || "jpg";
+      let toUpload: Blob = file;
+      let ext = file.name.split(".").pop() || "jpg";
+      const MAX = 5 * 1024 * 1024;
+      if (file.size > MAX) {
+        try {
+          toUpload = await compressImage(file, MAX);
+          ext = "jpg";
+          toast.info("Imagen comprimida para optimizar el tamaño");
+        } catch {
+          toast.error("No se pudo comprimir la imagen");
+          return;
+        }
+      }
       const path = `${crypto.randomUUID()}.${ext}`;
-      const { error: upErr } = await supabase.storage.from("vehicle-images").upload(path, file, { upsert: false });
+      const { error: upErr } = await supabase.storage.from("vehicle-images").upload(path, toUpload, { upsert: false, contentType: toUpload.type || file.type });
       if (upErr) { toast.error(upErr.message); return; }
       const { data } = supabase.storage.from("vehicle-images").getPublicUrl(path);
       setForm((f: any) => ({ ...f, image_url: data.publicUrl }));
