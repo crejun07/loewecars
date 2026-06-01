@@ -211,6 +211,7 @@ export type Database = {
       }
       spare_parts: {
         Row: {
+          cancellation_reason: string | null
           cost: number | null
           created_at: string
           delivery_date: string | null
@@ -220,6 +221,7 @@ export type Database = {
           order_date: string | null
           ordered_by: string | null
           part_name: string
+          part_purpose: string | null
           part_reference: string | null
           payment_method: string | null
           payment_status: string
@@ -230,6 +232,7 @@ export type Database = {
           workshop_id: string | null
         }
         Insert: {
+          cancellation_reason?: string | null
           cost?: number | null
           created_at?: string
           delivery_date?: string | null
@@ -239,6 +242,7 @@ export type Database = {
           order_date?: string | null
           ordered_by?: string | null
           part_name: string
+          part_purpose?: string | null
           part_reference?: string | null
           payment_method?: string | null
           payment_status?: string
@@ -249,6 +253,7 @@ export type Database = {
           workshop_id?: string | null
         }
         Update: {
+          cancellation_reason?: string | null
           cost?: number | null
           created_at?: string
           delivery_date?: string | null
@@ -258,6 +263,7 @@ export type Database = {
           order_date?: string | null
           ordered_by?: string | null
           part_name?: string
+          part_purpose?: string | null
           part_reference?: string | null
           payment_method?: string | null
           payment_status?: string
@@ -567,6 +573,7 @@ export type Database = {
         | "received"
         | "return"
         | "refunded"
+        | "cancelled"
       stock_status:
         | "preparing"
         | "available"
@@ -747,6 +754,7 @@ export const Constants = {
         "received",
         "return",
         "refunded",
+        "cancelled",
       ],
       stock_status: [
         "preparing",

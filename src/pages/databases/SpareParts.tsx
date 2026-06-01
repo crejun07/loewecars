@@ -39,7 +39,17 @@ const empty = {
   notes: "",
   payment_method: "",
   payment_status: "pending",
+  part_purpose: "",
+  cancellation_reason: "",
 };
+
+const partPurposeLabels: Record<string, string> = {
+  warranty: "Garantía",
+  own_vehicle: "Coche nuestro",
+  external_client: "Cliente externo",
+};
+
+const PAGE_SIZE = 25;
 
 export default function SparePartsPage() {
   const { data: parts = [] } = useSpareParts();
@@ -54,6 +64,7 @@ export default function SparePartsPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
   const [form, setForm] = useState<any>(empty);
+  const [page, setPage] = useState(1);
 
   const q = search.trim().toLowerCase();
   const filteredParts = parts.filter((p: any) => {
@@ -70,6 +81,9 @@ export default function SparePartsPage() {
     (a: any, b: any) =>
       (statusRank[a.status] ?? 99) - (statusRank[b.status] ?? 99),
   );
+  const totalPages = Math.max(1, Math.ceil(sortedParts.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const pagedParts = sortedParts.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   function openNew() {
     setEditing(null);
@@ -92,10 +106,17 @@ export default function SparePartsPage() {
       notes: p.notes ?? "",
       payment_method: p.payment_method ?? "",
       payment_status: p.payment_status ?? "pending",
+      part_purpose: p.part_purpose ?? "",
+      cancellation_reason: p.cancellation_reason ?? "",
     });
     setOpen(true);
   }
   async function save() {
+    const needsReason = form.status === "cancelled" || form.status === "return";
+    if (needsReason && !form.cancellation_reason?.trim()) {
+      toast.error("Indica el motivo de cancelación/devolución");
+      return;
+    }
     const payload = {
       ...form,
       vehicle_id: form.vehicle_id || null,
@@ -109,6 +130,8 @@ export default function SparePartsPage() {
       cost: form.cost === "" ? 0 : Number(form.cost),
       payment_method: form.payment_method || null,
       payment_status: form.payment_status || "pending",
+      part_purpose: form.part_purpose || null,
+      cancellation_reason: needsReason ? form.cancellation_reason : null,
     };
     const { error } = editing
       ? await supabase.from("spare_parts").update(payload).eq("id", editing.id)
@@ -167,7 +190,7 @@ export default function SparePartsPage() {
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             placeholder="Buscar por recambio, referencia o matrícula…"
             className="pl-9"
           />
@@ -240,7 +263,7 @@ export default function SparePartsPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
-                    {sortedParts.map((p: any) => (
+                    {pagedParts.map((p: any) => (
                       <tr key={p.id} onClick={() => openEdit(p)} className="cursor-pointer hover:bg-muted/30">
                         <td className="px-3 py-2 font-medium">{p.part_name}</td>
                         <td className="px-3 py-2 text-xs text-muted-foreground">{p.part_reference || "—"}</td>
@@ -279,6 +302,22 @@ export default function SparePartsPage() {
                 </table>
               </div>
             )}
+          </div>
+        )}
+        {view === "table" && sortedParts.length > PAGE_SIZE && (
+          <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
+            <span>
+              {(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, sortedParts.length)} de {sortedParts.length}
+            </span>
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" disabled={currentPage <= 1} onClick={() => setPage(currentPage - 1)}>
+                Anterior
+              </Button>
+              <span>Página {currentPage} / {totalPages}</span>
+              <Button size="sm" variant="outline" disabled={currentPage >= totalPages} onClick={() => setPage(currentPage + 1)}>
+                Siguiente
+              </Button>
+            </div>
           </div>
         )}
       </div>
@@ -368,6 +407,20 @@ export default function SparePartsPage() {
             </SelectContent>
           </Select>
         </Field>
+        <Field label="Destino del recambio">
+          <Select
+            value={form.part_purpose || "none"}
+            onValueChange={(v) => setForm({ ...form, part_purpose: v === "none" ? "" : v })}
+          >
+            <SelectTrigger><SelectValue placeholder="Selecciona" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">— Sin definir —</SelectItem>
+              {Object.entries(partPurposeLabels).map(([k, v]) => (
+                <SelectItem key={k} value={k}>{v}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Field>
         <Field label="Coste (€)">
           <Input type="number" step="0.01" value={form.cost} onChange={(e) => setForm({ ...form, cost: e.target.value })} />
         </Field>
@@ -398,6 +451,16 @@ export default function SparePartsPage() {
             </SelectContent>
           </Select>
         </Field>
+        {(form.status === "cancelled" || form.status === "return") && (
+          <Field label={form.status === "cancelled" ? "Motivo de cancelación" : "Motivo de devolución"} full>
+            <Textarea
+              rows={2}
+              value={form.cancellation_reason}
+              onChange={(e) => setForm({ ...form, cancellation_reason: e.target.value })}
+              placeholder="Explica el motivo"
+            />
+          </Field>
+        )}
         <Field label="Notas" full>
           <Textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
         </Field>

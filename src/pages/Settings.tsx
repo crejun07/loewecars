@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { Loader2, UserPlus } from "lucide-react";
+import { Loader2, UserPlus, Pencil } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { usePermissions, type AppRole, type Workspace, type PermissionRow } from "@/hooks/usePermissions";
 import { PageHeader } from "@/components/shared/PageHeader";
@@ -59,6 +59,10 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editing, setEditing] = useState<UserRow | null>(null);
+  const [editForm, setEditForm] = useState({ full_name: "", email: "", password: "" });
+  const [updating, setUpdating] = useState(false);
   const [newUser, setNewUser] = useState({
     email: "",
     password: "",
@@ -173,6 +177,34 @@ export default function SettingsPage() {
     toast.success("Usuario creado");
     setCreateOpen(false);
     setNewUser({ email: "", password: "", full_name: "", username: "", role: "comercial" });
+    loadUsers();
+  }
+
+  function openEdit(u: UserRow) {
+    setEditing(u);
+    setEditForm({ full_name: u.full_name ?? "", email: "", password: "" });
+    setEditOpen(true);
+  }
+
+  async function updateUser() {
+    if (!editing) return;
+    const payload: any = { user_id: editing.id };
+    if (editForm.full_name !== (editing.full_name ?? "")) payload.full_name = editForm.full_name;
+    if (editForm.email.trim()) payload.email = editForm.email.trim();
+    if (editForm.password) payload.password = editForm.password;
+    if (Object.keys(payload).length === 1) {
+      toast.info("No hay cambios que guardar");
+      return;
+    }
+    setUpdating(true);
+    const { data, error } = await supabase.functions.invoke("admin-update-user", { body: payload });
+    setUpdating(false);
+    if (error || (data as any)?.error) {
+      toast.error((data as any)?.error || error?.message || "Error al actualizar");
+      return;
+    }
+    toast.success("Usuario actualizado");
+    setEditOpen(false);
     loadUsers();
   }
 
@@ -325,6 +357,7 @@ export default function SettingsPage() {
                     <TableHead>Nombre</TableHead>
                     <TableHead>Usuario</TableHead>
                     <TableHead className="w-[240px]">Rol</TableHead>
+                    <TableHead className="w-[80px]"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -347,11 +380,16 @@ export default function SettingsPage() {
                           </SelectContent>
                         </Select>
                       </TableCell>
+                      <TableCell>
+                        <Button size="sm" variant="ghost" onClick={() => openEdit(u)}>
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   ))}
                   {users.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={3} className="text-center text-sm text-muted-foreground py-6">
+                      <TableCell colSpan={4} className="text-center text-sm text-muted-foreground py-6">
                         No hay usuarios
                       </TableCell>
                     </TableRow>
@@ -359,6 +397,49 @@ export default function SettingsPage() {
                 </TableBody>
               </Table>
             </div>
+
+            <Dialog open={editOpen} onOpenChange={setEditOpen}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Editar usuario</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-3">
+                  <div>
+                    <Label>Nombre completo</Label>
+                    <Input
+                      value={editForm.full_name}
+                      onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label>Nuevo correo</Label>
+                    <Input
+                      type="email"
+                      value={editForm.email}
+                      onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                      placeholder="Dejar vacío para no cambiarlo"
+                    />
+                  </div>
+                  <div>
+                    <Label>Nueva contraseña</Label>
+                    <Input
+                      type="password"
+                      value={editForm.password}
+                      onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
+                      placeholder="Dejar vacío para no cambiarla"
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setEditOpen(false)} disabled={updating}>
+                    Cancelar
+                  </Button>
+                  <Button onClick={updateUser} disabled={updating}>
+                    {updating ? "Guardando..." : "Guardar"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </TabsContent>
         </Tabs>
       </div>
