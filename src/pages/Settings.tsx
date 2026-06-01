@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { Loader2, UserPlus } from "lucide-react";
+import { Loader2, UserPlus, Pencil } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { usePermissions, type AppRole, type Workspace, type PermissionRow } from "@/hooks/usePermissions";
 import { PageHeader } from "@/components/shared/PageHeader";
@@ -59,6 +59,10 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editing, setEditing] = useState<UserRow | null>(null);
+  const [editForm, setEditForm] = useState({ full_name: "", email: "", password: "" });
+  const [updating, setUpdating] = useState(false);
   const [newUser, setNewUser] = useState({
     email: "",
     password: "",
@@ -173,6 +177,34 @@ export default function SettingsPage() {
     toast.success("Usuario creado");
     setCreateOpen(false);
     setNewUser({ email: "", password: "", full_name: "", username: "", role: "comercial" });
+    loadUsers();
+  }
+
+  function openEdit(u: UserRow) {
+    setEditing(u);
+    setEditForm({ full_name: u.full_name ?? "", email: "", password: "" });
+    setEditOpen(true);
+  }
+
+  async function updateUser() {
+    if (!editing) return;
+    const payload: any = { user_id: editing.id };
+    if (editForm.full_name !== (editing.full_name ?? "")) payload.full_name = editForm.full_name;
+    if (editForm.email.trim()) payload.email = editForm.email.trim();
+    if (editForm.password) payload.password = editForm.password;
+    if (Object.keys(payload).length === 1) {
+      toast.info("No hay cambios que guardar");
+      return;
+    }
+    setUpdating(true);
+    const { data, error } = await supabase.functions.invoke("admin-update-user", { body: payload });
+    setUpdating(false);
+    if (error || (data as any)?.error) {
+      toast.error((data as any)?.error || error?.message || "Error al actualizar");
+      return;
+    }
+    toast.success("Usuario actualizado");
+    setEditOpen(false);
     loadUsers();
   }
 
