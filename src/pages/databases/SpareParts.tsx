@@ -263,7 +263,7 @@ export default function SparePartsPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
-                    {sortedParts.map((p: any) => (
+                    {pagedParts.map((p: any) => (
                       <tr key={p.id} onClick={() => openEdit(p)} className="cursor-pointer hover:bg-muted/30">
                         <td className="px-3 py-2 font-medium">{p.part_name}</td>
                         <td className="px-3 py-2 text-xs text-muted-foreground">{p.part_reference || "—"}</td>
@@ -302,6 +302,22 @@ export default function SparePartsPage() {
                 </table>
               </div>
             )}
+          </div>
+        )}
+        {view === "table" && sortedParts.length > PAGE_SIZE && (
+          <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
+            <span>
+              {(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, sortedParts.length)} de {sortedParts.length}
+            </span>
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" disabled={currentPage <= 1} onClick={() => setPage(currentPage - 1)}>
+                Anterior
+              </Button>
+              <span>Página {currentPage} / {totalPages}</span>
+              <Button size="sm" variant="outline" disabled={currentPage >= totalPages} onClick={() => setPage(currentPage + 1)}>
+                Siguiente
+              </Button>
+            </div>
           </div>
         )}
       </div>
