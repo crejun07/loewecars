@@ -93,6 +93,7 @@ export const sparePartStatusLabels: Record<string, string> = {
   received: "Recibido",
   return: "Devolver",
   refunded: "Reembolsado",
+  cancelled: "Cancelado",
 };
 
 export const sparePartStatusOrder = [
@@ -102,6 +103,7 @@ export const sparePartStatusOrder = [
   "received",
   "return",
   "refunded",
+  "cancelled",
 ] as const;
 
 export const paymentMethodLabels: Record<string, string> = {
@@ -193,6 +195,7 @@ export const sparePartStatusTone: Record<string, StatusTone> = {
   received: "green",
   return: "amber",
   refunded: "red",
+  cancelled: "red",
 };
 
 // Pipeline column orderings
