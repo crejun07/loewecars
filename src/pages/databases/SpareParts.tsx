@@ -407,6 +407,20 @@ export default function SparePartsPage() {
             </SelectContent>
           </Select>
         </Field>
+        <Field label="Destino del recambio">
+          <Select
+            value={form.part_purpose || "none"}
+            onValueChange={(v) => setForm({ ...form, part_purpose: v === "none" ? "" : v })}
+          >
+            <SelectTrigger><SelectValue placeholder="Selecciona" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">— Sin definir —</SelectItem>
+              {Object.entries(partPurposeLabels).map(([k, v]) => (
+                <SelectItem key={k} value={k}>{v}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Field>
         <Field label="Coste (€)">
           <Input type="number" step="0.01" value={form.cost} onChange={(e) => setForm({ ...form, cost: e.target.value })} />
         </Field>
@@ -437,6 +451,16 @@ export default function SparePartsPage() {
             </SelectContent>
           </Select>
         </Field>
+        {(form.status === "cancelled" || form.status === "return") && (
+          <Field label={form.status === "cancelled" ? "Motivo de cancelación" : "Motivo de devolución"} full>
+            <Textarea
+              rows={2}
+              value={form.cancellation_reason}
+              onChange={(e) => setForm({ ...form, cancellation_reason: e.target.value })}
+              placeholder="Explica el motivo"
+            />
+          </Field>
+        )}
         <Field label="Notas" full>
           <Textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
         </Field>
