@@ -39,7 +39,17 @@ const empty = {
   notes: "",
   payment_method: "",
   payment_status: "pending",
+  part_purpose: "",
+  cancellation_reason: "",
 };
+
+const partPurposeLabels: Record<string, string> = {
+  warranty: "Garantía",
+  own_vehicle: "Coche nuestro",
+  external_client: "Cliente externo",
+};
+
+const PAGE_SIZE = 25;
 
 export default function SparePartsPage() {
   const { data: parts = [] } = useSpareParts();
@@ -54,6 +64,7 @@ export default function SparePartsPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
   const [form, setForm] = useState<any>(empty);
+  const [page, setPage] = useState(1);
 
   const q = search.trim().toLowerCase();
   const filteredParts = parts.filter((p: any) => {
@@ -70,6 +81,9 @@ export default function SparePartsPage() {
     (a: any, b: any) =>
       (statusRank[a.status] ?? 99) - (statusRank[b.status] ?? 99),
   );
+  const totalPages = Math.max(1, Math.ceil(sortedParts.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const pagedParts = sortedParts.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   function openNew() {
     setEditing(null);
@@ -92,10 +106,17 @@ export default function SparePartsPage() {
       notes: p.notes ?? "",
       payment_method: p.payment_method ?? "",
       payment_status: p.payment_status ?? "pending",
+      part_purpose: p.part_purpose ?? "",
+      cancellation_reason: p.cancellation_reason ?? "",
     });
     setOpen(true);
   }
   async function save() {
+    const needsReason = form.status === "cancelled" || form.status === "return";
+    if (needsReason && !form.cancellation_reason?.trim()) {
+      toast.error("Indica el motivo de cancelación/devolución");
+      return;
+    }
     const payload = {
       ...form,
       vehicle_id: form.vehicle_id || null,
@@ -109,6 +130,8 @@ export default function SparePartsPage() {
       cost: form.cost === "" ? 0 : Number(form.cost),
       payment_method: form.payment_method || null,
       payment_status: form.payment_status || "pending",
+      part_purpose: form.part_purpose || null,
+      cancellation_reason: needsReason ? form.cancellation_reason : null,
     };
     const { error } = editing
       ? await supabase.from("spare_parts").update(payload).eq("id", editing.id)
