@@ -357,6 +357,7 @@ export default function SettingsPage() {
                     <TableHead>Nombre</TableHead>
                     <TableHead>Usuario</TableHead>
                     <TableHead className="w-[240px]">Rol</TableHead>
+                    <TableHead className="w-[80px]"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -379,11 +380,16 @@ export default function SettingsPage() {
                           </SelectContent>
                         </Select>
                       </TableCell>
+                      <TableCell>
+                        <Button size="sm" variant="ghost" onClick={() => openEdit(u)}>
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   ))}
                   {users.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={3} className="text-center text-sm text-muted-foreground py-6">
+                      <TableCell colSpan={4} className="text-center text-sm text-muted-foreground py-6">
                         No hay usuarios
                       </TableCell>
                     </TableRow>
@@ -391,6 +397,49 @@ export default function SettingsPage() {
                 </TableBody>
               </Table>
             </div>
+
+            <Dialog open={editOpen} onOpenChange={setEditOpen}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Editar usuario</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-3">
+                  <div>
+                    <Label>Nombre completo</Label>
+                    <Input
+                      value={editForm.full_name}
+                      onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label>Nuevo correo</Label>
+                    <Input
+                      type="email"
+                      value={editForm.email}
+                      onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                      placeholder="Dejar vacío para no cambiarlo"
+                    />
+                  </div>
+                  <div>
+                    <Label>Nueva contraseña</Label>
+                    <Input
+                      type="password"
+                      value={editForm.password}
+                      onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
+                      placeholder="Dejar vacío para no cambiarla"
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setEditOpen(false)} disabled={updating}>
+                    Cancelar
+                  </Button>
+                  <Button onClick={updateUser} disabled={updating}>
+                    {updating ? "Guardando..." : "Guardar"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </TabsContent>
         </Tabs>
       </div>
