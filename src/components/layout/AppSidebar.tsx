@@ -1,8 +1,9 @@
-import { LayoutDashboard, Users, ClipboardList, ShoppingCart, Car, Wrench, Package, FileText, LogOut, Settings, History } from "lucide-react";
+import { LayoutDashboard, Users, ClipboardList, ShoppingCart, Car, Wrench, Package, FileText, LogOut, Settings, History, MessageSquare } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { usePermissions, type Workspace } from "@/hooks/usePermissions";
+import { useChatNotifications } from "@/hooks/useChatNotifications";
 import {
   Sidebar,
   SidebarContent,
@@ -36,6 +37,7 @@ export function AppSidebar() {
   const location = useLocation();
   const { user, signOut } = useAuth();
   const { canView } = usePermissions();
+  const { unreadTotal } = useChatNotifications();
   const visibleItems = items.filter((it) => it.ws === "dashboard" || canView(it.ws));
 
   return (
@@ -80,6 +82,35 @@ export function AppSidebar() {
                   </SidebarMenuItem>
                 );
               })}
+              {/* Chat — visible para todos */}
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={location.pathname.startsWith("/chat")}>
+                  <NavLink
+                    to="/chat"
+                    className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-sidebar-accent"
+                    activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                  >
+                    <div className="relative">
+                      <MessageSquare className="h-4 w-4 shrink-0" />
+                      {unreadTotal > 0 && (
+                        <span className="absolute -top-1 -right-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-medium text-primary-foreground">
+                          {unreadTotal > 9 ? "9+" : unreadTotal}
+                        </span>
+                      )}
+                    </div>
+                    {!collapsed && (
+                      <span className="flex-1 flex items-center justify-between">
+                        <span>Chat</span>
+                        {unreadTotal > 0 && (
+                          <span className="rounded-full bg-primary text-primary-foreground text-[10px] px-1.5 py-0.5">
+                            {unreadTotal}
+                          </span>
+                        )}
+                      </span>
+                    )}
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
