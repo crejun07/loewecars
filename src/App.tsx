@@ -15,11 +15,13 @@ import ReportsPage from "./pages/databases/Reports.tsx";
 import SettingsPage from "./pages/Settings.tsx";
 import HistoryPage from "./pages/History.tsx";
 import AuthPage from "./pages/Auth.tsx";
+import ChatPage from "./pages/Chat.tsx";
 import { AppLayout } from "./components/layout/AppLayout.tsx";
 import { AuthProvider } from "./hooks/useAuth";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { PermissionsProvider } from "./hooks/usePermissions";
 import { PermissionGuard } from "./components/PermissionGuard";
+import { ChatNotificationsProvider } from "./hooks/useChatNotifications";
 
 const queryClient = new QueryClient();
 
@@ -37,6 +39,7 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <PermissionsProvider>
+                    <ChatNotificationsProvider>
                     <AppLayout>
                       <Routes>
                         <Route path="/" element={<Dashboard />} />
@@ -49,9 +52,11 @@ const App = () => (
                         <Route path="/reports" element={<PermissionGuard workspace="reports"><ReportsPage /></PermissionGuard>} />
                         <Route path="/history" element={<PermissionGuard workspace="history"><HistoryPage /></PermissionGuard>} />
                         <Route path="/settings" element={<PermissionGuard workspace="settings"><SettingsPage /></PermissionGuard>} />
+                        <Route path="/chat" element={<ChatPage />} />
                         <Route path="*" element={<NotFound />} />
                       </Routes>
                     </AppLayout>
+                    </ChatNotificationsProvider>
                   </PermissionsProvider>
                 </ProtectedRoute>
               }

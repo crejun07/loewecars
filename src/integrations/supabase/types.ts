@@ -50,6 +50,48 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          recipient_id: string | null
+          sender_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          recipient_id?: string | null
+          sender_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          recipient_id?: string | null
+          sender_id?: string
+        }
+        Relationships: []
+      }
+      chat_reads: {
+        Row: {
+          conversation_key: string
+          last_read_at: string
+          user_id: string
+        }
+        Insert: {
+          conversation_key: string
+          last_read_at?: string
+          user_id: string
+        }
+        Update: {
+          conversation_key?: string
+          last_read_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       clients: {
         Row: {
           client_type: Database["public"]["Enums"]["client_type"]

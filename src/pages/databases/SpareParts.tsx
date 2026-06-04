@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, LayoutGrid, List, Trash2, Search } from "lucide-react";
+import { Plus, LayoutGrid, List, Trash2, Search, ArrowUpDown } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/shared/PageHeader";
@@ -65,6 +65,7 @@ export default function SparePartsPage() {
   const [editing, setEditing] = useState<any | null>(null);
   const [form, setForm] = useState<any>(empty);
   const [page, setPage] = useState(1);
+  const [sortBy, setSortBy] = useState<"status" | "order_date_desc" | "order_date_asc" | "cost_asc" | "cost_desc">("status");
 
   const q = search.trim().toLowerCase();
   const filteredParts = parts.filter((p: any) => {
@@ -77,10 +78,20 @@ export default function SparePartsPage() {
       (p.vehicle?.model ?? "").toLowerCase().includes(q)
     );
   });
-  const sortedParts = [...filteredParts].sort(
-    (a: any, b: any) =>
-      (statusRank[a.status] ?? 99) - (statusRank[b.status] ?? 99),
-  );
+  const sortedParts = [...filteredParts].sort((a: any, b: any) => {
+    switch (sortBy) {
+      case "order_date_desc":
+        return (b.order_date ?? "").localeCompare(a.order_date ?? "");
+      case "order_date_asc":
+        return (a.order_date ?? "").localeCompare(b.order_date ?? "");
+      case "cost_asc":
+        return Number(a.cost ?? 0) - Number(b.cost ?? 0);
+      case "cost_desc":
+        return Number(b.cost ?? 0) - Number(a.cost ?? 0);
+      default:
+        return (statusRank[a.status] ?? 99) - (statusRank[b.status] ?? 99);
+    }
+  });
   const totalPages = Math.max(1, Math.ceil(sortedParts.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
   const pagedParts = sortedParts.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
@@ -186,14 +197,29 @@ export default function SparePartsPage() {
         }
       />
       <div className="p-6">
-        <div className="mb-4 relative max-w-md">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            placeholder="Buscar por recambio, referencia o matrícula…"
-            className="pl-9"
-          />
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          <div className="relative max-w-md flex-1 min-w-[240px]">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+              placeholder="Buscar por recambio, referencia o matrícula…"
+              className="pl-9"
+            />
+          </div>
+          <Select value={sortBy} onValueChange={(v: any) => { setSortBy(v); setPage(1); }}>
+            <SelectTrigger className="w-[220px]">
+              <ArrowUpDown className="mr-2 h-3.5 w-3.5" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="status">Por estado</SelectItem>
+              <SelectItem value="order_date_desc">Pedido — más reciente</SelectItem>
+              <SelectItem value="order_date_asc">Pedido — más antiguo</SelectItem>
+              <SelectItem value="cost_asc">Coste — más barato</SelectItem>
+              <SelectItem value="cost_desc">Coste — más caro</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         {view === "kanban" ? (
           <KanbanBoard
@@ -211,7 +237,7 @@ export default function SparePartsPage() {
                     onClick={() => openEdit(p)}
                     className="rounded-md border border-border bg-card p-3 text-left hover:border-foreground/20"
                   >
-                    <div className="text-sm font-medium">{p.part_name}</div>
+                    <div className={`text-sm font-medium ${p.status === "ordered" ? "text-status-blue-fg" : ""}`}>{p.part_name}</div>
                     {p.part_reference && (
                       <div className="text-[11px] text-muted-foreground">Ref. {p.part_reference}</div>
                     )}
@@ -265,7 +291,7 @@ export default function SparePartsPage() {
                   <tbody className="divide-y divide-border">
                     {pagedParts.map((p: any) => (
                       <tr key={p.id} onClick={() => openEdit(p)} className="cursor-pointer hover:bg-muted/30">
-                        <td className="px-3 py-2 font-medium">{p.part_name}</td>
+                        <td className={`px-3 py-2 font-medium ${p.status === "ordered" ? "text-status-blue-fg" : ""}`}>{p.part_name}</td>
                         <td className="px-3 py-2 text-xs text-muted-foreground">{p.part_reference || "—"}</td>
                         <td className="px-3 py-2 text-xs text-muted-foreground">{vehicleLabel(p)}</td>
                         <td className="px-3 py-2 text-xs text-muted-foreground">{p.supplier || "—"}</td>
