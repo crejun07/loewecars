@@ -135,6 +135,14 @@ export default function StockPage() {
     });
     const [field, dir] = sortBy.endsWith("_desc") ? [sortBy.slice(0, -5), "desc"] : [sortBy.slice(0, -4), "asc"];
     const ascending = dir === "asc";
+    const plateLetters = (plate: string) => {
+      if (!plate) return "";
+      const cleaned = plate.trim().toUpperCase();
+      const parts = cleaned.split(/\s+/);
+      const lastPart = parts[parts.length - 1];
+      if (/^[A-Z]+$/.test(lastPart)) return lastPart;
+      return cleaned.replace(/\d/g, "").replace(/\s/g, "");
+    };
     filtered.sort((a: any, b: any) => {
       let cmp = 0;
       if (field === "entry_date") {
@@ -142,7 +150,7 @@ export default function StockPage() {
       } else if (field === "price") {
         cmp = (Number(a.selling_price) || 0) - (Number(b.selling_price) || 0);
       } else if (field === "plate") {
-        cmp = (a.license_plate || "").localeCompare(b.license_plate || "");
+        cmp = plateLetters(a.license_plate).localeCompare(plateLetters(b.license_plate));
       }
       return ascending ? cmp : -cmp;
     });
