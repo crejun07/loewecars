@@ -117,7 +117,7 @@ export default function StockPage() {
 
   const items = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return stock.filter((s: any) => {
+    let filtered = stock.filter((s: any) => {
       if (onlyAvailable && s.status !== "available") return false;
       if (q && !(
         (s.brand ?? "").toLowerCase().includes(q) ||
@@ -133,7 +133,21 @@ export default function StockPage() {
       if (colFilters.listing !== "all" && (s.listing_status ?? "pending_listing") !== colFilters.listing) return false;
       return true;
     });
-  }, [stock, onlyAvailable, search, colFilters]);
+    const [field, dir] = sortBy.split("_");
+    const ascending = dir === "asc";
+    filtered.sort((a: any, b: any) => {
+      let cmp = 0;
+      if (field === "entry") {
+        cmp = (a.entry_date || "").localeCompare(b.entry_date || "");
+      } else if (field === "price") {
+        cmp = (Number(a.selling_price) || 0) - (Number(b.selling_price) || 0);
+      } else if (field === "plate") {
+        cmp = (a.license_plate || "").localeCompare(b.license_plate || "");
+      }
+      return ascending ? cmp : -cmp;
+    });
+    return filtered;
+  }, [stock, onlyAvailable, search, colFilters, sortBy]);
 
   function openNew() { setEditing(null); setForm(emptyForm); setOpen(true); }
   function openEdit(s: any) {
