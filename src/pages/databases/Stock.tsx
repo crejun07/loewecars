@@ -35,6 +35,7 @@ export default function StockPage() {
   const [view, setView] = useState<"gallery" | "table" | "listings">("gallery");
   const [onlyAvailable, setOnlyAvailable] = useState(false);
   const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState<string>("entry_date_desc");
   const [editing, setEditing] = useState<any | null>(null);
   const [form, setForm] = useState<any>(emptyForm);
   const [open, setOpen] = useState(false);
