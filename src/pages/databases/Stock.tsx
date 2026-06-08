@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { Plus, LayoutGrid, Table as TableIcon, Pencil, Trash2, Car, Filter, Globe, Upload, X, Loader2, Eye, Search } from "lucide-react";
+import { Plus, LayoutGrid, Table as TableIcon, Pencil, Trash2, Car, Filter, Globe, Upload, X, Loader2, Eye, Search, ArrowUpDown } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/shared/PageHeader";
@@ -35,6 +35,7 @@ export default function StockPage() {
   const [view, setView] = useState<"gallery" | "table" | "listings">("gallery");
   const [onlyAvailable, setOnlyAvailable] = useState(false);
   const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState<string>("entry_date_desc");
   const [editing, setEditing] = useState<any | null>(null);
   const [form, setForm] = useState<any>(emptyForm);
   const [open, setOpen] = useState(false);
@@ -116,7 +117,7 @@ export default function StockPage() {
 
   const items = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return stock.filter((s: any) => {
+    let filtered = stock.filter((s: any) => {
       if (onlyAvailable && s.status !== "available") return false;
       if (q && !(
         (s.brand ?? "").toLowerCase().includes(q) ||
@@ -132,7 +133,21 @@ export default function StockPage() {
       if (colFilters.listing !== "all" && (s.listing_status ?? "pending_listing") !== colFilters.listing) return false;
       return true;
     });
-  }, [stock, onlyAvailable, search, colFilters]);
+    const [field, dir] = sortBy.endsWith("_desc") ? [sortBy.slice(0, -5), "desc"] : [sortBy.slice(0, -4), "asc"];
+    const ascending = dir === "asc";
+    filtered.sort((a: any, b: any) => {
+      let cmp = 0;
+      if (field === "entry_date") {
+        cmp = (a.entry_date || "").localeCompare(b.entry_date || "");
+      } else if (field === "price") {
+        cmp = (Number(a.selling_price) || 0) - (Number(b.selling_price) || 0);
+      } else if (field === "plate") {
+        cmp = (a.license_plate || "").localeCompare(b.license_plate || "");
+      }
+      return ascending ? cmp : -cmp;
+    });
+    return filtered;
+  }, [stock, onlyAvailable, search, colFilters, sortBy]);
 
   function openNew() { setEditing(null); setForm(emptyForm); setOpen(true); }
   function openEdit(s: any) {
@@ -217,14 +232,30 @@ export default function StockPage() {
         }
       />
       <div className="p-6">
-        <div className="mb-4 relative max-w-md">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar por marca, modelo o matrícula…"
-            className="pl-9"
-          />
+        <div className="mb-4 flex flex-wrap items-center gap-3">
+          <div className="relative max-w-md flex-1 min-w-[200px]">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Buscar por marca, modelo o matrícula…"
+              className="pl-9"
+            />
+          </div>
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="w-[220px] h-9 text-xs">
+              <ArrowUpDown className="mr-1.5 h-3.5 w-3.5" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="entry_date_desc">Fecha entrada: más reciente</SelectItem>
+              <SelectItem value="entry_date_asc">Fecha entrada: más antigua</SelectItem>
+              <SelectItem value="price_asc">Precio: más barato</SelectItem>
+              <SelectItem value="price_desc">Precio: más caro</SelectItem>
+              <SelectItem value="plate_asc">Matrícula: A-Z</SelectItem>
+              <SelectItem value="plate_desc">Matrícula: Z-A</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         {items.length === 0 ? (
           <div className="rounded-lg border border-dashed border-border bg-card p-12 text-center text-sm text-muted-foreground">Sin vehículos.</div>

@@ -112,9 +112,9 @@ export default function ChatPage() {
   });
 
   return (
-    <div>
+    <div className="flex flex-col h-[calc(100vh-3rem)]">
       <PageHeader title="Chat de trabajo" description="Comunicación interna del equipo" />
-      <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-0 h-[calc(100vh-7rem)] border-t border-border">
+      <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-0 flex-1 min-h-0 border-t border-border">
         {/* Sidebar */}
         <aside className="border-r border-border bg-card flex flex-col">
           <div className="p-3 border-b border-border">
