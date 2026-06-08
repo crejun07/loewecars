@@ -133,11 +133,11 @@ export default function StockPage() {
       if (colFilters.listing !== "all" && (s.listing_status ?? "pending_listing") !== colFilters.listing) return false;
       return true;
     });
-    const [field, dir] = sortBy.split("_");
+    const [field, dir] = sortBy.endsWith("_desc") ? [sortBy.slice(0, -5), "desc"] : [sortBy.slice(0, -4), "asc"];
     const ascending = dir === "asc";
     filtered.sort((a: any, b: any) => {
       let cmp = 0;
-      if (field === "entry") {
+      if (field === "entry_date") {
         cmp = (a.entry_date || "").localeCompare(b.entry_date || "");
       } else if (field === "price") {
         cmp = (Number(a.selling_price) || 0) - (Number(b.selling_price) || 0);
