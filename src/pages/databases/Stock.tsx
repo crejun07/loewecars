@@ -232,14 +232,30 @@ export default function StockPage() {
         }
       />
       <div className="p-6">
-        <div className="mb-4 relative max-w-md">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar por marca, modelo o matrícula…"
-            className="pl-9"
-          />
+        <div className="mb-4 flex flex-wrap items-center gap-3">
+          <div className="relative max-w-md flex-1 min-w-[200px]">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Buscar por marca, modelo o matrícula…"
+              className="pl-9"
+            />
+          </div>
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="w-[220px] h-9 text-xs">
+              <ArrowUpDown className="mr-1.5 h-3.5 w-3.5" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="entry_date_desc">Fecha entrada: más reciente</SelectItem>
+              <SelectItem value="entry_date_asc">Fecha entrada: más antigua</SelectItem>
+              <SelectItem value="price_asc">Precio: más barato</SelectItem>
+              <SelectItem value="price_desc">Precio: más caro</SelectItem>
+              <SelectItem value="plate_asc">Matrícula: A-Z</SelectItem>
+              <SelectItem value="plate_desc">Matrícula: Z-A</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         {items.length === 0 ? (
           <div className="rounded-lg border border-dashed border-border bg-card p-12 text-center text-sm text-muted-foreground">Sin vehículos.</div>
