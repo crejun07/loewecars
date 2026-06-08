@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { Plus, LayoutGrid, Table as TableIcon, Pencil, Trash2, Car, Filter, Globe, Upload, X, Loader2, Eye, Search } from "lucide-react";
+import { Plus, LayoutGrid, Table as TableIcon, Pencil, Trash2, Car, Filter, Globe, Upload, X, Loader2, Eye, Search, ArrowUpDown } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/shared/PageHeader";
