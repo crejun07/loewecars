@@ -22,6 +22,7 @@ import {
   sparePartStatusLabels,
   sparePartStatusOrder,
   sparePartStatusTone,
+  type StatusTone,
 } from "@/lib/labels";
 import { toast } from "sonner";
 
