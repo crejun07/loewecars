@@ -147,6 +147,8 @@ export default function StockPage() {
       let cmp = 0;
       if (field === "entry_date") {
         cmp = (a.entry_date || "").localeCompare(b.entry_date || "");
+      } else if (field === "created_at") {
+        cmp = (a.created_at || "").localeCompare(b.created_at || "");
       } else if (field === "price") {
         cmp = (Number(a.selling_price) || 0) - (Number(b.selling_price) || 0);
       } else if (field === "plate") {
