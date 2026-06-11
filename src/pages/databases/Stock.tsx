@@ -258,6 +258,8 @@ export default function StockPage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="created_at_desc">Añadido: más reciente</SelectItem>
+              <SelectItem value="created_at_asc">Añadido: más antiguo</SelectItem>
               <SelectItem value="entry_date_desc">Fecha entrada: más reciente</SelectItem>
               <SelectItem value="entry_date_asc">Fecha entrada: más antigua</SelectItem>
               <SelectItem value="price_asc">Precio: más barato</SelectItem>
