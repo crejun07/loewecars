@@ -22,6 +22,7 @@ import {
   sparePartStatusLabels,
   sparePartStatusOrder,
   sparePartStatusTone,
+  type StatusTone,
 } from "@/lib/labels";
 import { toast } from "sonner";
 
@@ -57,6 +58,14 @@ export default function SparePartsPage() {
   const statusRank: Record<string, number> = Object.fromEntries(
     sparePartStatusOrder.map((s, i) => [s, i]),
   );
+  const rowBgByTone: Record<StatusTone, string> = {
+    neutral: "bg-status-neutral",
+    blue: "bg-status-blue",
+    amber: "bg-status-amber",
+    violet: "bg-status-violet",
+    green: "bg-status-green",
+    red: "bg-status-red",
+  };
   const { data: stock = [] } = useStock();
   const qc = useQueryClient();
   const [view, setView] = useState<"kanban" | "table">("table");
@@ -290,7 +299,11 @@ export default function SparePartsPage() {
                   </thead>
                   <tbody className="divide-y divide-border">
                     {pagedParts.map((p: any) => (
-                      <tr key={p.id} onClick={() => openEdit(p)} className="cursor-pointer hover:bg-muted/30">
+                      <tr
+                        key={p.id}
+                        onClick={() => openEdit(p)}
+                        className={`cursor-pointer hover:bg-muted/30 ${rowBgByTone[sparePartStatusTone[p.status] ?? "neutral"]} hover:opacity-90`}
+                      >
                         <td className={`px-3 py-2 font-medium ${p.status === "ordered" ? "text-status-blue-fg" : ""}`}>{p.part_name}</td>
                         <td className="px-3 py-2 text-xs text-muted-foreground">{p.part_reference || "—"}</td>
                         <td className="px-3 py-2 text-xs text-muted-foreground">{vehicleLabel(p)}</td>
