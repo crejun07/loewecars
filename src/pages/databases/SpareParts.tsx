@@ -58,6 +58,14 @@ export default function SparePartsPage() {
   const statusRank: Record<string, number> = Object.fromEntries(
     sparePartStatusOrder.map((s, i) => [s, i]),
   );
+  const rowBgByTone: Record<StatusTone, string> = {
+    neutral: "bg-status-neutral",
+    blue: "bg-status-blue",
+    amber: "bg-status-amber",
+    violet: "bg-status-violet",
+    green: "bg-status-green",
+    red: "bg-status-red",
+  };
   const { data: stock = [] } = useStock();
   const qc = useQueryClient();
   const [view, setView] = useState<"kanban" | "table">("table");
