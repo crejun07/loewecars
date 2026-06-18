@@ -171,7 +171,12 @@ export default function AppraisalsPage() {
   function openNew() { setEditing(null); setForm(empty); setOpen(true); }
   function openEdit(a: any) {
     setEditing(a);
-    setForm({ ...empty, ...Object.fromEntries(Object.entries(a).map(([k, v]) => [k, v ?? (empty as any)[k] ?? ""])) });
+    const merged: any = { ...empty };
+    for (const [k, v] of Object.entries(a)) {
+      if (v === null || v === undefined) continue;
+      merged[k] = v;
+    }
+    setForm(merged);
     setOpen(true);
   }
   async function save() {
