@@ -355,60 +355,207 @@ export type Database = {
       }
       vehicle_appraisals: {
         Row: {
+          alloy_wheels: boolean | null
+          anti_theft: boolean | null
+          appraisal_date: string
+          appraisal_number: number
+          appraisal_value: number | null
           assigned_to: string | null
+          bluetooth: boolean | null
+          body_type: string | null
           brand: string
+          camera_360: boolean | null
           client_id: string | null
+          climate_control: string | null
+          clutch_done: boolean | null
+          clutch_invoice: boolean | null
+          color: string | null
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
           created_at: string
           deal_status: Database["public"]["Enums"]["appraisal_status"]
+          displacement: number | null
+          doors: number | null
+          drive_type: string | null
+          electric_seats: boolean | null
           estimated_price: number | null
+          first_registration_date: string | null
           follow_up_date: string | null
+          front_camera: boolean | null
+          fuel_other: string | null
           fuel_type: Database["public"]["Enums"]["fuel_type"] | null
+          has_invoices: boolean | null
+          heated_seats: boolean | null
+          horsepower: number | null
           id: string
+          industrial_type: string | null
+          interior_knob: string | null
+          interior_seats: string | null
+          interior_steering: string | null
+          keys_count: number | null
+          led_xenon: string | null
+          license_plate: string | null
+          metallic: boolean | null
           mileage: number | null
           model: string
+          multifunction_steering: boolean | null
+          navigator: boolean | null
           notes: string | null
           offered_price: number | null
+          operation_type: string | null
+          parcel_shelf: boolean | null
+          rear_camera: boolean | null
+          service_history: boolean | null
+          service_manual: boolean | null
+          service_seal: boolean | null
+          spare_wheel: boolean | null
+          sunroof: boolean | null
+          timing_belt_done: boolean | null
+          timing_belt_invoice: boolean | null
+          tires_front: string | null
+          tires_rear: string | null
           transmission: Database["public"]["Enums"]["transmission_type"] | null
           updated_at: string
+          upholstery: string | null
           vehicle_condition: string | null
+          workshop_value: number | null
           year: number | null
         }
         Insert: {
+          alloy_wheels?: boolean | null
+          anti_theft?: boolean | null
+          appraisal_date?: string
+          appraisal_number?: number
+          appraisal_value?: number | null
           assigned_to?: string | null
+          bluetooth?: boolean | null
+          body_type?: string | null
           brand: string
+          camera_360?: boolean | null
           client_id?: string | null
+          climate_control?: string | null
+          clutch_done?: boolean | null
+          clutch_invoice?: boolean | null
+          color?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
           created_at?: string
           deal_status?: Database["public"]["Enums"]["appraisal_status"]
+          displacement?: number | null
+          doors?: number | null
+          drive_type?: string | null
+          electric_seats?: boolean | null
           estimated_price?: number | null
+          first_registration_date?: string | null
           follow_up_date?: string | null
+          front_camera?: boolean | null
+          fuel_other?: string | null
           fuel_type?: Database["public"]["Enums"]["fuel_type"] | null
+          has_invoices?: boolean | null
+          heated_seats?: boolean | null
+          horsepower?: number | null
           id?: string
+          industrial_type?: string | null
+          interior_knob?: string | null
+          interior_seats?: string | null
+          interior_steering?: string | null
+          keys_count?: number | null
+          led_xenon?: string | null
+          license_plate?: string | null
+          metallic?: boolean | null
           mileage?: number | null
           model: string
+          multifunction_steering?: boolean | null
+          navigator?: boolean | null
           notes?: string | null
           offered_price?: number | null
+          operation_type?: string | null
+          parcel_shelf?: boolean | null
+          rear_camera?: boolean | null
+          service_history?: boolean | null
+          service_manual?: boolean | null
+          service_seal?: boolean | null
+          spare_wheel?: boolean | null
+          sunroof?: boolean | null
+          timing_belt_done?: boolean | null
+          timing_belt_invoice?: boolean | null
+          tires_front?: string | null
+          tires_rear?: string | null
           transmission?: Database["public"]["Enums"]["transmission_type"] | null
           updated_at?: string
+          upholstery?: string | null
           vehicle_condition?: string | null
+          workshop_value?: number | null
           year?: number | null
         }
         Update: {
+          alloy_wheels?: boolean | null
+          anti_theft?: boolean | null
+          appraisal_date?: string
+          appraisal_number?: number
+          appraisal_value?: number | null
           assigned_to?: string | null
+          bluetooth?: boolean | null
+          body_type?: string | null
           brand?: string
+          camera_360?: boolean | null
           client_id?: string | null
+          climate_control?: string | null
+          clutch_done?: boolean | null
+          clutch_invoice?: boolean | null
+          color?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
           created_at?: string
           deal_status?: Database["public"]["Enums"]["appraisal_status"]
+          displacement?: number | null
+          doors?: number | null
+          drive_type?: string | null
+          electric_seats?: boolean | null
           estimated_price?: number | null
+          first_registration_date?: string | null
           follow_up_date?: string | null
+          front_camera?: boolean | null
+          fuel_other?: string | null
           fuel_type?: Database["public"]["Enums"]["fuel_type"] | null
+          has_invoices?: boolean | null
+          heated_seats?: boolean | null
+          horsepower?: number | null
           id?: string
+          industrial_type?: string | null
+          interior_knob?: string | null
+          interior_seats?: string | null
+          interior_steering?: string | null
+          keys_count?: number | null
+          led_xenon?: string | null
+          license_plate?: string | null
+          metallic?: boolean | null
           mileage?: number | null
           model?: string
+          multifunction_steering?: boolean | null
+          navigator?: boolean | null
           notes?: string | null
           offered_price?: number | null
+          operation_type?: string | null
+          parcel_shelf?: boolean | null
+          rear_camera?: boolean | null
+          service_history?: boolean | null
+          service_manual?: boolean | null
+          service_seal?: boolean | null
+          spare_wheel?: boolean | null
+          sunroof?: boolean | null
+          timing_belt_done?: boolean | null
+          timing_belt_invoice?: boolean | null
+          tires_front?: string | null
+          tires_rear?: string | null
           transmission?: Database["public"]["Enums"]["transmission_type"] | null
           updated_at?: string
+          upholstery?: string | null
           vehicle_condition?: string | null
+          workshop_value?: number | null
           year?: number | null
         }
         Relationships: [
