@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { ReactNode, useState } from "react";
 import { Plus, LayoutGrid, Table as TableIcon, Pencil, Trash2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,20 +8,155 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Field, RecordDialog } from "@/components/shared/RecordDialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { KanbanBoard } from "@/components/shared/KanbanBoard";
 import { QuickStatusToggle } from "@/components/shared/QuickStatusToggle";
 import { SearchableSelect } from "@/components/shared/SearchableSelect";
 import { useAppraisals, useClients } from "@/hooks/data/useDealership";
 import { appraisalStatusLabels, appraisalStatusOrder, appraisalStatusTone, employees, formatCurrency, formatDate, fuelTypeLabels, transmissionLabels } from "@/lib/labels";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-const empty = {
-  client_id: "", brand: "", model: "", year: "" as any, mileage: "" as any, fuel_type: "gasoline",
-  transmission: "manual", vehicle_condition: "", estimated_price: "" as any, offered_price: "" as any,
+const empty: any = {
+  client_id: "",
+  contact_name: "", contact_phone: "", contact_email: "",
+  operation_type: "venta",
+  brand: "", model: "", year: "", mileage: "",
+  fuel_type: "gasoline", fuel_other: "",
+  transmission: "manual",
+  color: "", metallic: null, doors: "",
+  license_plate: "", first_registration_date: "",
+  displacement: "", horsepower: "",
+  climate_control: "",
+  service_manual: null, service_history: null, service_seal: null, has_invoices: null,
+  timing_belt_done: null, timing_belt_invoice: null,
+  clutch_done: null, clutch_invoice: null,
+  upholstery: "",
+  keys_count: null,
+  anti_theft: null, parcel_shelf: null, spare_wheel: null,
+  heated_seats: null, multifunction_steering: null,
+  navigator: null, bluetooth: null, sunroof: null,
+  led_xenon: "",
+  rear_camera: null, front_camera: null, camera_360: null,
+  electric_seats: null, alloy_wheels: null,
+  drive_type: "",
+  industrial_type: "", body_type: "",
+  tires_front: "", tires_rear: "",
+  interior_steering: "", interior_knob: "", interior_seats: "",
+  vehicle_condition: "",
+  appraisal_value: "", workshop_value: "",
+  estimated_price: "", offered_price: "",
   assigned_to: "",
-  deal_status: "pending", follow_up_date: "", notes: "",
+  deal_status: "pending",
+  follow_up_date: "",
+  notes: "",
 };
+
+const operationOptions = [
+  { value: "venta", label: "Venta" },
+  { value: "cambio", label: "Cambio" },
+  { value: "deposito", label: "Depósito" },
+];
+const bodyOptions = [
+  { value: "berlina", label: "Berlina" },
+  { value: "coupe", label: "Coupé" },
+  { value: "familiar", label: "Familiar" },
+  { value: "suv", label: "SUV" },
+  { value: "monovolumen", label: "Monovolumen" },
+  { value: "cabrio", label: "Cabrio" },
+];
+const industrialOptions = [
+  { value: "furgon_l2h2", label: "Furgón L2H2" },
+  { value: "furgon_l3h3", label: "Furgón L3H3" },
+  { value: "mixto_6", label: "Mixto 6" },
+  { value: "mixto_9", label: "Mixto 9" },
+  { value: "combi_6", label: "Combi 6" },
+  { value: "combi_9", label: "Combi 9" },
+];
+const climateOptions = [
+  { value: "aire", label: "Aire acondicionado" },
+  { value: "clima", label: "Climatizador" },
+  { value: "ninguno", label: "Ninguno" },
+];
+const upholsteryOptions = [
+  { value: "tela", label: "Tela" },
+  { value: "piel", label: "Piel" },
+  { value: "mix", label: "Mixta" },
+];
+const ledXenonOptions = [
+  { value: "led", label: "LED" },
+  { value: "xenon", label: "Xenón" },
+  { value: "halogeno", label: "Halógeno" },
+];
+const driveOptions = [
+  { value: "4x2", label: "4x2" },
+  { value: "4x4", label: "4x4" },
+];
+const interiorOptions = [
+  { value: "B", label: "Bueno" },
+  { value: "M", label: "Malo" },
+];
+const keysOptions = [
+  { value: 1, label: "1" },
+  { value: 2, label: "2" },
+  { value: 3, label: "3" },
+];
+
+// ---- Click-friendly inputs ----
+function PillGroup<T extends string | number | null>({
+  value, onChange, options, allowClear = true,
+}: { value: T; onChange: (v: T) => void; options: { value: T; label: string }[]; allowClear?: boolean }) {
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {options.map((o) => {
+        const active = value === o.value;
+        return (
+          <button
+            type="button"
+            key={String(o.value)}
+            onClick={() => onChange(allowClear && active ? (null as any) : o.value)}
+            className={cn(
+              "rounded-md border px-3 py-1.5 text-sm transition-colors",
+              active
+                ? "border-foreground bg-foreground text-background"
+                : "border-border bg-background hover:bg-muted",
+            )}
+          >
+            {o.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function YesNo({ value, onChange }: { value: boolean | null; onChange: (v: boolean | null) => void }) {
+  return (
+    <PillGroup
+      value={value as any}
+      onChange={onChange as any}
+      options={[{ value: true as any, label: "Sí" }, { value: false as any, label: "No" }]}
+    />
+  );
+}
+
+function Row({ label, children, full }: { label: string; children: ReactNode; full?: boolean }) {
+  return (
+    <div className={cn("flex flex-col gap-1.5", full && "col-span-full")}>
+      <span className="text-xs font-medium text-muted-foreground">{label}</span>
+      {children}
+    </div>
+  );
+}
+
+function Section({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section className="rounded-lg border border-border bg-card/40 p-4">
+      <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">{title}</h3>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">{children}</div>
+    </section>
+  );
+}
 
 export default function AppraisalsPage() {
   const { data: appraisals = [] } = useAppraisals();
@@ -31,37 +166,80 @@ export default function AppraisalsPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
   const [form, setForm] = useState<any>(empty);
+  const [busy, setBusy] = useState(false);
 
   function openNew() { setEditing(null); setForm(empty); setOpen(true); }
   function openEdit(a: any) {
     setEditing(a);
-    setForm({
-      client_id: a.client_id ?? "", brand: a.brand, model: a.model, year: a.year ?? "",
-      mileage: a.mileage ?? "", fuel_type: a.fuel_type ?? "gasoline", vehicle_condition: a.vehicle_condition ?? "",
-      transmission: a.transmission ?? "manual",
-      assigned_to: a.assigned_to ?? "",
-      estimated_price: a.estimated_price ?? "", offered_price: a.offered_price ?? "",
-      deal_status: a.deal_status, follow_up_date: a.follow_up_date ?? "", notes: a.notes ?? "",
-    });
+    setForm({ ...empty, ...Object.fromEntries(Object.entries(a).map(([k, v]) => [k, v ?? (empty as any)[k] ?? ""])) });
     setOpen(true);
   }
   async function save() {
-    const payload = {
-      ...form,
-      client_id: form.client_id || null,
-      assigned_to: form.assigned_to || null,
-      year: form.year ? Number(form.year) : null,
-      mileage: form.mileage ? Number(form.mileage) : null,
-      estimated_price: form.estimated_price === "" ? null : Number(form.estimated_price),
-      offered_price: form.offered_price === "" ? null : Number(form.offered_price),
-      follow_up_date: form.follow_up_date || null,
-    };
-    const { error } = editing
-      ? await supabase.from("vehicle_appraisals").update(payload).eq("id", editing.id)
-      : await supabase.from("vehicle_appraisals").insert(payload);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Guardado");
-    qc.invalidateQueries({ queryKey: ["vehicle_appraisals"] });
+    if (busy) return;
+    setBusy(true);
+    try {
+      const num = (v: any) => (v === "" || v === null || v === undefined ? null : Number(v));
+      const text = (v: any) => (v === "" || v === null || v === undefined ? null : v);
+      const offered = num(form.offered_price);
+      // Auto-status: si hay precio ofrecido y sigue pendiente -> oferta enviada
+      let deal_status = form.deal_status || "pending";
+      if (offered != null && deal_status === "pending") deal_status = "offer_sent";
+      if (offered == null && deal_status === "offer_sent") deal_status = "pending";
+
+      const payload: any = {
+        client_id: text(form.client_id),
+        contact_name: text(form.contact_name),
+        contact_phone: text(form.contact_phone),
+        contact_email: text(form.contact_email),
+        operation_type: text(form.operation_type),
+        brand: form.brand, model: form.model,
+        year: num(form.year), mileage: num(form.mileage),
+        fuel_type: form.fuel_type, fuel_other: text(form.fuel_other),
+        transmission: form.transmission,
+        color: text(form.color), metallic: form.metallic, doors: num(form.doors),
+        license_plate: text(form.license_plate),
+        first_registration_date: text(form.first_registration_date),
+        displacement: num(form.displacement),
+        horsepower: num(form.horsepower),
+        climate_control: text(form.climate_control),
+        service_manual: form.service_manual, service_history: form.service_history,
+        service_seal: form.service_seal, has_invoices: form.has_invoices,
+        timing_belt_done: form.timing_belt_done, timing_belt_invoice: form.timing_belt_invoice,
+        clutch_done: form.clutch_done, clutch_invoice: form.clutch_invoice,
+        upholstery: text(form.upholstery),
+        keys_count: form.keys_count ?? null,
+        anti_theft: form.anti_theft, parcel_shelf: form.parcel_shelf, spare_wheel: form.spare_wheel,
+        heated_seats: form.heated_seats, multifunction_steering: form.multifunction_steering,
+        navigator: form.navigator, bluetooth: form.bluetooth, sunroof: form.sunroof,
+        led_xenon: text(form.led_xenon),
+        rear_camera: form.rear_camera, front_camera: form.front_camera, camera_360: form.camera_360,
+        electric_seats: form.electric_seats, alloy_wheels: form.alloy_wheels,
+        drive_type: text(form.drive_type),
+        industrial_type: text(form.industrial_type), body_type: text(form.body_type),
+        tires_front: text(form.tires_front), tires_rear: text(form.tires_rear),
+        interior_steering: text(form.interior_steering),
+        interior_knob: text(form.interior_knob),
+        interior_seats: text(form.interior_seats),
+        vehicle_condition: text(form.vehicle_condition),
+        appraisal_value: num(form.appraisal_value),
+        workshop_value: num(form.workshop_value),
+        estimated_price: num(form.estimated_price),
+        offered_price: offered,
+        assigned_to: text(form.assigned_to),
+        deal_status,
+        follow_up_date: text(form.follow_up_date),
+        notes: text(form.notes),
+      };
+      const { error } = editing
+        ? await supabase.from("vehicle_appraisals").update(payload).eq("id", editing.id)
+        : await supabase.from("vehicle_appraisals").insert(payload);
+      if (error) { toast.error(error.message); return; }
+      toast.success("Tasación guardada");
+      qc.invalidateQueries({ queryKey: ["vehicle_appraisals"] });
+      setOpen(false);
+    } finally {
+      setBusy(false);
+    }
   }
   async function remove(id: string) {
     if (!confirm("¿Eliminar?")) return;
@@ -73,6 +251,7 @@ export default function AppraisalsPage() {
     if (error) { toast.error(error.message); return; }
     qc.invalidateQueries({ queryKey: ["vehicle_appraisals"] });
   }
+  const set = (k: string, v: any) => setForm((f: any) => ({ ...f, [k]: v }));
 
   return (
     <div>
@@ -152,58 +331,190 @@ export default function AppraisalsPage() {
         )}
       </div>
 
-      <RecordDialog open={open} onOpenChange={setOpen} trigger={null as any} title={editing ? "Editar tasación" : "Nueva tasación"} onSubmit={save}>
-        <Field label="Cliente" full>
-          <SearchableSelect
-            value={form.client_id}
-            onChange={(v) => setForm({ ...form, client_id: v })}
-            options={clients.map((c: any) => ({
-              value: c.id,
-              label: c.full_name,
-              hint: [c.dni, c.phone].filter(Boolean).join(" · "),
-            }))}
-            placeholder="Selecciona cliente"
-            searchPlaceholder="Buscar por nombre, DNI o teléfono…"
-            emptyText="Sin clientes"
-          />
-        </Field>
-        <Field label="Marca"><Input required value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} /></Field>
-        <Field label="Modelo"><Input required value={form.model} onChange={(e) => setForm({ ...form, model: e.target.value })} /></Field>
-        <Field label="Año"><Input type="number" value={form.year} onChange={(e) => setForm({ ...form, year: e.target.value })} /></Field>
-        <Field label="Kilómetros"><Input type="number" value={form.mileage} onChange={(e) => setForm({ ...form, mileage: e.target.value })} /></Field>
-        <Field label="Combustible">
-          <Select value={form.fuel_type} onValueChange={(v) => setForm({ ...form, fuel_type: v })}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>{Object.entries(fuelTypeLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
-          </Select>
-        </Field>
-        <Field label="Transmisión">
-          <Select value={form.transmission} onValueChange={(v) => setForm({ ...form, transmission: v })}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>{Object.entries(transmissionLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
-          </Select>
-        </Field>
-        <Field label="Estado del vehículo"><Input value={form.vehicle_condition} onChange={(e) => setForm({ ...form, vehicle_condition: e.target.value })} placeholder="Excelente / Bueno / Regular…" /></Field>
-        <Field label="Precio estimado (€)"><Input type="number" value={form.estimated_price} onChange={(e) => setForm({ ...form, estimated_price: e.target.value })} /></Field>
-        <Field label="Precio ofrecido (€)"><Input type="number" value={form.offered_price} onChange={(e) => setForm({ ...form, offered_price: e.target.value })} /></Field>
-        <Field label="Estado de la operación">
-          <Select value={form.deal_status} onValueChange={(v) => setForm({ ...form, deal_status: v })}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>{Object.entries(appraisalStatusLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
-          </Select>
-        </Field>
-        <Field label="Responsable">
-          <Select value={form.assigned_to || "none"} onValueChange={(v) => setForm({ ...form, assigned_to: v === "none" ? "" : v })}>
-            <SelectTrigger><SelectValue placeholder="Sin asignar" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">— Sin asignar —</SelectItem>
-              {employees.map((e) => <SelectItem key={e} value={e}>{e}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </Field>
-        <Field label="Fecha de seguimiento"><Input type="date" value={form.follow_up_date} onChange={(e) => setForm({ ...form, follow_up_date: e.target.value })} /></Field>
-        <Field label="Notas" full><Textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></Field>
-      </RecordDialog>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto">
+          <DialogHeader>
+            <div className="flex items-center justify-between gap-4">
+              <DialogTitle>{editing ? `Tasación nº ${editing.appraisal_number ?? "—"}` : "Nueva tasación"}</DialogTitle>
+              <div className="text-xs text-muted-foreground">
+                {editing
+                  ? `Fecha: ${formatDate(editing.appraisal_date)}`
+                  : `Nº y fecha asignados al guardar (${new Date().toLocaleDateString("es-ES")})`}
+              </div>
+            </div>
+          </DialogHeader>
+
+          <form
+            className="space-y-4"
+            onSubmit={(e) => { e.preventDefault(); save(); }}
+          >
+            <Section title="Datos personales">
+              <Row label="Cliente existente (opcional)" full>
+                <SearchableSelect
+                  value={form.client_id}
+                  onChange={(v) => {
+                    const c = clients.find((x: any) => x.id === v);
+                    setForm((f: any) => ({
+                      ...f,
+                      client_id: v,
+                      contact_name: c?.full_name || f.contact_name,
+                      contact_phone: c?.phone || f.contact_phone,
+                      contact_email: c?.email || f.contact_email,
+                    }));
+                  }}
+                  options={clients.map((c: any) => ({
+                    value: c.id, label: c.full_name,
+                    hint: [c.dni, c.phone].filter(Boolean).join(" · "),
+                  }))}
+                  placeholder="Buscar cliente…"
+                  searchPlaceholder="Nombre, DNI o teléfono"
+                  emptyText="Sin clientes"
+                />
+              </Row>
+              <Row label="Nombre"><Input value={form.contact_name} onChange={(e) => set("contact_name", e.target.value)} placeholder="Nombre completo" /></Row>
+              <Row label="Teléfono"><Input value={form.contact_phone} onChange={(e) => set("contact_phone", e.target.value)} placeholder="600 000 000" /></Row>
+              <Row label="Correo" full><Input type="email" value={form.contact_email} onChange={(e) => set("contact_email", e.target.value)} placeholder="email@ejemplo.com" /></Row>
+              <Row label="Tipo de operación" full>
+                <PillGroup value={form.operation_type} onChange={(v) => set("operation_type", v)} options={operationOptions} />
+              </Row>
+            </Section>
+
+            <Section title="Vehículo">
+              <Row label="Marca"><Input required value={form.brand} onChange={(e) => set("brand", e.target.value)} /></Row>
+              <Row label="Modelo exacto"><Input required value={form.model} onChange={(e) => set("model", e.target.value)} placeholder="Ej. Golf 1.6 TDI Advance" /></Row>
+              <Row label="Matrícula"><Input value={form.license_plate} onChange={(e) => set("license_plate", e.target.value.toUpperCase())} /></Row>
+              <Row label="Fecha 1ª matriculación"><Input type="date" value={form.first_registration_date} onChange={(e) => set("first_registration_date", e.target.value)} /></Row>
+              <Row label="Año"><Input type="number" value={form.year} onChange={(e) => set("year", e.target.value)} /></Row>
+              <Row label="Kilómetros"><Input type="number" value={form.mileage} onChange={(e) => set("mileage", e.target.value)} /></Row>
+              <Row label="Cilindrada (cc)"><Input type="number" value={form.displacement} onChange={(e) => set("displacement", e.target.value)} /></Row>
+              <Row label="CV"><Input type="number" value={form.horsepower} onChange={(e) => set("horsepower", e.target.value)} /></Row>
+              <Row label="Color"><Input value={form.color} onChange={(e) => set("color", e.target.value)} /></Row>
+              <Row label="¿Metalizado?"><YesNo value={form.metallic} onChange={(v) => set("metallic", v)} /></Row>
+              <Row label="Puertas">
+                <PillGroup value={form.doors === "" ? null : Number(form.doors)} onChange={(v) => set("doors", v ?? "")} options={[3,4,5].map(n => ({ value: n, label: String(n) }))} />
+              </Row>
+              <Row label="Combustible" full>
+                <PillGroup
+                  value={form.fuel_type}
+                  onChange={(v) => set("fuel_type", v ?? "gasoline")}
+                  allowClear={false}
+                  options={Object.entries(fuelTypeLabels).map(([k, v]) => ({ value: k, label: v }))}
+                />
+              </Row>
+              {form.fuel_type === "other" && (
+                <Row label="Combustible (especifica)" full><Input value={form.fuel_other} onChange={(e) => set("fuel_other", e.target.value)} /></Row>
+              )}
+              <Row label="Cambio">
+                <PillGroup
+                  value={form.transmission}
+                  onChange={(v) => set("transmission", v ?? "manual")}
+                  allowClear={false}
+                  options={Object.entries(transmissionLabels).map(([k, v]) => ({ value: k, label: v }))}
+                />
+              </Row>
+              <Row label="Tracción">
+                <PillGroup value={form.drive_type} onChange={(v) => set("drive_type", v ?? "")} options={driveOptions} />
+              </Row>
+              <Row label="Carrocería" full>
+                <PillGroup value={form.body_type} onChange={(v) => set("body_type", v ?? "")} options={bodyOptions} />
+              </Row>
+              <Row label="Industrial (si aplica)" full>
+                <PillGroup value={form.industrial_type} onChange={(v) => set("industrial_type", v ?? "")} options={industrialOptions} />
+              </Row>
+            </Section>
+
+            <Section title="Mantenimiento y mecánica">
+              <Row label="Climatización" full>
+                <PillGroup value={form.climate_control} onChange={(v) => set("climate_control", v ?? "")} options={climateOptions} />
+              </Row>
+              <Row label="Libro manual"><YesNo value={form.service_manual} onChange={(v) => set("service_manual", v)} /></Row>
+              <Row label="Libro revisiones"><YesNo value={form.service_history} onChange={(v) => set("service_history", v)} /></Row>
+              <Row label="Sello taller"><YesNo value={form.service_seal} onChange={(v) => set("service_seal", v)} /></Row>
+              <Row label="Facturas"><YesNo value={form.has_invoices} onChange={(v) => set("has_invoices", v)} /></Row>
+              <Row label="Distribución hecha"><YesNo value={form.timing_belt_done} onChange={(v) => set("timing_belt_done", v)} /></Row>
+              <Row label="Factura distribución"><YesNo value={form.timing_belt_invoice} onChange={(v) => set("timing_belt_invoice", v)} /></Row>
+              <Row label="Embrague hecho"><YesNo value={form.clutch_done} onChange={(v) => set("clutch_done", v)} /></Row>
+              <Row label="Factura embrague"><YesNo value={form.clutch_invoice} onChange={(v) => set("clutch_invoice", v)} /></Row>
+            </Section>
+
+            <Section title="Equipamiento">
+              <Row label="Tapicería" full>
+                <PillGroup value={form.upholstery} onChange={(v) => set("upholstery", v ?? "")} options={upholsteryOptions} />
+              </Row>
+              <Row label="Llaves">
+                <PillGroup value={form.keys_count} onChange={(v) => set("keys_count", v)} options={keysOptions} />
+              </Row>
+              <Row label="Antirrobo"><YesNo value={form.anti_theft} onChange={(v) => set("anti_theft", v)} /></Row>
+              <Row label="Bandeja"><YesNo value={form.parcel_shelf} onChange={(v) => set("parcel_shelf", v)} /></Row>
+              <Row label="Rueda de repuesto"><YesNo value={form.spare_wheel} onChange={(v) => set("spare_wheel", v)} /></Row>
+              <Row label="Asientos calefactables"><YesNo value={form.heated_seats} onChange={(v) => set("heated_seats", v)} /></Row>
+              <Row label="Volante multifunción"><YesNo value={form.multifunction_steering} onChange={(v) => set("multifunction_steering", v)} /></Row>
+            </Section>
+
+            <Section title="Extras">
+              <Row label="Navegador"><YesNo value={form.navigator} onChange={(v) => set("navigator", v)} /></Row>
+              <Row label="Bluetooth"><YesNo value={form.bluetooth} onChange={(v) => set("bluetooth", v)} /></Row>
+              <Row label="Techo solar"><YesNo value={form.sunroof} onChange={(v) => set("sunroof", v)} /></Row>
+              <Row label="Iluminación">
+                <PillGroup value={form.led_xenon} onChange={(v) => set("led_xenon", v ?? "")} options={ledXenonOptions} />
+              </Row>
+              <Row label="Cámara trasera"><YesNo value={form.rear_camera} onChange={(v) => set("rear_camera", v)} /></Row>
+              <Row label="Cámara delantera"><YesNo value={form.front_camera} onChange={(v) => set("front_camera", v)} /></Row>
+              <Row label="Cámara 360"><YesNo value={form.camera_360} onChange={(v) => set("camera_360", v)} /></Row>
+              <Row label="Asientos eléctricos"><YesNo value={form.electric_seats} onChange={(v) => set("electric_seats", v)} /></Row>
+              <Row label="Llantas de aluminio"><YesNo value={form.alloy_wheels} onChange={(v) => set("alloy_wheels", v)} /></Row>
+            </Section>
+
+            <Section title="Estado interior y neumáticos">
+              <Row label="Volante">
+                <PillGroup value={form.interior_steering} onChange={(v) => set("interior_steering", v ?? "")} options={interiorOptions} />
+              </Row>
+              <Row label="Pomo">
+                <PillGroup value={form.interior_knob} onChange={(v) => set("interior_knob", v ?? "")} options={interiorOptions} />
+              </Row>
+              <Row label="Asientos">
+                <PillGroup value={form.interior_seats} onChange={(v) => set("interior_seats", v ?? "")} options={interiorOptions} />
+              </Row>
+              <Row label="Neumáticos delanteros"><Input value={form.tires_front} onChange={(e) => set("tires_front", e.target.value)} placeholder="Marca / % vida" /></Row>
+              <Row label="Neumáticos traseros"><Input value={form.tires_rear} onChange={(e) => set("tires_rear", e.target.value)} placeholder="Marca / % vida" /></Row>
+              <Row label="Estado general del vehículo" full>
+                <Input value={form.vehicle_condition} onChange={(e) => set("vehicle_condition", e.target.value)} placeholder="Excelente / Bueno / Regular…" />
+              </Row>
+            </Section>
+
+            <Section title="Valoración">
+              <Row label="Valor tasación (€)"><Input type="number" value={form.appraisal_value} onChange={(e) => set("appraisal_value", e.target.value)} /></Row>
+              <Row label="Valor taller (€)"><Input type="number" value={form.workshop_value} onChange={(e) => set("workshop_value", e.target.value)} /></Row>
+              <Row label="Precio estimado (€)"><Input type="number" value={form.estimated_price} onChange={(e) => set("estimated_price", e.target.value)} /></Row>
+              <Row label="Precio ofrecido (€)">
+                <Input type="number" value={form.offered_price} onChange={(e) => set("offered_price", e.target.value)} placeholder="Vacío = Pendiente" />
+              </Row>
+              <Row label="Estado de la operación">
+                <Select value={form.deal_status} onValueChange={(v) => set("deal_status", v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{Object.entries(appraisalStatusLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
+                </Select>
+              </Row>
+              <Row label="Responsable">
+                <Select value={form.assigned_to || "none"} onValueChange={(v) => set("assigned_to", v === "none" ? "" : v)}>
+                  <SelectTrigger><SelectValue placeholder="Sin asignar" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">— Sin asignar —</SelectItem>
+                    {employees.map((e) => <SelectItem key={e} value={e}>{e}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </Row>
+              <Row label="Fecha de seguimiento"><Input type="date" value={form.follow_up_date} onChange={(e) => set("follow_up_date", e.target.value)} /></Row>
+              <Row label="Notas" full><Textarea rows={3} value={form.notes} onChange={(e) => set("notes", e.target.value)} /></Row>
+            </Section>
+
+            <DialogFooter className="pt-2">
+              <Button type="button" variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button>
+              <Button type="submit" disabled={busy}>{busy ? "Guardando…" : "Guardar tasación"}</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
