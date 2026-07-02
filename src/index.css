@@ -120,8 +120,9 @@ All colors MUST be HSL.
 }
 
 @media print {
-  body * { visibility: hidden !important; }
-  [role="dialog"], [role="dialog"] * { visibility: visible !important; }
-  [role="dialog"] { position: absolute !important; inset: 0 !important; box-shadow: none !important; border: 0 !important; transform: none !important; max-width: none !important; }
+  @page { margin: 10mm; }
+  html, body { height: auto !important; overflow: visible !important; background: #fff !important; }
+  body > *:not(#print-root) { display: none !important; }
+  #print-root { display: block !important; position: static !important; }
   .print\:hidden { display: none !important; }
 }
