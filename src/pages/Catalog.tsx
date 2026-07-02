@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Printer, Car, Search } from "lucide-react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -95,8 +96,24 @@ export default function CatalogPage() {
 
   function handlePrint(v: any) {
     setPrinting(v);
-    setTimeout(() => window.print(), 200);
   }
+
+  useEffect(() => {
+    if (!printing) return;
+    let root = document.getElementById("print-root");
+    if (!root) {
+      root = document.createElement("div");
+      root.id = "print-root";
+      root.style.display = "none";
+      document.body.appendChild(root);
+    }
+    return () => {
+      const el = document.getElementById("print-root");
+      if (el) el.remove();
+    };
+  }, [printing]);
+
+  const printRoot = typeof document !== "undefined" ? document.getElementById("print-root") : null;
 
   return (
     <div>
@@ -184,6 +201,8 @@ export default function CatalogPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {printing && printRoot && createPortal(<VehicleSheet v={printing} />, printRoot)}
     </div>
   );
 }
