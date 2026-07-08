@@ -17,6 +17,7 @@ import HistoryPage from "./pages/History.tsx";
 import AuthPage from "./pages/Auth.tsx";
 import ChatPage from "./pages/Chat.tsx";
 import CatalogPage from "./pages/Catalog.tsx";
+import AgendaPage from "./pages/Agenda.tsx";
 import { AppLayout } from "./components/layout/AppLayout.tsx";
 import { AuthProvider } from "./hooks/useAuth";
 import { ProtectedRoute } from "./components/ProtectedRoute";
@@ -51,6 +52,7 @@ const App = () => (
                         <Route path="/workshop" element={<PermissionGuard workspace="workshop"><WorkshopPage /></PermissionGuard>} />
                         <Route path="/spare-parts" element={<PermissionGuard workspace="spare-parts"><SparePartsPage /></PermissionGuard>} />
                         <Route path="/catalog" element={<CatalogPage />} />
+                        <Route path="/agenda" element={<AgendaPage />} />
                         <Route path="/reports" element={<PermissionGuard workspace="reports"><ReportsPage /></PermissionGuard>} />
                         <Route path="/history" element={<PermissionGuard workspace="history"><HistoryPage /></PermissionGuard>} />
                         <Route path="/settings" element={<PermissionGuard workspace="settings"><SettingsPage /></PermissionGuard>} />
