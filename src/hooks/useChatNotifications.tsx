@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useEmployees } from "@/hooks/data/useDealership";
+import { playChime } from "@/lib/notify";
 
 interface Ctx {
   unreadTotal: number;
@@ -79,25 +80,7 @@ export function ChatNotificationsProvider({ children }: { children: ReactNode })
               action: { label: "Ver", onClick: () => navigate("/chat") },
               position: "bottom-right",
             });
-            try {
-              const Ctx: any = (window as any).AudioContext || (window as any).webkitAudioContext;
-              if (Ctx) {
-                const ctx = new Ctx();
-                const o = ctx.createOscillator();
-                const g = ctx.createGain();
-                o.type = "sine";
-                o.frequency.setValueAtTime(880, ctx.currentTime);
-                o.frequency.setValueAtTime(1320, ctx.currentTime + 0.08);
-                g.gain.setValueAtTime(0.0001, ctx.currentTime);
-                g.gain.exponentialRampToValueAtTime(0.18, ctx.currentTime + 0.01);
-                g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.3);
-                o.connect(g);
-                g.connect(ctx.destination);
-                o.start();
-                o.stop(ctx.currentTime + 0.32);
-                setTimeout(() => ctx.close(), 500);
-              }
-            } catch { /* ignore */ }
+            playChime();
           }
         },
       )

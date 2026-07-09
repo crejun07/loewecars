@@ -24,8 +24,14 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import { PermissionsProvider } from "./hooks/usePermissions";
 import { PermissionGuard } from "./components/PermissionGuard";
 import { ChatNotificationsProvider } from "./hooks/useChatNotifications";
+import { useAgendaNotifications } from "./hooks/useAgendaNotifications";
 
 const queryClient = new QueryClient();
+
+function AppShell({ children }: { children: React.ReactNode }) {
+  useAgendaNotifications();
+  return <>{children}</>;
+}
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -42,6 +48,7 @@ const App = () => (
                 <ProtectedRoute>
                   <PermissionsProvider>
                     <ChatNotificationsProvider>
+                    <AppShell>
                     <AppLayout>
                       <Routes>
                         <Route path="/" element={<Dashboard />} />
@@ -60,6 +67,7 @@ const App = () => (
                         <Route path="*" element={<NotFound />} />
                       </Routes>
                     </AppLayout>
+                    </AppShell>
                     </ChatNotificationsProvider>
                   </PermissionsProvider>
                 </ProtectedRoute>

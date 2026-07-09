@@ -20,6 +20,7 @@ import {
 
 const items: { title: string; url: string; icon: any; ws: Workspace }[] = [
   { title: "Panel", url: "/", icon: LayoutDashboard, ws: "dashboard" },
+  { title: "Agenda", url: "/agenda", icon: CalendarIcon, ws: "dashboard" },
   { title: "Clientes", url: "/clients", icon: Users, ws: "clients" },
   { title: "Tasaciones", url: "/appraisals", icon: ClipboardList, ws: "appraisals" },
   { title: "Ventas", url: "/sales", icon: ShoppingCart, ws: "sales" },
@@ -27,7 +28,6 @@ const items: { title: string; url: string; icon: any; ws: Workspace }[] = [
   { title: "Taller", url: "/workshop", icon: Wrench, ws: "workshop" },
   { title: "Recambios", url: "/spare-parts", icon: Package, ws: "spare-parts" },
   { title: "Catálogo", url: "/catalog", icon: BookOpen, ws: "stock" },
-  { title: "Agenda", url: "/agenda", icon: CalendarIcon, ws: "dashboard" },
   { title: "Informes", url: "/reports", icon: FileText, ws: "reports" },
   { title: "Historial", url: "/history", icon: History, ws: "history" },
   { title: "Ajustes", url: "/settings", icon: Settings, ws: "settings" },
