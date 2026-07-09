@@ -1,5 +1,10 @@
 import { Link } from "react-router-dom";
-import { Users, ClipboardList, ShoppingCart, Car, Wrench, AlertTriangle, Clock, TrendingUp, ArrowRight } from "lucide-react";
+import { Users, ClipboardList, ShoppingCart, Car, Wrench, AlertTriangle, Clock, TrendingUp, ArrowRight, CalendarClock } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { useAppraisals, useClients, useSales, useStock, useWorkshop } from "@/hooks/data/useDealership";
@@ -36,11 +41,32 @@ function Kpi({ label, value, sub }: { label: string; value: string | number; sub
 }
 
 export default function Dashboard() {
+  const { user } = useAuth();
   const { data: clients = [] } = useClients();
   const { data: stock = [] } = useStock();
   const { data: appraisals = [] } = useAppraisals();
   const { data: sales = [] } = useSales();
   const { data: workshop = [] } = useWorkshop();
+
+  const { data: upcomingEvents = [] } = useQuery({
+    queryKey: ["agenda_events_upcoming", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+      const { data, error } = await supabase
+        .from("agenda_events")
+        .select("id,title,event_date,status,is_broadcast,user_id,event_type")
+        .gte("event_date", now.toISOString())
+        .neq("status", "done")
+        .order("event_date", { ascending: true })
+        .limit(20);
+      if (error) throw error;
+      return (data ?? []).filter(
+        (e: any) => e.is_broadcast || e.user_id === user!.id,
+      );
+    },
+  });
 
   const available = stock.filter((s: any) => s.status === "available");
   const totalMargin = stock
@@ -123,6 +149,38 @@ export default function Dashboard() {
         </div>
 
         <div className="grid gap-4 lg:grid-cols-3">
+          {/* Upcoming events */}
+          <div className="rounded-lg border border-border bg-card lg:col-span-3">
+            <div className="flex items-center justify-between border-b border-border px-4 py-3">
+              <div className="flex items-center gap-2">
+                <CalendarClock className="h-4 w-4 text-primary" />
+                <h2 className="text-sm font-semibold">Eventos próximos</h2>
+              </div>
+              <Link to="/agenda" className="text-xs text-muted-foreground hover:text-foreground">Ver agenda →</Link>
+            </div>
+            {upcomingEvents.length === 0 ? (
+              <div className="px-4 py-6 text-center text-xs text-muted-foreground">No tienes eventos próximos</div>
+            ) : (
+              <div className="divide-y divide-border">
+                {upcomingEvents.slice(0, 6).map((e: any) => (
+                  <Link
+                    key={e.id}
+                    to="/agenda"
+                    className="flex items-center justify-between gap-3 px-4 py-2.5 hover:bg-muted/40"
+                  >
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-medium">{e.title}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {format(new Date(e.event_date), "EEE d MMM · HH:mm", { locale: es })}
+                        {e.is_broadcast ? " · Equipo" : ""}
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+
           {/* Alerts */}
           <div className="rounded-lg border border-border bg-card lg:col-span-1">
             <div className="flex items-center justify-between border-b border-border px-4 py-3">
