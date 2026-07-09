@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import type { ReactNode } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
@@ -24,8 +25,14 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import { PermissionsProvider } from "./hooks/usePermissions";
 import { PermissionGuard } from "./components/PermissionGuard";
 import { ChatNotificationsProvider } from "./hooks/useChatNotifications";
+import { useAgendaNotifications } from "./hooks/useAgendaNotifications";
 
 const queryClient = new QueryClient();
+
+function AppShell({ children }: { children: ReactNode }) {
+  useAgendaNotifications();
+  return <>{children}</>;
+}
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -42,6 +49,7 @@ const App = () => (
                 <ProtectedRoute>
                   <PermissionsProvider>
                     <ChatNotificationsProvider>
+                    <AppShell>
                     <AppLayout>
                       <Routes>
                         <Route path="/" element={<Dashboard />} />
@@ -60,6 +68,7 @@ const App = () => (
                         <Route path="*" element={<NotFound />} />
                       </Routes>
                     </AppLayout>
+                    </AppShell>
                     </ChatNotificationsProvider>
                   </PermissionsProvider>
                 </ProtectedRoute>

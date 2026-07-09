@@ -65,6 +65,12 @@ interface EventRow {
   vehicle_id: string | null;
   status: string;
   completed_at: string | null;
+  extra_data?: {
+    phone?: string;
+    location?: string;
+    contact_person?: string;
+    other?: string;
+  } | null;
 }
 
 function useAgendaEvents() {
@@ -101,6 +107,10 @@ export default function AgendaPage() {
     vehicle_id: "",
     assignee_id: user?.id ?? "",
     is_broadcast: false,
+    phone: "",
+    location: "",
+    contact_person: "",
+    other: "",
   });
 
   const eventsByDay = useMemo(() => {
@@ -141,12 +151,17 @@ export default function AgendaPage() {
       vehicle_id: "",
       assignee_id: user?.id ?? "",
       is_broadcast: false,
+      phone: "",
+      location: "",
+      contact_person: "",
+      other: "",
     });
     setDialogOpen(true);
   }
 
   function openEdit(e: EventRow) {
     setEditing(e);
+    const ex = (e.extra_data ?? {}) as any;
     setForm({
       event_type: e.event_type,
       title: e.title,
@@ -155,6 +170,10 @@ export default function AgendaPage() {
       vehicle_id: e.vehicle_id ?? "",
       assignee_id: e.user_id ?? user?.id ?? "",
       is_broadcast: e.is_broadcast,
+      phone: ex.phone ?? "",
+      location: ex.location ?? "",
+      contact_person: ex.contact_person ?? "",
+      other: ex.other ?? "",
     });
     setDialogOpen(true);
   }
@@ -163,6 +182,16 @@ export default function AgendaPage() {
     mutationFn: async () => {
       if (!user) throw new Error("No autenticado");
       if (!form.title.trim()) throw new Error("Añade un título");
+      const isCustom = form.event_type === "custom";
+      const extra = isCustom
+        ? {
+            phone: form.phone.trim() || undefined,
+            location: form.location.trim() || undefined,
+            contact_person: form.contact_person.trim() || undefined,
+            other: form.other.trim() || undefined,
+          }
+        : null;
+      const cleanExtra = extra && Object.values(extra).some((v) => v) ? extra : null;
       const payload = {
         event_type: form.event_type,
         title: form.title.trim(),
@@ -171,13 +200,28 @@ export default function AgendaPage() {
         vehicle_id: form.vehicle_id || null,
         is_broadcast: isAdmin ? form.is_broadcast : false,
         user_id: form.is_broadcast && isAdmin ? null : (isAdmin ? (form.assignee_id || user.id) : user.id),
+        extra_data: cleanExtra,
       };
       if (editing) {
-        const { error } = await supabase.from("agenda_events").update(payload).eq("id", editing.id);
+        const { error } = await supabase.from("agenda_events").update(payload as any).eq("id", editing.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("agenda_events").insert({ ...payload, created_by: user.id });
+        const { error } = await supabase.from("agenda_events").insert({ ...payload, created_by: user.id } as any);
         if (error) throw error;
+        // If admin created this for someone else or broadcast, drop a summary in chat
+        if (isAdmin && (payload.is_broadcast || (payload.user_id && payload.user_id !== user.id))) {
+          const veh = stock.find((v: any) => v.id === payload.vehicle_id);
+          const when = format(new Date(payload.event_date), "d/MM/yyyy 'a las' HH:mm", { locale: es });
+          const me = employees.find((e: any) => e.id === user.id) as any;
+          const meName = me?.full_name || me?.username || "Administración";
+          const vehText = veh ? ` con el vehículo ${veh.brand ?? ""} ${veh.model ?? ""}`.trim() : "";
+          const summary = `📅 ${meName} ha añadido el evento "${payload.title}" el ${when}${vehText}.`;
+          await supabase.from("chat_messages").insert({
+            sender_id: user.id,
+            recipient_id: payload.is_broadcast ? null : payload.user_id,
+            content: summary,
+          } as any);
+        }
       }
     },
     onSuccess: () => {
@@ -238,6 +282,7 @@ export default function AgendaPage() {
 
   const currentPreset = PRESETS.find((p) => p.type === form.event_type);
   const needsVehicle = currentPreset?.needsVehicle;
+  const isCustom = form.event_type === "custom";
 
   return (
     <div>
@@ -369,6 +414,14 @@ export default function AgendaPage() {
                             {e.description && (
                               <div className="text-sm text-muted-foreground mt-1">{e.description}</div>
                             )}
+                            {e.extra_data && (
+                              <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+                                {e.extra_data.phone && <span>📞 {e.extra_data.phone}</span>}
+                                {e.extra_data.contact_person && <span>👤 {e.extra_data.contact_person}</span>}
+                                {e.extra_data.location && <span>📍 {e.extra_data.location}</span>}
+                                {e.extra_data.other && <span>· {e.extra_data.other}</span>}
+                              </div>
+                            )}
                           </button>
                           <div className="flex items-center gap-1 shrink-0">
                             {!isDone && canEdit && (
@@ -460,6 +513,49 @@ export default function AgendaPage() {
                   placeholder="Vincular vehículo del stock…"
                   emptyLabel="— Sin vehículo —"
                 />
+              </div>
+            )}
+
+            {isCustom && (
+              <div className="rounded-lg border border-dashed border-border p-3 space-y-3">
+                <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Datos adicionales (opcional)
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Teléfono</Label>
+                    <Input
+                      value={form.phone}
+                      onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+                      placeholder="+34 600 000 000"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Persona de contacto</Label>
+                    <Input
+                      value={form.contact_person}
+                      onChange={(e) => setForm((f) => ({ ...f, contact_person: e.target.value }))}
+                      placeholder="Nombre y apellidos"
+                    />
+                  </div>
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <Label className="text-xs">Ubicación / Dirección</Label>
+                    <Input
+                      value={form.location}
+                      onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))}
+                      placeholder="Dirección, ciudad, taller…"
+                    />
+                  </div>
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <Label className="text-xs">Otros datos de interés</Label>
+                    <Textarea
+                      rows={2}
+                      value={form.other}
+                      onChange={(e) => setForm((f) => ({ ...f, other: e.target.value }))}
+                      placeholder="Cualquier información adicional…"
+                    />
+                  </div>
+                </div>
               </div>
             )}
 
