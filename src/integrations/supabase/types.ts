@@ -22,6 +22,7 @@ export type Database = {
           description: string | null
           event_date: string
           event_type: string
+          extra_data: Json | null
           id: string
           is_broadcast: boolean
           metadata: Json
@@ -38,6 +39,7 @@ export type Database = {
           description?: string | null
           event_date: string
           event_type?: string
+          extra_data?: Json | null
           id?: string
           is_broadcast?: boolean
           metadata?: Json
@@ -54,6 +56,7 @@ export type Database = {
           description?: string | null
           event_date?: string
           event_type?: string
+          extra_data?: Json | null
           id?: string
           is_broadcast?: boolean
           metadata?: Json
