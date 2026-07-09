@@ -414,6 +414,14 @@ export default function AgendaPage() {
                             {e.description && (
                               <div className="text-sm text-muted-foreground mt-1">{e.description}</div>
                             )}
+                            {e.extra_data && (
+                              <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+                                {e.extra_data.phone && <span>📞 {e.extra_data.phone}</span>}
+                                {e.extra_data.contact_person && <span>👤 {e.extra_data.contact_person}</span>}
+                                {e.extra_data.location && <span>📍 {e.extra_data.location}</span>}
+                                {e.extra_data.other && <span>· {e.extra_data.other}</span>}
+                              </div>
+                            )}
                           </button>
                           <div className="flex items-center gap-1 shrink-0">
                             {!isDone && canEdit && (
