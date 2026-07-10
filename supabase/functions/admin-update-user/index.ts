@@ -46,10 +46,27 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { user_id, full_name, email, password } = body ?? {};
+    const { user_id, full_name, email, password, delete: deleteUser } = body ?? {};
     if (!user_id) {
       return new Response(JSON.stringify({ error: "user_id is required" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (deleteUser === true) {
+      if (user_id === userData.user.id) {
+        return new Response(JSON.stringify({ error: "No puedes eliminarte a ti mismo" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { error: delErr } = await admin.auth.admin.deleteUser(user_id);
+      if (delErr) {
+        return new Response(JSON.stringify({ error: delErr.message }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      return new Response(JSON.stringify({ ok: true, deleted: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 

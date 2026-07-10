@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { Loader2, UserPlus, Pencil } from "lucide-react";
+import { Loader2, UserPlus, Pencil, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { usePermissions, type AppRole, type Workspace, type PermissionRow } from "@/hooks/usePermissions";
 import { PageHeader } from "@/components/shared/PageHeader";
@@ -383,6 +383,14 @@ export default function SettingsPage() {
                       <TableCell>
                         <Button size="sm" variant="ghost" onClick={() => openEdit(u)}>
                           <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => deleteUser(u)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
                         </Button>
                       </TableCell>
                     </TableRow>
