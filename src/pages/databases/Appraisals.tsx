@@ -1,5 +1,6 @@
-import { ReactNode, useState } from "react";
-import { Plus, LayoutGrid, Table as TableIcon, Pencil, Trash2 } from "lucide-react";
+import { ReactNode, useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
+import { Plus, LayoutGrid, Table as TableIcon, Pencil, Trash2, Search, Printer } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/shared/PageHeader";
@@ -167,6 +168,28 @@ export default function AppraisalsPage() {
   const [editing, setEditing] = useState<any | null>(null);
   const [form, setForm] = useState<any>(empty);
   const [busy, setBusy] = useState(false);
+  const [query, setQuery] = useState("");
+  const [printing, setPrinting] = useState<any | null>(null);
+
+  const clientById = useMemo(() => {
+    const m = new Map<string, any>();
+    (clients as any[]).forEach((c) => m.set(c.id, c));
+    return m;
+  }, [clients]);
+
+  const filteredAppraisals = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return appraisals as any[];
+    return (appraisals as any[]).filter((a) => {
+      const c = a.client_id ? clientById.get(a.client_id) : null;
+      const hay = [
+        a.contact_name, a.contact_phone, a.contact_email,
+        c?.full_name, c?.dni, c?.phone, c?.email,
+        a.brand, a.model, a.license_plate,
+      ].filter(Boolean).join(" ").toLowerCase();
+      return hay.includes(q);
+    });
+  }, [appraisals, query, clientById]);
 
   function openNew() { setEditing(null); setForm(empty); setOpen(true); }
   function openEdit(a: any) {
@@ -251,12 +274,51 @@ export default function AppraisalsPage() {
     await supabase.from("vehicle_appraisals").delete().eq("id", id);
     qc.invalidateQueries({ queryKey: ["vehicle_appraisals"] });
   }
+  async function removeCurrent() {
+    if (!editing) return;
+    if (!confirm("¿Eliminar esta tasación? Esta acción no se puede deshacer.")) return;
+    const { error } = await supabase.from("vehicle_appraisals").delete().eq("id", editing.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Tasación eliminada");
+    qc.invalidateQueries({ queryKey: ["vehicle_appraisals"] });
+    setOpen(false);
+  }
   async function quickUpdateStatus(id: string, status: string) {
     const { error } = await supabase.from("vehicle_appraisals").update({ deal_status: status as any }).eq("id", id);
     if (error) { toast.error(error.message); return; }
     qc.invalidateQueries({ queryKey: ["vehicle_appraisals"] });
   }
-  const set = (k: string, v: any) => setForm((f: any) => ({ ...f, [k]: v }));
+  const set = (k: string, v: any) => setForm((f: any) => {
+    const next = { ...f, [k]: v };
+    // Auto-fill year from 1ª matriculación
+    if (k === "first_registration_date" && typeof v === "string" && v.length >= 4) {
+      const y = Number(v.slice(0, 4));
+      if (!Number.isNaN(y) && y > 1900 && y < 2100) next.year = y;
+    }
+    return next;
+  });
+
+  // Print root portal
+  useEffect(() => {
+    if (!printing) return;
+    let root = document.getElementById("print-root");
+    if (!root) {
+      root = document.createElement("div");
+      root.id = "print-root";
+      root.style.display = "none";
+      document.body.appendChild(root);
+    }
+    return () => {
+      const el = document.getElementById("print-root");
+      if (el) el.remove();
+    };
+  }, [printing]);
+  const printRoot = typeof document !== "undefined" ? document.getElementById("print-root") : null;
+
+  function printCurrent() {
+    setPrinting({ ...form, id: editing?.id, appraisal_number: editing?.appraisal_number, appraisal_date: editing?.appraisal_date });
+    setTimeout(() => window.print(), 100);
+  }
 
   return (
     <div>
@@ -274,12 +336,25 @@ export default function AppraisalsPage() {
         }
       />
       <div className="p-6">
+        <div className="mb-4 flex items-center gap-3">
+          <div className="relative max-w-md flex-1">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Buscar por nombre, DNI, teléfono, matrícula…"
+              className="pl-9"
+            />
+          </div>
+          {query && <span className="text-xs text-muted-foreground">{filteredAppraisals.length} resultados</span>}
+        </div>
         {view === "kanban" ? (
           <KanbanBoard
-            columns={appraisalStatusOrder.map((s) => ({ id: s, title: appraisalStatusLabels[s], count: appraisals.filter((a: any) => a.deal_status === s).length }))}
+            columns={appraisalStatusOrder.map((s) => ({ id: s, title: appraisalStatusLabels[s], count: filteredAppraisals.filter((a: any) => a.deal_status === s).length }))}
             renderCards={(col) =>
-              appraisals.filter((a: any) => a.deal_status === col).map((a: any) => (
-                <button key={a.id} onClick={() => openEdit(a)} className="rounded-md border border-border bg-card p-3 text-left transition-colors hover:border-foreground/20">
+              filteredAppraisals.filter((a: any) => a.deal_status === col).map((a: any) => (
+                <div key={a.id} className="group relative">
+                <button onClick={() => openEdit(a)} className="w-full rounded-md border border-border bg-card p-3 text-left transition-colors hover:border-foreground/20">
                   <div className="text-sm font-medium">{a.brand} {a.model}</div>
                   <div className="text-xs text-muted-foreground">{a.client?.full_name ?? "Cliente desconocido"}</div>
                   <div className="mt-2 flex items-center justify-between text-xs">
@@ -303,6 +378,15 @@ export default function AppraisalsPage() {
                     />
                   </div>
                 </button>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); remove(a.id); }}
+                  className="absolute right-1.5 top-1.5 rounded p-1 text-muted-foreground opacity-0 transition group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive"
+                  aria-label="Eliminar tasación"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+                </div>
               ))
             }
           />
@@ -315,7 +399,7 @@ export default function AppraisalsPage() {
                 <th className="px-4 py-2.5 font-medium">Estado</th><th className="px-4 py-2.5 font-medium">Responsable</th><th className="px-4 py-2.5 font-medium">Seguimiento</th><th></th>
               </tr></thead>
               <tbody className="divide-y divide-border">
-                {appraisals.map((a: any) => (
+                {filteredAppraisals.map((a: any) => (
                   <tr key={a.id} className="hover:bg-muted/30">
                     <td className="px-4 py-2.5 font-medium">{a.brand} {a.model} <span className="text-muted-foreground">{a.year ?? ""}</span></td>
                     <td className="px-4 py-2.5 text-muted-foreground">{a.client?.full_name ?? "—"}</td>
@@ -514,12 +598,161 @@ export default function AppraisalsPage() {
             </Section>
 
             <DialogFooter className="pt-2">
+              {editing && (
+                <>
+                  <Button type="button" variant="ghost" className="mr-auto text-destructive hover:text-destructive" onClick={removeCurrent}>
+                    <Trash2 className="mr-1 h-4 w-4" />Eliminar
+                  </Button>
+                  <Button type="button" variant="outline" onClick={printCurrent}>
+                    <Printer className="mr-1 h-4 w-4" />Imprimir
+                  </Button>
+                </>
+              )}
               <Button type="button" variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button>
               <Button type="submit" disabled={busy}>{busy ? "Guardando…" : "Guardar tasación"}</Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
+
+      {printing && printRoot && createPortal(<AppraisalSheet a={printing} client={printing.client_id ? clientById.get(printing.client_id) : null} />, printRoot)}
+    </div>
+  );
+}
+
+function Line({ label, value }: { label: string; value: any }) {
+  return (
+    <div className="flex justify-between gap-2 border-b border-neutral-300 py-0.5">
+      <span className="text-neutral-500">{label}</span>
+      <span className="font-medium text-right">{value ?? "—"}</span>
+    </div>
+  );
+}
+
+function yn(v: any) { return v === true ? "Sí" : v === false ? "No" : "—"; }
+
+function AppraisalSheet({ a, client }: { a: any; client: any }) {
+  const name = a.contact_name || client?.full_name || "—";
+  const phone = a.contact_phone || client?.phone || "—";
+  const email = a.contact_email || client?.email || "—";
+  return (
+    <div style={{ fontFamily: "system-ui, sans-serif", color: "#111", padding: "8mm", fontSize: 10, lineHeight: 1.25 }}>
+      <div className="flex items-start justify-between border-b-2 border-neutral-800 pb-2">
+        <div>
+          <div className="text-lg font-bold">Ficha de tasación</div>
+          <div className="text-xs text-neutral-600">Orlando Cars · www.orlandocars.es · 961 475 660</div>
+        </div>
+        <div className="text-right text-xs">
+          <div><b>Nº:</b> {a.appraisal_number ?? "—"}</div>
+          <div><b>Fecha:</b> {formatDate(a.appraisal_date) || new Date().toLocaleDateString("es-ES")}</div>
+          <div><b>Operación:</b> {operationOptions.find(o => o.value === a.operation_type)?.label ?? "—"}</div>
+        </div>
+      </div>
+
+      <div className="mt-3 grid grid-cols-3 gap-3">
+        <section>
+          <h4 className="mb-1 text-[11px] font-bold uppercase text-neutral-700">Cliente</h4>
+          <Line label="Nombre" value={name} />
+          <Line label="Teléfono" value={phone} />
+          <Line label="Correo" value={email} />
+          {client?.dni && <Line label="DNI" value={client.dni} />}
+        </section>
+        <section className="col-span-2">
+          <h4 className="mb-1 text-[11px] font-bold uppercase text-neutral-700">Vehículo</h4>
+          <div className="grid grid-cols-2 gap-x-4">
+            <Line label="Marca" value={a.brand} />
+            <Line label="Modelo" value={a.model} />
+            <Line label="Matrícula" value={a.license_plate} />
+            <Line label="1ª matriculación" value={formatDate(a.first_registration_date)} />
+            <Line label="Año" value={a.year} />
+            <Line label="Kilómetros" value={a.mileage ? `${Number(a.mileage).toLocaleString("es-ES")} km` : "—"} />
+            <Line label="Combustible" value={a.fuel_type ? (fuelTypeLabels[a.fuel_type] ?? a.fuel_type) : "—"} />
+            <Line label="Cambio" value={a.transmission ? transmissionLabels[a.transmission] : "—"} />
+            <Line label="Cilindrada" value={a.displacement ? `${a.displacement} cc` : "—"} />
+            <Line label="Potencia" value={a.horsepower ? `${a.horsepower} CV` : "—"} />
+            <Line label="Color" value={a.color} />
+            <Line label="Puertas" value={a.doors} />
+          </div>
+        </section>
+      </div>
+
+      <div className="mt-3 grid grid-cols-3 gap-3">
+        <section>
+          <h4 className="mb-1 text-[11px] font-bold uppercase text-neutral-700">Mantenimiento</h4>
+          <Line label="Libro manual" value={yn(a.service_manual)} />
+          <Line label="Libro revisiones" value={yn(a.service_history)} />
+          <Line label="Sello taller" value={yn(a.service_seal)} />
+          <Line label="Facturas" value={yn(a.has_invoices)} />
+          <Line label="Distribución" value={yn(a.timing_belt_done)} />
+          <Line label="Fact. distribución" value={yn(a.timing_belt_invoice)} />
+          <Line label="Embrague" value={yn(a.clutch_done)} />
+          <Line label="Fact. embrague" value={yn(a.clutch_invoice)} />
+        </section>
+        <section>
+          <h4 className="mb-1 text-[11px] font-bold uppercase text-neutral-700">Equipamiento</h4>
+          <Line label="Tapicería" value={a.upholstery} />
+          <Line label="Llaves" value={a.keys_count} />
+          <Line label="Antirrobo" value={yn(a.anti_theft)} />
+          <Line label="Bandeja" value={yn(a.parcel_shelf)} />
+          <Line label="Rueda repuesto" value={yn(a.spare_wheel)} />
+          <Line label="Calefactables" value={yn(a.heated_seats)} />
+          <Line label="Volante multif." value={yn(a.multifunction_steering)} />
+          <Line label="Climatización" value={a.climate_control} />
+        </section>
+        <section>
+          <h4 className="mb-1 text-[11px] font-bold uppercase text-neutral-700">Extras</h4>
+          <Line label="Navegador" value={yn(a.navigator)} />
+          <Line label="Bluetooth" value={yn(a.bluetooth)} />
+          <Line label="Techo solar" value={yn(a.sunroof)} />
+          <Line label="Iluminación" value={a.led_xenon} />
+          <Line label="Cámara tras." value={yn(a.rear_camera)} />
+          <Line label="Cámara del." value={yn(a.front_camera)} />
+          <Line label="Cámara 360" value={yn(a.camera_360)} />
+          <Line label="As. eléctricos" value={yn(a.electric_seats)} />
+          <Line label="Llantas alu." value={yn(a.alloy_wheels)} />
+        </section>
+      </div>
+
+      <div className="mt-3 grid grid-cols-2 gap-3">
+        <section>
+          <h4 className="mb-1 text-[11px] font-bold uppercase text-neutral-700">Estado</h4>
+          <div className="grid grid-cols-2 gap-x-4">
+            <Line label="Volante" value={a.interior_steering} />
+            <Line label="Pomo" value={a.interior_knob} />
+            <Line label="Asientos" value={a.interior_seats} />
+            <Line label="Neum. delanteros" value={a.tires_front} />
+            <Line label="Neum. traseros" value={a.tires_rear} />
+            <Line label="Estado general" value={a.vehicle_condition} />
+          </div>
+        </section>
+        <section>
+          <h4 className="mb-1 text-[11px] font-bold uppercase text-neutral-700">Valoración</h4>
+          <Line label="Valor tasación" value={formatCurrency(a.appraisal_value)} />
+          <Line label="Valor taller" value={formatCurrency(a.workshop_value)} />
+          <Line label="Precio estimado" value={formatCurrency(a.estimated_price)} />
+          <Line label="Precio ofrecido" value={formatCurrency(a.offered_price)} />
+          <Line label="Responsable" value={a.assigned_to} />
+          <Line label="Seguimiento" value={formatDate(a.follow_up_date)} />
+        </section>
+      </div>
+
+      {a.notes && (
+        <section className="mt-3">
+          <h4 className="mb-1 text-[11px] font-bold uppercase text-neutral-700">Notas</h4>
+          <p className="whitespace-pre-wrap text-[10px]">{a.notes}</p>
+        </section>
+      )}
+
+      <div className="mt-4 grid grid-cols-2 gap-6 pt-3 text-[10px] text-neutral-600">
+        <div>
+          <div className="mb-8">Firma del cliente:</div>
+          <div className="border-t border-neutral-800 pt-1">{name}</div>
+        </div>
+        <div>
+          <div className="mb-8">Firma del tasador:</div>
+          <div className="border-t border-neutral-800 pt-1">{a.assigned_to || "Orlando Cars"}</div>
+        </div>
+      </div>
     </div>
   );
 }
