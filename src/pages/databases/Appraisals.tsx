@@ -598,12 +598,161 @@ export default function AppraisalsPage() {
             </Section>
 
             <DialogFooter className="pt-2">
+              {editing && (
+                <>
+                  <Button type="button" variant="ghost" className="mr-auto text-destructive hover:text-destructive" onClick={removeCurrent}>
+                    <Trash2 className="mr-1 h-4 w-4" />Eliminar
+                  </Button>
+                  <Button type="button" variant="outline" onClick={printCurrent}>
+                    <Printer className="mr-1 h-4 w-4" />Imprimir
+                  </Button>
+                </>
+              )}
               <Button type="button" variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button>
               <Button type="submit" disabled={busy}>{busy ? "Guardando…" : "Guardar tasación"}</Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
+
+      {printing && printRoot && createPortal(<AppraisalSheet a={printing} client={printing.client_id ? clientById.get(printing.client_id) : null} />, printRoot)}
+    </div>
+  );
+}
+
+function Line({ label, value }: { label: string; value: any }) {
+  return (
+    <div className="flex justify-between gap-2 border-b border-neutral-300 py-0.5">
+      <span className="text-neutral-500">{label}</span>
+      <span className="font-medium text-right">{value ?? "—"}</span>
+    </div>
+  );
+}
+
+function yn(v: any) { return v === true ? "Sí" : v === false ? "No" : "—"; }
+
+function AppraisalSheet({ a, client }: { a: any; client: any }) {
+  const name = a.contact_name || client?.full_name || "—";
+  const phone = a.contact_phone || client?.phone || "—";
+  const email = a.contact_email || client?.email || "—";
+  return (
+    <div style={{ fontFamily: "system-ui, sans-serif", color: "#111", padding: "8mm", fontSize: 10, lineHeight: 1.25 }}>
+      <div className="flex items-start justify-between border-b-2 border-neutral-800 pb-2">
+        <div>
+          <div className="text-lg font-bold">Ficha de tasación</div>
+          <div className="text-xs text-neutral-600">Orlando Cars · www.orlandocars.es · 961 475 660</div>
+        </div>
+        <div className="text-right text-xs">
+          <div><b>Nº:</b> {a.appraisal_number ?? "—"}</div>
+          <div><b>Fecha:</b> {formatDate(a.appraisal_date) || new Date().toLocaleDateString("es-ES")}</div>
+          <div><b>Operación:</b> {operationOptions.find(o => o.value === a.operation_type)?.label ?? "—"}</div>
+        </div>
+      </div>
+
+      <div className="mt-3 grid grid-cols-3 gap-3">
+        <section>
+          <h4 className="mb-1 text-[11px] font-bold uppercase text-neutral-700">Cliente</h4>
+          <Line label="Nombre" value={name} />
+          <Line label="Teléfono" value={phone} />
+          <Line label="Correo" value={email} />
+          {client?.dni && <Line label="DNI" value={client.dni} />}
+        </section>
+        <section className="col-span-2">
+          <h4 className="mb-1 text-[11px] font-bold uppercase text-neutral-700">Vehículo</h4>
+          <div className="grid grid-cols-2 gap-x-4">
+            <Line label="Marca" value={a.brand} />
+            <Line label="Modelo" value={a.model} />
+            <Line label="Matrícula" value={a.license_plate} />
+            <Line label="1ª matriculación" value={formatDate(a.first_registration_date)} />
+            <Line label="Año" value={a.year} />
+            <Line label="Kilómetros" value={a.mileage ? `${Number(a.mileage).toLocaleString("es-ES")} km` : "—"} />
+            <Line label="Combustible" value={a.fuel_type ? (fuelTypeLabels[a.fuel_type] ?? a.fuel_type) : "—"} />
+            <Line label="Cambio" value={a.transmission ? transmissionLabels[a.transmission] : "—"} />
+            <Line label="Cilindrada" value={a.displacement ? `${a.displacement} cc` : "—"} />
+            <Line label="Potencia" value={a.horsepower ? `${a.horsepower} CV` : "—"} />
+            <Line label="Color" value={a.color} />
+            <Line label="Puertas" value={a.doors} />
+          </div>
+        </section>
+      </div>
+
+      <div className="mt-3 grid grid-cols-3 gap-3">
+        <section>
+          <h4 className="mb-1 text-[11px] font-bold uppercase text-neutral-700">Mantenimiento</h4>
+          <Line label="Libro manual" value={yn(a.service_manual)} />
+          <Line label="Libro revisiones" value={yn(a.service_history)} />
+          <Line label="Sello taller" value={yn(a.service_seal)} />
+          <Line label="Facturas" value={yn(a.has_invoices)} />
+          <Line label="Distribución" value={yn(a.timing_belt_done)} />
+          <Line label="Fact. distribución" value={yn(a.timing_belt_invoice)} />
+          <Line label="Embrague" value={yn(a.clutch_done)} />
+          <Line label="Fact. embrague" value={yn(a.clutch_invoice)} />
+        </section>
+        <section>
+          <h4 className="mb-1 text-[11px] font-bold uppercase text-neutral-700">Equipamiento</h4>
+          <Line label="Tapicería" value={a.upholstery} />
+          <Line label="Llaves" value={a.keys_count} />
+          <Line label="Antirrobo" value={yn(a.anti_theft)} />
+          <Line label="Bandeja" value={yn(a.parcel_shelf)} />
+          <Line label="Rueda repuesto" value={yn(a.spare_wheel)} />
+          <Line label="Calefactables" value={yn(a.heated_seats)} />
+          <Line label="Volante multif." value={yn(a.multifunction_steering)} />
+          <Line label="Climatización" value={a.climate_control} />
+        </section>
+        <section>
+          <h4 className="mb-1 text-[11px] font-bold uppercase text-neutral-700">Extras</h4>
+          <Line label="Navegador" value={yn(a.navigator)} />
+          <Line label="Bluetooth" value={yn(a.bluetooth)} />
+          <Line label="Techo solar" value={yn(a.sunroof)} />
+          <Line label="Iluminación" value={a.led_xenon} />
+          <Line label="Cámara tras." value={yn(a.rear_camera)} />
+          <Line label="Cámara del." value={yn(a.front_camera)} />
+          <Line label="Cámara 360" value={yn(a.camera_360)} />
+          <Line label="As. eléctricos" value={yn(a.electric_seats)} />
+          <Line label="Llantas alu." value={yn(a.alloy_wheels)} />
+        </section>
+      </div>
+
+      <div className="mt-3 grid grid-cols-2 gap-3">
+        <section>
+          <h4 className="mb-1 text-[11px] font-bold uppercase text-neutral-700">Estado</h4>
+          <div className="grid grid-cols-2 gap-x-4">
+            <Line label="Volante" value={a.interior_steering} />
+            <Line label="Pomo" value={a.interior_knob} />
+            <Line label="Asientos" value={a.interior_seats} />
+            <Line label="Neum. delanteros" value={a.tires_front} />
+            <Line label="Neum. traseros" value={a.tires_rear} />
+            <Line label="Estado general" value={a.vehicle_condition} />
+          </div>
+        </section>
+        <section>
+          <h4 className="mb-1 text-[11px] font-bold uppercase text-neutral-700">Valoración</h4>
+          <Line label="Valor tasación" value={formatCurrency(a.appraisal_value)} />
+          <Line label="Valor taller" value={formatCurrency(a.workshop_value)} />
+          <Line label="Precio estimado" value={formatCurrency(a.estimated_price)} />
+          <Line label="Precio ofrecido" value={formatCurrency(a.offered_price)} />
+          <Line label="Responsable" value={a.assigned_to} />
+          <Line label="Seguimiento" value={formatDate(a.follow_up_date)} />
+        </section>
+      </div>
+
+      {a.notes && (
+        <section className="mt-3">
+          <h4 className="mb-1 text-[11px] font-bold uppercase text-neutral-700">Notas</h4>
+          <p className="whitespace-pre-wrap text-[10px]">{a.notes}</p>
+        </section>
+      )}
+
+      <div className="mt-4 grid grid-cols-2 gap-6 pt-3 text-[10px] text-neutral-600">
+        <div>
+          <div className="mb-8">Firma del cliente:</div>
+          <div className="border-t border-neutral-800 pt-1">{name}</div>
+        </div>
+        <div>
+          <div className="mb-8">Firma del tasador:</div>
+          <div className="border-t border-neutral-800 pt-1">{a.assigned_to || "Orlando Cars"}</div>
+        </div>
+      </div>
     </div>
   );
 }
