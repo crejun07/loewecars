@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { Search, Car, Wrench, Package, Calendar, FileText } from "lucide-react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { StatusBadge } from "@/components/shared/StatusBadge";
@@ -61,8 +62,10 @@ export default function ReportsPage() {
   }
 
   function printReport() {
-    window.print();
+    setTimeout(() => window.print(), 50);
   }
+
+  const printRoot = typeof document !== "undefined" ? document.getElementById("print-root") : null;
 
   return (
     <div className="flex h-full flex-col">
@@ -306,6 +309,145 @@ export default function ReportsPage() {
           </div>
         )}
       </div>
+
+      {vehicle && printRoot &&
+        createPortal(
+          <ReportSheet
+            vehicle={vehicle}
+            workshop={vehicleWorkshop}
+            spareParts={vehicleSpareParts}
+            totals={{ workshop: totalWorkshopCost, parts: totalPartsCost, total: totalCost }}
+          />,
+          printRoot,
+        )}
+    </div>
+  );
+}
+
+function ReportSheet({
+  vehicle,
+  workshop,
+  spareParts,
+  totals,
+}: {
+  vehicle: any;
+  workshop: any[];
+  spareParts: any[];
+  totals: { workshop: number; parts: number; total: number };
+}) {
+  return (
+    <div style={{ fontFamily: "system-ui, sans-serif", color: "#111", padding: "8mm", fontSize: 11, lineHeight: 1.3 }}>
+      <div style={{ borderBottom: "2px solid #222", paddingBottom: 8, marginBottom: 10, display: "flex", justifyContent: "space-between" }}>
+        <div>
+          <div style={{ fontSize: 18, fontWeight: 700 }}>Informe de vehículo</div>
+          <div style={{ fontSize: 10, color: "#555" }}>Orlando Cars · www.orlandocars.es · 961 475 660</div>
+        </div>
+        <div style={{ textAlign: "right", fontSize: 10 }}>
+          <div><b>Fecha:</b> {new Date().toLocaleDateString("es-ES")}</div>
+          <div><b>Matrícula:</b> {vehicle.license_plate || "—"}</div>
+        </div>
+      </div>
+
+      <h3 style={{ fontSize: 13, margin: "8px 0 4px" }}>
+        {vehicle.brand} {vehicle.model} {vehicle.year ? `· ${vehicle.year}` : ""}
+      </h3>
+      <table style={{ width: "100%", fontSize: 10, borderCollapse: "collapse" }}>
+        <tbody>
+          <PRow k="Combustible" v={vehicle.fuel_type ? (fuelTypeLabels[vehicle.fuel_type] ?? vehicle.fuel_type) : "—"} />
+          <PRow k="Transmisión" v={vehicle.transmission ? (transmissionLabels[vehicle.transmission] ?? vehicle.transmission) : "—"} />
+          <PRow k="Kilómetros" v={vehicle.mileage ? `${Number(vehicle.mileage).toLocaleString("es-ES")} km` : "—"} />
+          <PRow k="Ubicación" v={vehicle.location || "—"} />
+          <PRow k="Fecha de entrada" v={formatDate(vehicle.entry_date)} />
+          <PRow k="Próxima ITV" v={formatDate(vehicle.next_itv_date)} />
+          <PRow k="Precio de compra" v={formatCurrency(vehicle.purchase_price)} />
+          <PRow k="Precio de venta" v={formatCurrency(vehicle.selling_price)} />
+        </tbody>
+      </table>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginTop: 12 }}>
+        <SumBox label="Coste taller" value={formatCurrency(totals.workshop)} sub={`${workshop.length} tareas`} />
+        <SumBox label="Coste recambios" value={formatCurrency(totals.parts)} sub={`${spareParts.length} piezas`} />
+        <SumBox label="Coste total invertido" value={formatCurrency(totals.total)} sub="Taller + recambios" />
+      </div>
+
+      <h4 style={{ fontSize: 12, margin: "14px 0 4px" }}>Historial de taller</h4>
+      {workshop.length === 0 ? (
+        <div style={{ fontSize: 10, color: "#666" }}>Sin tareas registradas.</div>
+      ) : (
+        <table style={{ width: "100%", fontSize: 10, borderCollapse: "collapse" }}>
+          <thead>
+            <tr style={{ borderBottom: "1px solid #999", textAlign: "left" }}>
+              <th style={{ padding: 2 }}>Fecha</th>
+              <th style={{ padding: 2 }}>Tarea</th>
+              <th style={{ padding: 2 }}>Descripción</th>
+              <th style={{ padding: 2 }}>Estado</th>
+              <th style={{ padding: 2, textAlign: "right" }}>Coste</th>
+            </tr>
+          </thead>
+          <tbody>
+            {[...workshop].sort((a, b) => (a.task_date < b.task_date ? 1 : -1)).map((t) => (
+              <tr key={t.id} style={{ borderBottom: "1px solid #eee" }}>
+                <td style={{ padding: 2 }}>{formatDate(t.task_date)}</td>
+                <td style={{ padding: 2 }}>{t.task}</td>
+                <td style={{ padding: 2, color: "#555" }}>{t.description || "—"}</td>
+                <td style={{ padding: 2 }}>{workshopStatusLabels[t.status] ?? t.status}</td>
+                <td style={{ padding: 2, textAlign: "right" }}>{formatCurrency(t.cost)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      <h4 style={{ fontSize: 12, margin: "14px 0 4px" }}>Recambios</h4>
+      {spareParts.length === 0 ? (
+        <div style={{ fontSize: 10, color: "#666" }}>Sin recambios registrados.</div>
+      ) : (
+        <table style={{ width: "100%", fontSize: 10, borderCollapse: "collapse" }}>
+          <thead>
+            <tr style={{ borderBottom: "1px solid #999", textAlign: "left" }}>
+              <th style={{ padding: 2 }}>Pieza</th>
+              <th style={{ padding: 2 }}>Referencia</th>
+              <th style={{ padding: 2 }}>Proveedor</th>
+              <th style={{ padding: 2 }}>Pedido</th>
+              <th style={{ padding: 2 }}>Entrega</th>
+              <th style={{ padding: 2 }}>Estado</th>
+              <th style={{ padding: 2, textAlign: "right" }}>Coste</th>
+            </tr>
+          </thead>
+          <tbody>
+            {[...spareParts].sort((a, b) => ((a.order_date || "") < (b.order_date || "") ? 1 : -1)).map((p) => (
+              <tr key={p.id} style={{ borderBottom: "1px solid #eee" }}>
+                <td style={{ padding: 2 }}>{p.part_name}</td>
+                <td style={{ padding: 2, fontFamily: "monospace" }}>{p.part_reference || "—"}</td>
+                <td style={{ padding: 2 }}>{p.supplier || "—"}</td>
+                <td style={{ padding: 2 }}>{formatDate(p.order_date)}</td>
+                <td style={{ padding: 2 }}>{formatDate(p.delivery_date)}</td>
+                <td style={{ padding: 2 }}>{sparePartStatusLabels[p.status] ?? p.status}</td>
+                <td style={{ padding: 2, textAlign: "right" }}>{formatCurrency(p.cost)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
+}
+
+function PRow({ k, v }: { k: string; v: any }) {
+  return (
+    <tr style={{ borderBottom: "1px solid #eee" }}>
+      <td style={{ padding: "2px 4px", color: "#666", width: "35%" }}>{k}</td>
+      <td style={{ padding: "2px 4px", fontWeight: 500 }}>{v ?? "—"}</td>
+    </tr>
+  );
+}
+
+function SumBox({ label, value, sub }: { label: string; value: string; sub: string }) {
+  return (
+    <div style={{ border: "1px solid #ccc", borderRadius: 6, padding: 8 }}>
+      <div style={{ fontSize: 9, textTransform: "uppercase", color: "#666" }}>{label}</div>
+      <div style={{ fontSize: 16, fontWeight: 600, marginTop: 2 }}>{value}</div>
+      <div style={{ fontSize: 9, color: "#888", marginTop: 2 }}>{sub}</div>
     </div>
   );
 }
