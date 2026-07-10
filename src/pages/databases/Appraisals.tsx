@@ -1,5 +1,6 @@
-import { ReactNode, useState } from "react";
-import { Plus, LayoutGrid, Table as TableIcon, Pencil, Trash2 } from "lucide-react";
+import { ReactNode, useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
+import { Plus, LayoutGrid, Table as TableIcon, Pencil, Trash2, Search, Printer } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/shared/PageHeader";
@@ -167,6 +168,28 @@ export default function AppraisalsPage() {
   const [editing, setEditing] = useState<any | null>(null);
   const [form, setForm] = useState<any>(empty);
   const [busy, setBusy] = useState(false);
+  const [query, setQuery] = useState("");
+  const [printing, setPrinting] = useState<any | null>(null);
+
+  const clientById = useMemo(() => {
+    const m = new Map<string, any>();
+    (clients as any[]).forEach((c) => m.set(c.id, c));
+    return m;
+  }, [clients]);
+
+  const filteredAppraisals = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return appraisals as any[];
+    return (appraisals as any[]).filter((a) => {
+      const c = a.client_id ? clientById.get(a.client_id) : null;
+      const hay = [
+        a.contact_name, a.contact_phone, a.contact_email,
+        c?.full_name, c?.dni, c?.phone, c?.email,
+        a.brand, a.model, a.license_plate,
+      ].filter(Boolean).join(" ").toLowerCase();
+      return hay.includes(q);
+    });
+  }, [appraisals, query, clientById]);
 
   function openNew() { setEditing(null); setForm(empty); setOpen(true); }
   function openEdit(a: any) {
@@ -251,12 +274,51 @@ export default function AppraisalsPage() {
     await supabase.from("vehicle_appraisals").delete().eq("id", id);
     qc.invalidateQueries({ queryKey: ["vehicle_appraisals"] });
   }
+  async function removeCurrent() {
+    if (!editing) return;
+    if (!confirm("¿Eliminar esta tasación? Esta acción no se puede deshacer.")) return;
+    const { error } = await supabase.from("vehicle_appraisals").delete().eq("id", editing.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Tasación eliminada");
+    qc.invalidateQueries({ queryKey: ["vehicle_appraisals"] });
+    setOpen(false);
+  }
   async function quickUpdateStatus(id: string, status: string) {
     const { error } = await supabase.from("vehicle_appraisals").update({ deal_status: status as any }).eq("id", id);
     if (error) { toast.error(error.message); return; }
     qc.invalidateQueries({ queryKey: ["vehicle_appraisals"] });
   }
-  const set = (k: string, v: any) => setForm((f: any) => ({ ...f, [k]: v }));
+  const set = (k: string, v: any) => setForm((f: any) => {
+    const next = { ...f, [k]: v };
+    // Auto-fill year from 1ª matriculación
+    if (k === "first_registration_date" && typeof v === "string" && v.length >= 4) {
+      const y = Number(v.slice(0, 4));
+      if (!Number.isNaN(y) && y > 1900 && y < 2100) next.year = y;
+    }
+    return next;
+  });
+
+  // Print root portal
+  useEffect(() => {
+    if (!printing) return;
+    let root = document.getElementById("print-root");
+    if (!root) {
+      root = document.createElement("div");
+      root.id = "print-root";
+      root.style.display = "none";
+      document.body.appendChild(root);
+    }
+    return () => {
+      const el = document.getElementById("print-root");
+      if (el) el.remove();
+    };
+  }, [printing]);
+  const printRoot = typeof document !== "undefined" ? document.getElementById("print-root") : null;
+
+  function printCurrent() {
+    setPrinting({ ...form, id: editing?.id, appraisal_number: editing?.appraisal_number, appraisal_date: editing?.appraisal_date });
+    setTimeout(() => window.print(), 100);
+  }
 
   return (
     <div>
@@ -274,12 +336,25 @@ export default function AppraisalsPage() {
         }
       />
       <div className="p-6">
+        <div className="mb-4 flex items-center gap-3">
+          <div className="relative max-w-md flex-1">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Buscar por nombre, DNI, teléfono, matrícula…"
+              className="pl-9"
+            />
+          </div>
+          {query && <span className="text-xs text-muted-foreground">{filteredAppraisals.length} resultados</span>}
+        </div>
         {view === "kanban" ? (
           <KanbanBoard
-            columns={appraisalStatusOrder.map((s) => ({ id: s, title: appraisalStatusLabels[s], count: appraisals.filter((a: any) => a.deal_status === s).length }))}
+            columns={appraisalStatusOrder.map((s) => ({ id: s, title: appraisalStatusLabels[s], count: filteredAppraisals.filter((a: any) => a.deal_status === s).length }))}
             renderCards={(col) =>
-              appraisals.filter((a: any) => a.deal_status === col).map((a: any) => (
-                <button key={a.id} onClick={() => openEdit(a)} className="rounded-md border border-border bg-card p-3 text-left transition-colors hover:border-foreground/20">
+              filteredAppraisals.filter((a: any) => a.deal_status === col).map((a: any) => (
+                <div key={a.id} className="group relative">
+                <button onClick={() => openEdit(a)} className="w-full rounded-md border border-border bg-card p-3 text-left transition-colors hover:border-foreground/20">
                   <div className="text-sm font-medium">{a.brand} {a.model}</div>
                   <div className="text-xs text-muted-foreground">{a.client?.full_name ?? "Cliente desconocido"}</div>
                   <div className="mt-2 flex items-center justify-between text-xs">
@@ -303,6 +378,15 @@ export default function AppraisalsPage() {
                     />
                   </div>
                 </button>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); remove(a.id); }}
+                  className="absolute right-1.5 top-1.5 rounded p-1 text-muted-foreground opacity-0 transition group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive"
+                  aria-label="Eliminar tasación"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+                </div>
               ))
             }
           />
@@ -315,7 +399,7 @@ export default function AppraisalsPage() {
                 <th className="px-4 py-2.5 font-medium">Estado</th><th className="px-4 py-2.5 font-medium">Responsable</th><th className="px-4 py-2.5 font-medium">Seguimiento</th><th></th>
               </tr></thead>
               <tbody className="divide-y divide-border">
-                {appraisals.map((a: any) => (
+                {filteredAppraisals.map((a: any) => (
                   <tr key={a.id} className="hover:bg-muted/30">
                     <td className="px-4 py-2.5 font-medium">{a.brand} {a.model} <span className="text-muted-foreground">{a.year ?? ""}</span></td>
                     <td className="px-4 py-2.5 text-muted-foreground">{a.client?.full_name ?? "—"}</td>
