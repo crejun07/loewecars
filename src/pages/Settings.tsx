@@ -208,6 +208,20 @@ export default function SettingsPage() {
     loadUsers();
   }
 
+  async function deleteUser(u: UserRow) {
+    const label = u.full_name || u.username || "este usuario";
+    if (!window.confirm(`¿Eliminar a ${label}? Esta acción es permanente.`)) return;
+    const { data, error } = await supabase.functions.invoke("admin-update-user", {
+      body: { user_id: u.id, delete: true },
+    });
+    if (error || (data as any)?.error) {
+      toast.error((data as any)?.error || error?.message || "Error al eliminar");
+      return;
+    }
+    toast.success("Usuario eliminado");
+    loadUsers();
+  }
+
   return (
     <div>
       <PageHeader title="Ajustes" description="Gestión de permisos y roles de usuarios" />
