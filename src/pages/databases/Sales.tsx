@@ -28,6 +28,21 @@ export default function SalesPage() {
   const [editing, setEditing] = useState<any | null>(null);
   const [form, setForm] = useState<any>(empty);
 
+  // Keep stock status in sync when a sale is marked as sold/reserved.
+  async function syncStockStatus(vehicleId: string | null | undefined, saleStatus: string) {
+    if (!vehicleId) return;
+    let stockStatus: string | null = null;
+    if (saleStatus === "sold") stockStatus = "sold";
+    else if (saleStatus === "reserved") stockStatus = "reserved";
+    if (!stockStatus) return;
+    const { error } = await supabase
+      .from("vehicle_stock")
+      .update({ status: stockStatus as any })
+      .eq("id", vehicleId);
+    if (error) toast.error(`No se pudo actualizar stock: ${error.message}`);
+    else qc.invalidateQueries({ queryKey: ["vehicle_stock"] });
+  }
+
   function openNew() { setEditing(null); setForm(empty); setOpen(true); }
   function openEdit(s: any) {
     setEditing(s);
@@ -54,6 +69,7 @@ export default function SalesPage() {
     if (error) { toast.error(error.message); return; }
     toast.success("Guardado");
     qc.invalidateQueries({ queryKey: ["sales"] });
+    await syncStockStatus(payload.vehicle_id, payload.sale_status);
   }
   async function remove(id: string) {
     if (!confirm("¿Eliminar?")) return;
@@ -64,6 +80,8 @@ export default function SalesPage() {
     const { error } = await supabase.from("sales").update({ sale_status: status as any }).eq("id", id);
     if (error) { toast.error(error.message); return; }
     qc.invalidateQueries({ queryKey: ["sales"] });
+    const sale = (sales as any[]).find((s) => s.id === id);
+    await syncStockStatus(sale?.vehicle_id, status);
   }
 
   // Group sales with next_contact_date by month
