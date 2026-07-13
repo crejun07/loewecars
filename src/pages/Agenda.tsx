@@ -575,7 +575,7 @@ export default function AgendaPage() {
               />
             </div>
 
-            {isAdmin && (
+            {canManageAll && (
               <div className="rounded-lg border border-border p-3 space-y-3 bg-muted/30">
                 <div className="flex items-center justify-between">
                   <div>
