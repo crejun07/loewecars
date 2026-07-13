@@ -91,6 +91,8 @@ export default function AgendaPage() {
   const { user } = useAuth();
   const { roles } = usePermissions();
   const isAdmin = roles.includes("admin");
+  const canManageAll =
+    isAdmin || roles.includes("administracion") || roles.includes("informatica");
   const qc = useQueryClient();
   const { data: events = [], isLoading } = useAgendaEvents();
   const { data: stock = [] } = useStock();
@@ -198,8 +200,13 @@ export default function AgendaPage() {
         description: form.description.trim() || null,
         event_date: new Date(form.event_date).toISOString(),
         vehicle_id: form.vehicle_id || null,
-        is_broadcast: isAdmin ? form.is_broadcast : false,
-        user_id: form.is_broadcast && isAdmin ? null : (isAdmin ? (form.assignee_id || user.id) : user.id),
+        is_broadcast: canManageAll ? form.is_broadcast : false,
+        user_id:
+          form.is_broadcast && canManageAll
+            ? null
+            : canManageAll
+              ? form.assignee_id || user.id
+              : user.id,
         extra_data: cleanExtra,
       };
       if (editing) {
@@ -209,7 +216,7 @@ export default function AgendaPage() {
         const { error } = await supabase.from("agenda_events").insert({ ...payload, created_by: user.id } as any);
         if (error) throw error;
         // If admin created this for someone else or broadcast, drop a summary in chat
-        if (isAdmin && (payload.is_broadcast || (payload.user_id && payload.user_id !== user.id))) {
+        if (canManageAll && (payload.is_broadcast || (payload.user_id && payload.user_id !== user.id))) {
           const veh = stock.find((v: any) => v.id === payload.vehicle_id);
           const when = format(new Date(payload.event_date), "d/MM/yyyy 'a las' HH:mm", { locale: es });
           const me = employees.find((e: any) => e.id === user.id) as any;
@@ -380,7 +387,7 @@ export default function AgendaPage() {
                     const veh = stock.find((v: any) => v.id === e.vehicle_id);
                     const meta = TYPE_META[e.event_type] ?? TYPE_META.custom;
                     const isDone = e.status === "done";
-                    const canEdit = isAdmin || e.created_by === user?.id || e.user_id === user?.id;
+                    const canEdit = canManageAll || e.created_by === user?.id || e.user_id === user?.id;
                     return (
                       <div
                         key={e.id}
@@ -568,7 +575,7 @@ export default function AgendaPage() {
               />
             </div>
 
-            {isAdmin && (
+            {canManageAll && (
               <div className="rounded-lg border border-border p-3 space-y-3 bg-muted/30">
                 <div className="flex items-center justify-between">
                   <div>
