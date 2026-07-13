@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { KanbanBoard } from "@/components/shared/KanbanBoard";
 import { QuickStatusToggle } from "@/components/shared/QuickStatusToggle";
 import { SearchableSelect } from "@/components/shared/SearchableSelect";
+import { AppraisalPhotos } from "@/components/shared/AppraisalPhotos";
 import { useAppraisals, useClients } from "@/hooks/data/useDealership";
 import { appraisalStatusLabels, appraisalStatusOrder, appraisalStatusTone, employees, formatCurrency, formatDate, fuelTypeLabels, transmissionLabels } from "@/lib/labels";
 import { cn } from "@/lib/utils";
@@ -170,6 +171,7 @@ export default function AppraisalsPage() {
   const [busy, setBusy] = useState(false);
   const [query, setQuery] = useState("");
   const [printing, setPrinting] = useState<any | null>(null);
+  const [photos, setPhotos] = useState<any[]>([]);
 
   const clientById = useMemo(() => {
     const m = new Map<string, any>();
@@ -191,7 +193,7 @@ export default function AppraisalsPage() {
     });
   }, [appraisals, query, clientById]);
 
-  function openNew() { setEditing(null); setForm(empty); setOpen(true); }
+  function openNew() { setEditing(null); setForm(empty); setPhotos([]); setOpen(true); }
   function openEdit(a: any) {
     setEditing(a);
     const merged: any = { ...empty };
@@ -200,6 +202,7 @@ export default function AppraisalsPage() {
       merged[k] = v;
     }
     setForm(merged);
+    setPhotos(Array.isArray(a.photos) ? a.photos : []);
     setOpen(true);
   }
   async function save() {
@@ -595,6 +598,16 @@ export default function AppraisalsPage() {
               </Row>
               <Row label="Fecha de seguimiento"><Input type="date" value={form.follow_up_date} onChange={(e) => set("follow_up_date", e.target.value)} /></Row>
               <Row label="Notas" full><Textarea rows={3} value={form.notes} onChange={(e) => set("notes", e.target.value)} /></Row>
+            </Section>
+
+            <Section title="Fotos de la tasación">
+              <div className="col-span-full">
+                <AppraisalPhotos
+                  appraisalId={editing?.id ?? null}
+                  photos={photos}
+                  onChange={setPhotos}
+                />
+              </div>
             </Section>
 
             <DialogFooter className="pt-2">
