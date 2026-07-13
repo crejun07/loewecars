@@ -467,6 +467,7 @@ export type Database = {
           offered_price: number | null
           operation_type: string | null
           parcel_shelf: boolean | null
+          photos: Json
           rear_camera: boolean | null
           service_history: boolean | null
           service_manual: boolean | null
@@ -535,6 +536,7 @@ export type Database = {
           offered_price?: number | null
           operation_type?: string | null
           parcel_shelf?: boolean | null
+          photos?: Json
           rear_camera?: boolean | null
           service_history?: boolean | null
           service_manual?: boolean | null
@@ -603,6 +605,7 @@ export type Database = {
           offered_price?: number | null
           operation_type?: string | null
           parcel_shelf?: boolean | null
+          photos?: Json
           rear_camera?: boolean | null
           service_history?: boolean | null
           service_manual?: boolean | null
