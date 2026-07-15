@@ -17,15 +17,14 @@ export function useAgendaNotifications() {
   const navigate = useNavigate();
   const digestShown = useRef(false);
 
-  // Daily digest on app open
+  // Digest on app open: upcoming events from now to +7 days
   useEffect(() => {
     if (!user || digestShown.current) return;
     digestShown.current = true;
     (async () => {
-      const today = new Date();
-      const start = new Date(today);
-      start.setHours(0, 0, 0, 0);
-      const end = new Date(today);
+      const start = new Date();
+      const end = new Date();
+      end.setDate(end.getDate() + 7);
       end.setHours(23, 59, 59, 999);
       const { data } = await supabase
         .from("agenda_events")
@@ -39,10 +38,13 @@ export function useAgendaNotifications() {
       if (events.length === 0) return;
       const list = events
         .slice(0, 4)
-        .map((e: any) => `• ${format(new Date(e.event_date), "HH:mm")} — ${e.title}`)
+        .map(
+          (e: any) =>
+            `• ${format(new Date(e.event_date), "d MMM · HH:mm", { locale: es })} — ${e.title}`,
+        )
         .join("\n");
       const more = events.length > 4 ? `\n… y ${events.length - 4} más` : "";
-      toast(`Tienes ${events.length} evento(s) hoy`, {
+      toast(`Tienes ${events.length} evento(s) próximo(s)`, {
         description: list + more,
         duration: 10000,
         action: { label: "Ver agenda", onClick: () => navigate("/agenda") },
