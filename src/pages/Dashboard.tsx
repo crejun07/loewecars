@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { useAppraisals, useClients, useSales, useStock, useWorkshop } from "@/hooks/data/useDealership";
+import { usePermissions } from "@/hooks/usePermissions";
 import {
   appraisalStatusLabels,
   appraisalStatusTone,
@@ -42,6 +43,8 @@ function Kpi({ label, value, sub }: { label: string; value: string | number; sub
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const { roles } = usePermissions();
+  const isAdmin = roles.includes("admin");
   const { data: clients = [] } = useClients();
   const { data: stock = [] } = useStock();
   const { data: appraisals = [] } = useAppraisals();
@@ -141,11 +144,13 @@ export default function Dashboard() {
         </div>
 
         {/* KPIs */}
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <div className={`grid grid-cols-2 gap-3 ${isAdmin ? "md:grid-cols-4" : "md:grid-cols-3"}`}>
           <Kpi label="Stock disponible" value={available.length} sub={`${stock.length} vehículos en total`} />
           <Kpi label="Ventas activas" value={sales.filter((s: any) => !["sold", "lost"].includes(s.sale_status)).length} sub={`${sales.filter((s: any) => s.sale_status === "sold").length} cerradas`} />
           <Kpi label="Taller pendiente" value={pendingTasks.length} sub={`${workshop.length} tareas totales`} />
-          <Kpi label="Beneficio (vendidos)" value={formatCurrency(totalMargin)} sub="Margen acumulado" />
+          {isAdmin && (
+            <Kpi label="Beneficio (vendidos)" value={formatCurrency(totalMargin)} sub="Margen acumulado" />
+          )}
         </div>
 
         <div className="grid gap-4 lg:grid-cols-3">
