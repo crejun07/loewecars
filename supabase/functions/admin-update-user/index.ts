@@ -84,8 +84,17 @@ Deno.serve(async (req) => {
     if (Object.keys(authPatch).length > 0) {
       const { error: authErr } = await admin.auth.admin.updateUserById(user_id, authPatch);
       if (authErr) {
-        return new Response(JSON.stringify({ error: authErr.message }), {
-          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        const raw = authErr.message || "Error al actualizar";
+        let msg = raw;
+        if (/weak|known|pwned|easy to guess/i.test(raw)) {
+          msg = "La contraseña es demasiado débil o ha sido filtrada en brechas conocidas. Elige otra más segura (mezcla mayúsculas, números y símbolos).";
+        } else if (/already been registered|already exists|duplicate/i.test(raw)) {
+          msg = "Ese correo ya está en uso por otro usuario.";
+        } else if (/invalid.*email/i.test(raw)) {
+          msg = "Correo electrónico no válido.";
+        }
+        return new Response(JSON.stringify({ error: msg }), {
+          status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
     }
