@@ -433,6 +433,8 @@ export default function AppraisalsPage() {
             </table>
           </div>
         )}
+        </>
+        )}
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
