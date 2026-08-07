@@ -247,3 +247,25 @@ export function daysUntil(dateStr: string | null | undefined): number | null {
   d.setHours(0, 0, 0, 0);
   return Math.round((d.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 }
+// --- Tasaciones online ---
+export const onlineAppraisalStatusLabels: Record<string, string> = {
+  pending: "Pendiente",
+  interested: "Interesado",
+  will_come: "Vendrá aquí",
+  not_interested: "No interesa",
+  too_many_km: "Muchos km",
+  rejected: "Rechazado",
+};
+
+export const onlineAppraisalStatusTone: Record<string, StatusTone> = {
+  pending: "neutral",
+  interested: "blue",
+  will_come: "violet",
+  not_interested: "amber",
+  too_many_km: "amber",
+  rejected: "red",
+};
+
+export const onlineAppraisalStatusOrder = [
+  "pending", "interested", "will_come", "not_interested", "too_many_km", "rejected",
+] as const;
