@@ -199,6 +199,75 @@ export type Database = {
         }
         Relationships: []
       }
+      online_appraisals: {
+        Row: {
+          appointment_date: string | null
+          brand: string
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          created_at: string
+          fuel_type: Database["public"]["Enums"]["fuel_type"] | null
+          horsepower: number | null
+          id: string
+          market_value: number | null
+          mileage: number | null
+          model: string
+          notes: string | null
+          offered_value: number | null
+          reference: string | null
+          status: Database["public"]["Enums"]["online_appraisal_status"]
+          updated_at: string
+          vehicle_age: string | null
+          version: string | null
+          wants_appointment: boolean
+        }
+        Insert: {
+          appointment_date?: string | null
+          brand: string
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          fuel_type?: Database["public"]["Enums"]["fuel_type"] | null
+          horsepower?: number | null
+          id?: string
+          market_value?: number | null
+          mileage?: number | null
+          model: string
+          notes?: string | null
+          offered_value?: number | null
+          reference?: string | null
+          status?: Database["public"]["Enums"]["online_appraisal_status"]
+          updated_at?: string
+          vehicle_age?: string | null
+          version?: string | null
+          wants_appointment?: boolean
+        }
+        Update: {
+          appointment_date?: string | null
+          brand?: string
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          fuel_type?: Database["public"]["Enums"]["fuel_type"] | null
+          horsepower?: number | null
+          id?: string
+          market_value?: number | null
+          mileage?: number | null
+          model?: string
+          notes?: string | null
+          offered_value?: number | null
+          reference?: string | null
+          status?: Database["public"]["Enums"]["online_appraisal_status"]
+          updated_at?: string
+          vehicle_age?: string | null
+          version?: string | null
+          wants_appointment?: boolean
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -473,6 +542,8 @@ export type Database = {
           service_manual: boolean | null
           service_seal: boolean | null
           spare_wheel: boolean | null
+          stock_request_status: string
+          stock_vehicle_id: string | null
           sunroof: boolean | null
           timing_belt_done: boolean | null
           timing_belt_invoice: boolean | null
@@ -542,6 +613,8 @@ export type Database = {
           service_manual?: boolean | null
           service_seal?: boolean | null
           spare_wheel?: boolean | null
+          stock_request_status?: string
+          stock_vehicle_id?: string | null
           sunroof?: boolean | null
           timing_belt_done?: boolean | null
           timing_belt_invoice?: boolean | null
@@ -611,6 +684,8 @@ export type Database = {
           service_manual?: boolean | null
           service_seal?: boolean | null
           spare_wheel?: boolean | null
+          stock_request_status?: string
+          stock_vehicle_id?: string | null
           sunroof?: boolean | null
           timing_belt_done?: boolean | null
           timing_belt_invoice?: boolean | null
@@ -629,6 +704,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicle_appraisals_stock_vehicle_id_fkey"
+            columns: ["stock_vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicle_stock"
             referencedColumns: ["id"]
           },
         ]
@@ -812,6 +894,13 @@ export type Database = {
         | "other"
         | "plug_in_hybrid"
       listing_status: "listed" | "pending_listing" | "not_listed"
+      online_appraisal_status:
+        | "pending"
+        | "interested"
+        | "will_come"
+        | "not_interested"
+        | "too_many_km"
+        | "rejected"
       sale_status:
         | "new_lead"
         | "interested"
@@ -992,6 +1081,14 @@ export const Constants = {
         "plug_in_hybrid",
       ],
       listing_status: ["listed", "pending_listing", "not_listed"],
+      online_appraisal_status: [
+        "pending",
+        "interested",
+        "will_come",
+        "not_interested",
+        "too_many_km",
+        "rejected",
+      ],
       sale_status: [
         "new_lead",
         "interested",

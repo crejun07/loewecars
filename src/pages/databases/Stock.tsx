@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Field, RecordDialog } from "@/components/shared/RecordDialog";
-import { useStock } from "@/hooks/data/useDealership";
+import { useStock, useStockRequests } from "@/hooks/data/useDealership";
 import { usePermissions } from "@/hooks/usePermissions";
 import {
   daysUntil, formatCurrency, formatDate, fuelTypeLabels,
@@ -29,11 +29,13 @@ const emptyForm = {
 
 export default function StockPage() {
   const { data: stock = [] } = useStock();
+  const { data: stockRequests = [] } = useStockRequests();
   const { canViewSensitive } = usePermissions();
   const showSensitive = canViewSensitive("stock");
   const qc = useQueryClient();
   const [view, setView] = useState<"gallery" | "table" | "listings">("gallery");
   const [onlyAvailable, setOnlyAvailable] = useState(false);
+  const [group, setGroup] = useState<"active" | "sold">("active");
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<string>("entry_date_desc");
   const [editing, setEditing] = useState<any | null>(null);
@@ -118,6 +120,7 @@ export default function StockPage() {
   const items = useMemo(() => {
     const q = search.trim().toLowerCase();
     let filtered = stock.filter((s: any) => {
+      if (group === "sold" ? s.status !== "sold" : s.status === "sold") return false;
       if (onlyAvailable && s.status !== "available") return false;
       if (q && !(
         (s.brand ?? "").toLowerCase().includes(q) ||
@@ -157,7 +160,7 @@ export default function StockPage() {
       return ascending ? cmp : -cmp;
     });
     return filtered;
-  }, [stock, onlyAvailable, search, colFilters, sortBy]);
+  }, [stock, onlyAvailable, search, colFilters, sortBy, group]);
 
   function openNew() { setEditing(null); setForm(emptyForm); setOpen(true); }
   function openEdit(s: any) {
@@ -216,6 +219,43 @@ export default function StockPage() {
     qc.invalidateQueries({ queryKey: ["vehicle_stock"] });
   }
 
+  async function acceptRequest(a: any) {
+    const plate = (a.license_plate || "").trim().toUpperCase();
+    if (plate) {
+      const { data: dup } = await supabase.from("vehicle_stock").select("id").ilike("license_plate", plate).maybeSingle();
+      if (dup) { toast.error("Ya existe un vehículo en stock con esa matrícula"); return; }
+    }
+    const { data: created, error } = await supabase.from("vehicle_stock").insert({
+      brand: a.brand, model: a.model,
+      license_plate: plate || null,
+      year: a.year ?? null, mileage: a.mileage ?? null,
+      fuel_type: a.fuel_type ?? null, transmission: a.transmission ?? null,
+      purchase_price: Number(a.offered_price ?? a.appraisal_value ?? 0) || 0,
+      selling_price: Number(a.estimated_price ?? 0) || 0,
+      status: "preparing" as any,
+      listing_status: "pending_listing" as any,
+      entry_date: new Date().toISOString().slice(0, 10),
+      notes: a.notes ?? null,
+    }).select("id").single();
+    if (error) { toast.error(error.message); return; }
+    const { error: upErr } = await supabase.from("vehicle_appraisals")
+      .update({ stock_request_status: "accepted", stock_vehicle_id: created.id })
+      .eq("id", a.id);
+    if (upErr) { toast.error(upErr.message); return; }
+    toast.success("Vehículo añadido al stock");
+    qc.invalidateQueries({ queryKey: ["vehicle_stock"] });
+    qc.invalidateQueries({ queryKey: ["stock_requests"] });
+    qc.invalidateQueries({ queryKey: ["vehicle_appraisals"] });
+  }
+
+  async function rejectRequest(a: any) {
+    const { error } = await supabase.from("vehicle_appraisals")
+      .update({ stock_request_status: "rejected" }).eq("id", a.id);
+    if (error) { toast.error(error.message); return; }
+    qc.invalidateQueries({ queryKey: ["stock_requests"] });
+    qc.invalidateQueries({ queryKey: ["vehicle_appraisals"] });
+  }
+
   return (
     <div>
       <PageHeader
@@ -223,6 +263,10 @@ export default function StockPage() {
         description={`${stock.length} vehículos`}
         actions={
           <>
+            <div className="flex rounded-md border border-border">
+              <Button size="sm" variant={group === "active" ? "secondary" : "ghost"} className="rounded-r-none" onClick={() => setGroup("active")}>En stock</Button>
+              <Button size="sm" variant={group === "sold" ? "secondary" : "ghost"} className="rounded-l-none" onClick={() => setGroup("sold")}>Vendidos</Button>
+            </div>
             <Button size="sm" variant={onlyAvailable ? "secondary" : "ghost"} onClick={() => setOnlyAvailable((v) => !v)}>
               <Filter className="mr-1 h-3.5 w-3.5" />Solo disponibles
             </Button>
@@ -242,6 +286,32 @@ export default function StockPage() {
         }
       />
       <div className="p-6">
+        {stockRequests.length > 0 && (
+          <div className="mb-4 rounded-lg border border-status-amber/50 bg-status-amber/10 p-3">
+            <div className="mb-2 text-sm font-semibold">
+              Solicitudes de alta en stock ({stockRequests.length})
+            </div>
+            <div className="space-y-2">
+              {(stockRequests as any[]).map((a) => (
+                <div key={a.id} className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-card p-3">
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium">
+                      {a.brand} {a.model}
+                      {a.license_plate && <span className="ml-1 font-mono text-xs text-muted-foreground">· {a.license_plate}</span>}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Tasación nº {a.appraisal_number ?? "—"} · {a.client?.full_name ?? a.contact_name ?? "Sin cliente"} · Comprado por {formatCurrency(a.offered_price ?? a.appraisal_value)}
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={() => acceptRequest(a)}>Aceptar</Button>
+                    <Button size="sm" variant="ghost" onClick={() => rejectRequest(a)}>Denegar</Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         <div className="mb-4 flex flex-wrap items-center gap-3">
           <div className="relative max-w-md flex-1 min-w-[200px]">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />

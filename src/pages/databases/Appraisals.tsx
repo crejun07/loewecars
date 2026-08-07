@@ -14,6 +14,7 @@ import { KanbanBoard } from "@/components/shared/KanbanBoard";
 import { QuickStatusToggle } from "@/components/shared/QuickStatusToggle";
 import { SearchableSelect } from "@/components/shared/SearchableSelect";
 import { AppraisalPhotos } from "@/components/shared/AppraisalPhotos";
+import { OnlineAppraisals } from "@/components/appraisals/OnlineAppraisals";
 import { useAppraisals, useClients } from "@/hooks/data/useDealership";
 import { appraisalStatusLabels, appraisalStatusOrder, appraisalStatusTone, employees, formatCurrency, formatDate, fuelTypeLabels, transmissionLabels } from "@/lib/labels";
 import { cn } from "@/lib/utils";
@@ -165,6 +166,7 @@ export default function AppraisalsPage() {
   const { data: clients = [] } = useClients();
   const qc = useQueryClient();
   const [view, setView] = useState<"kanban" | "table">("kanban");
+  const [tab, setTab] = useState<"store" | "online">("store");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
   const [form, setForm] = useState<any>(empty);
@@ -331,14 +333,24 @@ export default function AppraisalsPage() {
         actions={
           <>
             <div className="flex rounded-md border border-border">
+              <Button size="sm" variant={tab === "store" ? "secondary" : "ghost"} className="rounded-r-none" onClick={() => setTab("store")}>Tienda</Button>
+              <Button size="sm" variant={tab === "online" ? "secondary" : "ghost"} className="rounded-l-none" onClick={() => setTab("online")}>Online</Button>
+            </div>
+            {tab === "store" && (
+            <>
+            <div className="flex rounded-md border border-border">
               <Button size="sm" variant={view === "kanban" ? "secondary" : "ghost"} className="rounded-r-none" onClick={() => setView("kanban")}><LayoutGrid className="h-3.5 w-3.5" /></Button>
               <Button size="sm" variant={view === "table" ? "secondary" : "ghost"} className="rounded-l-none" onClick={() => setView("table")}><TableIcon className="h-3.5 w-3.5" /></Button>
             </div>
             <Button size="sm" onClick={openNew}><Plus className="mr-1 h-4 w-4" />Nueva tasación</Button>
+            </>
+            )}
           </>
         }
       />
       <div className="p-6">
+        {tab === "online" ? <OnlineAppraisals /> : (
+        <>
         <div className="mb-4 flex items-center gap-3">
           <div className="relative max-w-md flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -420,6 +432,8 @@ export default function AppraisalsPage() {
               </tbody>
             </table>
           </div>
+        )}
+        </>
         )}
       </div>
 
