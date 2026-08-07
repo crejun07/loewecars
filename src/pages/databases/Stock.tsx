@@ -286,6 +286,32 @@ export default function StockPage() {
         }
       />
       <div className="p-6">
+        {stockRequests.length > 0 && (
+          <div className="mb-4 rounded-lg border border-status-amber/50 bg-status-amber/10 p-3">
+            <div className="mb-2 text-sm font-semibold">
+              Solicitudes de alta en stock ({stockRequests.length})
+            </div>
+            <div className="space-y-2">
+              {(stockRequests as any[]).map((a) => (
+                <div key={a.id} className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-card p-3">
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium">
+                      {a.brand} {a.model}
+                      {a.license_plate && <span className="ml-1 font-mono text-xs text-muted-foreground">· {a.license_plate}</span>}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Tasación nº {a.appraisal_number ?? "—"} · {a.client?.full_name ?? a.contact_name ?? "Sin cliente"} · Comprado por {formatCurrency(a.offered_price ?? a.appraisal_value)}
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={() => acceptRequest(a)}>Aceptar</Button>
+                    <Button size="sm" variant="ghost" onClick={() => rejectRequest(a)}>Denegar</Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         <div className="mb-4 flex flex-wrap items-center gap-3">
           <div className="relative max-w-md flex-1 min-w-[200px]">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
