@@ -95,3 +95,31 @@ export function useSpareParts() {
     },
   });
 }
+export function useOnlineAppraisals() {
+  return useQuery({
+    queryKey: ["online_appraisals"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("online_appraisals")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+export function useStockRequests() {
+  return useQuery({
+    queryKey: ["stock_requests"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("vehicle_appraisals")
+        .select("*, client:clients(id, full_name)")
+        .eq("stock_request_status", "pending")
+        .order("updated_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
