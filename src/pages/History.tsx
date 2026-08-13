@@ -12,7 +12,8 @@ import { Button } from "@/components/ui/button";
 const tableLabels: Record<string, string> = {
   clients: "Clientes",
   vehicle_stock: "Stock",
-  vehicle_appraisals: "Tasaciones",
+  vehicle_appraisals: "Tasaciones (tienda)",
+  online_appraisals: "Tasaciones online",
   sales: "Ventas",
   workshop: "Taller",
   spare_parts: "Recambios",
