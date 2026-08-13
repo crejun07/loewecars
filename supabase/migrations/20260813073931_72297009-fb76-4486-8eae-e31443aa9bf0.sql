@@ -1,0 +1,2 @@
+GRANT EXECUTE ON FUNCTION public.user_can_edit_workspace(uuid, text) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.user_can_view_workspace(uuid, text) TO authenticated, service_role;
