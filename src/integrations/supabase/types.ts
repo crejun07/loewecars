@@ -484,6 +484,45 @@ export type Database = {
         }
         Relationships: []
       }
+      user_tasks: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          done: boolean
+          due_date: string | null
+          id: string
+          notes: string | null
+          priority: number
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          done?: boolean
+          due_date?: string | null
+          id?: string
+          notes?: string | null
+          priority?: number
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          done?: boolean
+          due_date?: string | null
+          id?: string
+          notes?: string | null
+          priority?: number
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       vehicle_appraisals: {
         Row: {
           alloy_wheels: boolean | null
