@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, ClipboardList, ShoppingCart, Car, Wrench, Package, FileText, LogOut, Settings, History, MessageSquare, BookOpen, Calendar as CalendarIcon } from "lucide-react";
+import { LayoutDashboard, Users, ClipboardList, ShoppingCart, Car, Wrench, Package, FileText, LogOut, Settings, History, MessageSquare, BookOpen, Calendar as CalendarIcon, CheckSquare } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -21,6 +21,7 @@ import {
 const items: { title: string; url: string; icon: any; ws: Workspace }[] = [
   { title: "Panel", url: "/", icon: LayoutDashboard, ws: "dashboard" },
   { title: "Agenda", url: "/agenda", icon: CalendarIcon, ws: "dashboard" },
+  { title: "Tareas", url: "/tasks", icon: CheckSquare, ws: "dashboard" },
   { title: "Clientes", url: "/clients", icon: Users, ws: "clients" },
   { title: "Tasaciones", url: "/appraisals", icon: ClipboardList, ws: "appraisals" },
   { title: "Ventas", url: "/sales", icon: ShoppingCart, ws: "sales" },
