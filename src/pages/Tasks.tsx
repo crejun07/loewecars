@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronRight, Loader2, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -8,11 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RichTextEditor, sanitizeHtml } from "@/components/shared/RichTextEditor";
 import { cn } from "@/lib/utils";
 
 interface Task {
   id: string;
   title: string;
+  notes: string | null;
   priority: number;
   done: boolean;
   due_date: string | null;
@@ -42,13 +44,16 @@ export default function TasksPage() {
   const [priority, setPriority] = useState("3");
   const [dueDate, setDueDate] = useState("");
   const [showDone, setShowDone] = useState(true);
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [draft, setDraft] = useState("");
+  const [saving, setSaving] = useState(false);
 
   async function load() {
     if (!user) return;
     setLoading(true);
     const { data, error } = await supabase
       .from("user_tasks")
-      .select("id,title,priority,done,due_date")
+      .select("id,title,notes,priority,done,due_date")
       .order("done", { ascending: true })
       .order("priority", { ascending: false })
       .order("created_at", { ascending: true });
@@ -93,6 +98,25 @@ export default function TasksPage() {
     const { error } = await supabase.from("user_tasks").update({ priority: Number(value) }).eq("id", task.id);
     if (error) return toast.error("No se pudo actualizar la prioridad");
     load();
+  }
+
+  function openDetails(task: Task) {
+    if (openId === task.id) {
+      setOpenId(null);
+      return;
+    }
+    setOpenId(task.id);
+    setDraft(task.notes ?? "");
+  }
+
+  async function saveNotes(task: Task) {
+    setSaving(true);
+    const clean = sanitizeHtml(draft);
+    const { error } = await supabase.from("user_tasks").update({ notes: clean }).eq("id", task.id);
+    setSaving(false);
+    if (error) return toast.error("No se pudieron guardar los detalles");
+    toast.success("Detalles guardados");
+    setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, notes: clean } : t)));
   }
 
   async function remove(task: Task) {
@@ -162,10 +186,24 @@ export default function TasksPage() {
               <li
                 key={task.id}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2.5",
+                  "px-3 py-2.5",
                   task.done && "opacity-60",
                 )}
               >
+                <div className="flex items-center gap-3">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 shrink-0"
+                  onClick={() => openDetails(task)}
+                  title="Detalles"
+                >
+                  {openId === task.id ? (
+                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </Button>
                 <Checkbox checked={task.done} onCheckedChange={() => toggle(task)} />
                 <span
                   className={cn(
@@ -201,6 +239,22 @@ export default function TasksPage() {
                 <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => remove(task)}>
                   <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
                 </Button>
+                </div>
+
+                {openId === task.id && (
+                  <div className="mt-3 pl-10 pr-1 pb-1">
+                    <RichTextEditor value={draft} onChange={setDraft} />
+                    <div className="mt-2 flex justify-end gap-2">
+                      <Button variant="ghost" size="sm" onClick={() => setOpenId(null)}>
+                        Cerrar
+                      </Button>
+                      <Button size="sm" onClick={() => saveNotes(task)} disabled={saving}>
+                        {saving ? <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> : null}
+                        Guardar detalles
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </li>
             ))}
           </ul>
