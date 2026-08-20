@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
-import { ChevronDown, ChevronRight, Loader2, Plus, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
+import { ChevronDown, ChevronRight, Loader2, Plus, Printer, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -36,6 +37,20 @@ const priorityClass: Record<number, string> = {
   5: "bg-destructive/15 text-destructive",
 };
 
+const DRAFTS_KEY = "task_note_drafts";
+
+function readDrafts(): Record<string, string> {
+  try {
+    return JSON.parse(localStorage.getItem(DRAFTS_KEY) || "{}");
+  } catch {
+    return {};
+  }
+}
+
+function writeDrafts(drafts: Record<string, string>) {
+  localStorage.setItem(DRAFTS_KEY, JSON.stringify(drafts));
+}
+
 export default function TasksPage() {
   const { user } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -47,6 +62,8 @@ export default function TasksPage() {
   const [openId, setOpenId] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
   const [saving, setSaving] = useState(false);
+  const [drafts, setDrafts] = useState<Record<string, string>>(() => readDrafts());
+  const [printing, setPrinting] = useState(false);
 
   async function load() {
     if (!user) return;
@@ -106,7 +123,23 @@ export default function TasksPage() {
       return;
     }
     setOpenId(task.id);
+    setDraft(drafts[task.id] ?? task.notes ?? "");
+  }
+
+  function updateDraft(taskId: string, value: string) {
+    setDraft(value);
+    const next = { ...readDrafts(), [taskId]: value };
+    writeDrafts(next);
+    setDrafts(next);
+  }
+
+  function discardDraft(task: Task) {
+    const next = { ...readDrafts() };
+    delete next[task.id];
+    writeDrafts(next);
+    setDrafts(next);
     setDraft(task.notes ?? "");
+    toast.info("Borrador descartado");
   }
 
   async function saveNotes(task: Task) {
@@ -115,6 +148,10 @@ export default function TasksPage() {
     const { error } = await supabase.from("user_tasks").update({ notes: clean }).eq("id", task.id);
     setSaving(false);
     if (error) return toast.error("No se pudieron guardar los detalles");
+    const next = { ...readDrafts() };
+    delete next[task.id];
+    writeDrafts(next);
+    setDrafts(next);
     toast.success("Detalles guardados");
     setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, notes: clean } : t)));
   }
@@ -122,12 +159,32 @@ export default function TasksPage() {
   async function remove(task: Task) {
     const { error } = await supabase.from("user_tasks").delete().eq("id", task.id);
     if (error) return toast.error("No se pudo eliminar");
+    const next = { ...readDrafts() };
+    delete next[task.id];
+    writeDrafts(next);
+    setDrafts(next);
     load();
   }
 
-  const pending = tasks.filter((t) => !t.done);
-  const done = tasks.filter((t) => t.done);
-  const visible = showDone ? [...pending, ...done] : pending;
+  const sorted = useMemo(
+    () =>
+      [...tasks].sort((a, b) => {
+        if (a.done !== b.done) return a.done ? 1 : -1;
+        return b.priority - a.priority;
+      }),
+    [tasks],
+  );
+  const visible = showDone ? sorted : sorted.filter((t) => !t.done);
+
+  function handlePrint() {
+    setPrinting(true);
+    setTimeout(() => {
+      window.print();
+      setPrinting(false);
+    }, 50);
+  }
+
+  const printRoot = typeof document !== "undefined" ? document.getElementById("print-root") : null;
 
   return (
     <div className="flex flex-col">
@@ -135,9 +192,14 @@ export default function TasksPage() {
         title="Tareas"
         description="Tu lista personal de tareas. Solo tú puedes verlas."
         actions={
-          <Button variant="outline" size="sm" onClick={() => setShowDone((v) => !v)}>
-            {showDone ? "Ocultar completadas" : "Mostrar completadas"}
-          </Button>
+          <>
+            <Button variant="outline" size="sm" onClick={handlePrint}>
+              <Printer className="mr-1 h-4 w-4" /> Imprimir listado
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setShowDone((v) => !v)}>
+              {showDone ? "Ocultar completadas" : "Mostrar completadas"}
+            </Button>
+          </>
         }
       />
 
@@ -182,7 +244,10 @@ export default function TasksPage() {
           </p>
         ) : (
           <ul className="divide-y divide-border rounded-md border border-border">
-            {visible.map((task) => (
+            {visible.map((task) => {
+              const hasDraft = drafts[task.id] !== undefined && drafts[task.id] !== (task.notes ?? "");
+              const previewHtml = sanitizeHtml(hasDraft ? drafts[task.id] : task.notes ?? "");
+              return (
               <li
                 key={task.id}
                 className={cn(
@@ -207,13 +272,18 @@ export default function TasksPage() {
                 <Checkbox checked={task.done} onCheckedChange={() => toggle(task)} />
                 <span
                   className={cn(
-                    "min-w-0 flex-1 truncate text-sm",
+                    "min-w-0 flex-1 truncate text-sm font-semibold",
                     task.done && "line-through text-muted-foreground",
                   )}
                   title={task.title}
                 >
                   {task.title}
                 </span>
+                {hasDraft && (
+                  <span className="shrink-0 rounded-full bg-warning/20 px-2 py-0.5 text-[10px] font-medium text-warning-foreground">
+                    Borrador
+                  </span>
+                )}
                 {task.due_date && (
                   <span className="shrink-0 text-xs text-muted-foreground">
                     {new Date(task.due_date).toLocaleDateString("es-ES")}
@@ -241,10 +311,27 @@ export default function TasksPage() {
                 </Button>
                 </div>
 
+                {openId !== task.id && previewHtml && (
+                  <div
+                    className="mt-1 ml-10 mr-1 line-clamp-3 text-xs text-muted-foreground [&_a]:underline [&_li]:ml-4 [&_ol]:list-decimal [&_ul]:list-disc"
+                    dangerouslySetInnerHTML={{ __html: previewHtml }}
+                  />
+                )}
+
                 {openId === task.id && (
                   <div className="mt-3 pl-10 pr-1 pb-1">
-                    <RichTextEditor value={draft} onChange={setDraft} />
-                    <div className="mt-2 flex justify-end gap-2">
+                    <RichTextEditor value={draft} onChange={(v) => updateDraft(task.id, v)} />
+                    <div className="mt-2 flex items-center justify-end gap-2">
+                      {hasDraft && (
+                        <span className="mr-auto text-xs text-muted-foreground">
+                          Borrador sin guardar
+                        </span>
+                      )}
+                      {hasDraft && (
+                        <Button variant="ghost" size="sm" onClick={() => discardDraft(task)}>
+                          Descartar borrador
+                        </Button>
+                      )}
                       <Button variant="ghost" size="sm" onClick={() => setOpenId(null)}>
                         Cerrar
                       </Button>
@@ -256,10 +343,39 @@ export default function TasksPage() {
                   </div>
                 )}
               </li>
-            ))}
+            );})}
           </ul>
         )}
       </div>
+
+      {printing && printRoot &&
+        createPortal(
+          <div className="p-6 text-black">
+            <h1 className="mb-1 text-xl font-bold">Listado de tareas</h1>
+            <p className="mb-4 text-xs">{new Date().toLocaleDateString("es-ES")}</p>
+            {visible.map((task) => {
+              const html = sanitizeHtml(drafts[task.id] ?? task.notes ?? "");
+              return (
+                <div key={task.id} className="mb-4 break-inside-avoid border-b pb-3">
+                  <div className="text-base font-bold">
+                    {task.done ? "☑ " : "☐ "}{task.title}
+                  </div>
+                  <div className="text-xs">
+                    {priorityLabels[task.priority]}
+                    {task.due_date && ` · Fecha límite: ${new Date(task.due_date).toLocaleDateString("es-ES")}`}
+                  </div>
+                  {html && (
+                    <div
+                      className="mt-1 text-sm [&_a]:underline [&_li]:ml-4 [&_ol]:list-decimal [&_ul]:list-disc"
+                      dangerouslySetInnerHTML={{ __html: html }}
+                    />
+                  )}
+                </div>
+              );
+            })}
+          </div>,
+          printRoot,
+        )}
     </div>
   );
 }
