@@ -76,6 +76,101 @@ export type Database = {
           },
         ]
       }
+      auctions: {
+        Row: {
+          auction_date: string | null
+          auction_house: string | null
+          brand: string
+          created_at: string
+          fuel_type: Database["public"]["Enums"]["fuel_type"] | null
+          id: string
+          image_url: string | null
+          license_plate: string | null
+          lot_reference: string | null
+          mileage: number | null
+          model: string
+          notes: string | null
+          payment_date: string | null
+          payment_done: boolean
+          picked_up: boolean
+          picked_up_by: string | null
+          picked_up_date: string | null
+          purchase_price: number
+          ready_for_pickup: boolean
+          selling_price: number
+          stock_request_status: string
+          stock_vehicle_id: string | null
+          transmission: Database["public"]["Enums"]["transmission_type"] | null
+          updated_at: string
+          withdrawal_authorized: boolean
+          year: number | null
+        }
+        Insert: {
+          auction_date?: string | null
+          auction_house?: string | null
+          brand: string
+          created_at?: string
+          fuel_type?: Database["public"]["Enums"]["fuel_type"] | null
+          id?: string
+          image_url?: string | null
+          license_plate?: string | null
+          lot_reference?: string | null
+          mileage?: number | null
+          model: string
+          notes?: string | null
+          payment_date?: string | null
+          payment_done?: boolean
+          picked_up?: boolean
+          picked_up_by?: string | null
+          picked_up_date?: string | null
+          purchase_price?: number
+          ready_for_pickup?: boolean
+          selling_price?: number
+          stock_request_status?: string
+          stock_vehicle_id?: string | null
+          transmission?: Database["public"]["Enums"]["transmission_type"] | null
+          updated_at?: string
+          withdrawal_authorized?: boolean
+          year?: number | null
+        }
+        Update: {
+          auction_date?: string | null
+          auction_house?: string | null
+          brand?: string
+          created_at?: string
+          fuel_type?: Database["public"]["Enums"]["fuel_type"] | null
+          id?: string
+          image_url?: string | null
+          license_plate?: string | null
+          lot_reference?: string | null
+          mileage?: number | null
+          model?: string
+          notes?: string | null
+          payment_date?: string | null
+          payment_done?: boolean
+          picked_up?: boolean
+          picked_up_by?: string | null
+          picked_up_date?: string | null
+          purchase_price?: number
+          ready_for_pickup?: boolean
+          selling_price?: number
+          stock_request_status?: string
+          stock_vehicle_id?: string | null
+          transmission?: Database["public"]["Enums"]["transmission_type"] | null
+          updated_at?: string
+          withdrawal_authorized?: boolean
+          year?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auctions_stock_vehicle_id_fkey"
+            columns: ["stock_vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicle_stock"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_log: {
         Row: {
           action: string
