@@ -123,3 +123,32 @@ export function useStockRequests() {
     },
   });
 }
+
+export function useAuctions() {
+  return useQuery({
+    queryKey: ["auctions"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("auctions")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+export function useAuctionStockRequests() {
+  return useQuery({
+    queryKey: ["auction_stock_requests"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("auctions")
+        .select("*")
+        .eq("stock_request_status", "pending")
+        .order("updated_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
