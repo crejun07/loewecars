@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Field, RecordDialog } from "@/components/shared/RecordDialog";
-import { useStock, useStockRequests } from "@/hooks/data/useDealership";
+import { useStock, useStockRequests, useAuctionStockRequests } from "@/hooks/data/useDealership";
 import { usePermissions } from "@/hooks/usePermissions";
 import {
   daysUntil, formatCurrency, formatDate, fuelTypeLabels,
@@ -30,6 +30,7 @@ const emptyForm = {
 export default function StockPage() {
   const { data: stock = [] } = useStock();
   const { data: stockRequests = [] } = useStockRequests();
+  const { data: auctionRequests = [] } = useAuctionStockRequests();
   const { canViewSensitive } = usePermissions();
   const showSensitive = canViewSensitive("stock");
   const qc = useQueryClient();
@@ -256,6 +257,44 @@ export default function StockPage() {
     qc.invalidateQueries({ queryKey: ["vehicle_appraisals"] });
   }
 
+  async function acceptAuctionRequest(a: any) {
+    const plate = (a.license_plate || "").trim().toUpperCase();
+    if (plate) {
+      const { data: dup } = await supabase.from("vehicle_stock").select("id").ilike("license_plate", plate).maybeSingle();
+      if (dup) { toast.error("Ya existe un vehículo en stock con esa matrícula"); return; }
+    }
+    const { data: created, error } = await supabase.from("vehicle_stock").insert({
+      brand: a.brand, model: a.model,
+      license_plate: plate || null,
+      year: a.year ?? null, mileage: a.mileage ?? null,
+      fuel_type: a.fuel_type ?? null, transmission: a.transmission ?? null,
+      purchase_price: Number(a.purchase_price ?? 0) || 0,
+      selling_price: Number(a.selling_price ?? 0) || 0,
+      status: "preparing" as any,
+      listing_status: "pending_listing" as any,
+      entry_date: a.picked_up_date ?? new Date().toISOString().slice(0, 10),
+      image_url: a.image_url ?? null,
+      notes: a.notes ?? null,
+    }).select("id").single();
+    if (error) { toast.error(error.message); return; }
+    const { error: upErr } = await supabase.from("auctions")
+      .update({ stock_request_status: "accepted", stock_vehicle_id: created.id })
+      .eq("id", a.id);
+    if (upErr) { toast.error(upErr.message); return; }
+    toast.success("Vehículo de subasta añadido al stock");
+    qc.invalidateQueries({ queryKey: ["vehicle_stock"] });
+    qc.invalidateQueries({ queryKey: ["auction_stock_requests"] });
+    qc.invalidateQueries({ queryKey: ["auctions"] });
+  }
+
+  async function rejectAuctionRequest(a: any) {
+    const { error } = await supabase.from("auctions")
+      .update({ stock_request_status: "rejected" }).eq("id", a.id);
+    if (error) { toast.error(error.message); return; }
+    qc.invalidateQueries({ queryKey: ["auction_stock_requests"] });
+    qc.invalidateQueries({ queryKey: ["auctions"] });
+  }
+
   return (
     <div>
       <PageHeader
@@ -306,6 +345,33 @@ export default function StockPage() {
                   <div className="flex gap-2">
                     <Button size="sm" onClick={() => acceptRequest(a)}>Aceptar</Button>
                     <Button size="sm" variant="ghost" onClick={() => rejectRequest(a)}>Denegar</Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {auctionRequests.length > 0 && (
+          <div className="mb-4 rounded-lg border border-status-amber/50 bg-status-amber/10 p-3">
+            <div className="mb-2 text-sm font-semibold">
+              Solicitudes de alta desde Subastas ({auctionRequests.length})
+            </div>
+            <div className="space-y-2">
+              {(auctionRequests as any[]).map((a) => (
+                <div key={a.id} className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-card p-3">
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium">
+                      {a.brand} {a.model}
+                      {a.license_plate && <span className="ml-1 font-mono text-xs text-muted-foreground">· {a.license_plate}</span>}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Subasta{a.auction_house ? ` ${a.auction_house}` : ""} · Retirado {a.picked_up_date ? formatDate(a.picked_up_date) : "—"}
+                      {a.picked_up_by ? ` por ${a.picked_up_by}` : ""} · Compra {formatCurrency(a.purchase_price, 2)}
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={() => acceptAuctionRequest(a)}>Aceptar</Button>
+                    <Button size="sm" variant="ghost" onClick={() => rejectAuctionRequest(a)}>Denegar</Button>
                   </div>
                 </div>
               ))}
