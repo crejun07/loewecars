@@ -249,6 +249,160 @@ export type Database = {
         }
         Relationships: []
       }
+      claim_documents: {
+        Row: {
+          claim_id: string
+          created_at: string
+          doc_date: string | null
+          file_path: string
+          id: string
+          name: string
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          claim_id: string
+          created_at?: string
+          doc_date?: string | null
+          file_path: string
+          id?: string
+          name: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          claim_id?: string
+          created_at?: string
+          doc_date?: string | null
+          file_path?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "claim_documents_claim_id_fkey"
+            columns: ["claim_id"]
+            isOneToOne: false
+            referencedRelation: "claims"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      claims: {
+        Row: {
+          amount_claimed: number | null
+          burofax_received: boolean
+          burofax_received_date: string | null
+          burofax_sent: boolean
+          burofax_sent_date: string | null
+          citation_date: string | null
+          created_at: string
+          has_citation: boolean
+          has_judgment: boolean
+          has_lawsuit: boolean
+          id: string
+          judgment_date: string | null
+          judgment_result: string | null
+          lawsuit_date: string | null
+          lawyer_date: string | null
+          lawyer_name: string | null
+          notes: string | null
+          person_address: string | null
+          person_dni: string | null
+          person_email: string | null
+          person_name: string
+          person_phone: string | null
+          requested_solution: string | null
+          response_deadline: string | null
+          sent_to_lawyer: boolean
+          status: Database["public"]["Enums"]["claim_status"]
+          subject: string | null
+          title: string
+          updated_at: string
+          vehicle_id: string | null
+          vehicle_model: string | null
+          vehicle_plate: string | null
+        }
+        Insert: {
+          amount_claimed?: number | null
+          burofax_received?: boolean
+          burofax_received_date?: string | null
+          burofax_sent?: boolean
+          burofax_sent_date?: string | null
+          citation_date?: string | null
+          created_at?: string
+          has_citation?: boolean
+          has_judgment?: boolean
+          has_lawsuit?: boolean
+          id?: string
+          judgment_date?: string | null
+          judgment_result?: string | null
+          lawsuit_date?: string | null
+          lawyer_date?: string | null
+          lawyer_name?: string | null
+          notes?: string | null
+          person_address?: string | null
+          person_dni?: string | null
+          person_email?: string | null
+          person_name: string
+          person_phone?: string | null
+          requested_solution?: string | null
+          response_deadline?: string | null
+          sent_to_lawyer?: boolean
+          status?: Database["public"]["Enums"]["claim_status"]
+          subject?: string | null
+          title: string
+          updated_at?: string
+          vehicle_id?: string | null
+          vehicle_model?: string | null
+          vehicle_plate?: string | null
+        }
+        Update: {
+          amount_claimed?: number | null
+          burofax_received?: boolean
+          burofax_received_date?: string | null
+          burofax_sent?: boolean
+          burofax_sent_date?: string | null
+          citation_date?: string | null
+          created_at?: string
+          has_citation?: boolean
+          has_judgment?: boolean
+          has_lawsuit?: boolean
+          id?: string
+          judgment_date?: string | null
+          judgment_result?: string | null
+          lawsuit_date?: string | null
+          lawyer_date?: string | null
+          lawyer_name?: string | null
+          notes?: string | null
+          person_address?: string | null
+          person_dni?: string | null
+          person_email?: string | null
+          person_name?: string
+          person_phone?: string | null
+          requested_solution?: string | null
+          response_deadline?: string | null
+          sent_to_lawyer?: boolean
+          status?: Database["public"]["Enums"]["claim_status"]
+          subject?: string | null
+          title?: string
+          updated_at?: string
+          vehicle_id?: string | null
+          vehicle_model?: string | null
+          vehicle_plate?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "claims_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicle_stock"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           client_type: Database["public"]["Enums"]["client_type"]
@@ -1017,6 +1171,15 @@ export type Database = {
         | "negotiating"
         | "purchased"
         | "rejected"
+      claim_status:
+        | "open"
+        | "burofax_sent"
+        | "with_lawyer"
+        | "citation"
+        | "lawsuit"
+        | "judgment"
+        | "resolved"
+        | "closed"
       client_status: "new" | "in_followup" | "closed"
       client_type: "seller" | "buyer" | "both"
       fuel_type:
@@ -1075,12 +1238,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1104,11 +1267,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1129,11 +1292,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1154,11 +1317,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1171,11 +1334,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1202,6 +1365,16 @@ export const Constants = {
         "negotiating",
         "purchased",
         "rejected",
+      ],
+      claim_status: [
+        "open",
+        "burofax_sent",
+        "with_lawyer",
+        "citation",
+        "lawsuit",
+        "judgment",
+        "resolved",
+        "closed",
       ],
       client_status: ["new", "in_followup", "closed"],
       client_type: ["seller", "buyer", "both"],
