@@ -124,6 +124,20 @@ export function useStockRequests() {
   });
 }
 
+export function useClaims() {
+  return useQuery({
+    queryKey: ["claims"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("claims")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
 export function useAuctions() {
   return useQuery({
     queryKey: ["auctions"],

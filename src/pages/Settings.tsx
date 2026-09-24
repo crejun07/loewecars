@@ -30,6 +30,7 @@ const WORKSPACES: { key: Workspace; label: string }[] = [
   { key: "stock", label: "Stock" },
   { key: "workshop", label: "Taller" },
   { key: "spare-parts", label: "Recambios" },
+  { key: "claims", label: "Reclamaciones" },
   { key: "reports", label: "Informes" },
   { key: "history", label: "Historial" },
   { key: "settings", label: "Ajustes" },

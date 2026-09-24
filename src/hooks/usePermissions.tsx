@@ -10,6 +10,7 @@ export type Workspace =
   | "stock"
   | "workshop"
   | "spare-parts"
+  | "claims"
   | "reports"
   | "history"
   | "settings";
