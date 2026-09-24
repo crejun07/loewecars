@@ -14,6 +14,7 @@ const tableLabels: Record<string, string> = {
   vehicle_stock: "Stock",
   vehicle_appraisals: "Tasaciones (tienda)",
   online_appraisals: "Tasaciones online",
+  claims: "Reclamaciones",
   sales: "Ventas",
   workshop: "Taller",
   spare_parts: "Recambios",
