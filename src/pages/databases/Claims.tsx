@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  Plus, Pencil, Trash2, Search, Scale, FileText, Upload, ExternalLink, Car, Phone, Mail, MapPin, IdCard, CalendarClock,
+  Plus, Pencil, Trash2, Search, Scale, FileText, Upload, ExternalLink, Car, Phone, Mail, MapPin, IdCard, CalendarClock, Eye, Gavel, Flag,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -71,6 +71,7 @@ export default function ClaimsPage() {
   const [open, setOpen] = useState(false);
   const [docsFor, setDocsFor] = useState<any | null>(null);
   const [eventsFor, setEventsFor] = useState<any | null>(null);
+  const [detailFor, setDetailFor] = useState<any | null>(null);
 
   const vehicleOptions = useMemo(
     () => (stock as any[]).map((v) => ({
@@ -183,7 +184,7 @@ export default function ClaimsPage() {
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 text-sm font-semibold">
                       <Scale className="h-4 w-4 shrink-0 text-muted-foreground" />
-                      <span className="truncate">{c.title}</span>
+                      <button type="button" onClick={() => setDetailFor(c)} className="truncate text-left hover:underline">{c.title}</button>
                     </div>
                     <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
                       <span className="font-medium text-foreground">{c.person_name}</span>
@@ -200,6 +201,7 @@ export default function ClaimsPage() {
                     )}
                   </div>
                   <div className="flex shrink-0 items-center gap-1">
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDetailFor(c)} title="Ver detalles"><Eye className="h-3.5 w-3.5" /></Button>
                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEventsFor(c)} title="Eventos"><CalendarClock className="h-3.5 w-3.5" /></Button>
                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDocsFor(c)} title="Documentos"><FileText className="h-3.5 w-3.5" /></Button>
                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(c)}><Pencil className="h-3.5 w-3.5" /></Button>
@@ -354,6 +356,7 @@ export default function ClaimsPage() {
 
       <ClaimDocumentsDialog claim={docsFor} onClose={() => setDocsFor(null)} />
       <ClaimEventsDialog claim={eventsFor} onClose={() => setEventsFor(null)} />
+      <ClaimDetailDialog claim={detailFor} onClose={() => setDetailFor(null)} />
     </div>
   );
 }
@@ -586,6 +589,124 @@ function ClaimEventsDialog({ claim, onClose }: { claim: any | null; onClose: () 
             </ol>
           )}
         </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function DetailRow({ label, value }: { label: string; value: any }) {
+  if (value == null || value === "") return null;
+  return (
+    <div className="flex flex-col">
+      <span className="text-[11px] font-medium text-muted-foreground">{label}</span>
+      <span className="text-sm">{value}</span>
+    </div>
+  );
+}
+
+function ClaimDetailDialog({ claim, onClose }: { claim: any | null; onClose: () => void }) {
+  const [events, setEvents] = useState<any[]>([]);
+  const [docs, setDocs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!claim) return;
+    setLoading(true);
+    Promise.all([
+      (supabase as any).from("claim_events").select("*").eq("claim_id", claim.id),
+      supabase.from("claim_documents").select("*").eq("claim_id", claim.id),
+    ]).then(([e, d]: any[]) => {
+      setEvents(e.data ?? []);
+      setDocs(d.data ?? []);
+      setLoading(false);
+    });
+  }, [claim?.id]);
+
+  const timeline = useMemo(() => {
+    if (!claim) return [];
+    const items: { date: string; title: string; notes?: string; kind: "event" | "doc" | "milestone" | "created"; doc?: any }[] = [];
+    items.push({ date: claim.created_at, title: "Reclamación registrada", kind: "created" });
+    milestones.forEach((m) => {
+      if (claim[m.key] && claim[m.date]) items.push({ date: claim[m.date], title: m.label, kind: "milestone" });
+    });
+    events.forEach((ev) => items.push({ date: ev.event_date ?? ev.date ?? ev.created_at, title: ev.title, notes: ev.notes, kind: "event" }));
+    docs.forEach((d) => items.push({ date: d.document_date ?? d.doc_date ?? d.created_at, title: `Documento: ${d.name ?? d.file_name ?? "PDF"}`, kind: "doc", doc: d }));
+    if (claim.response_deadline) items.push({ date: claim.response_deadline, title: "Plazo de contestación", kind: "milestone" });
+    return items.filter((i) => i.date).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [claim, events, docs]);
+
+  async function openDoc(d: any) {
+    const { data, error } = await supabase.storage.from("claim-documents").createSignedUrl(d.file_path, 600);
+    if (error || !data) { toast.error("No se pudo abrir el documento"); return; }
+    window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+  }
+
+  const icon = (k: string) =>
+    k === "doc" ? <FileText className="h-3.5 w-3.5" /> : k === "milestone" ? <Gavel className="h-3.5 w-3.5" /> : k === "created" ? <Flag className="h-3.5 w-3.5" /> : <CalendarClock className="h-3.5 w-3.5" />;
+  const tone = (k: string) =>
+    k === "doc" ? "bg-status-blue/15 text-status-blue border-status-blue/40" : k === "milestone" ? "bg-status-amber/15 text-status-amber border-status-amber/40" : k === "created" ? "bg-muted text-muted-foreground border-border" : "bg-status-green/15 text-status-green border-status-green/40";
+
+  return (
+    <Dialog open={!!claim} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2"><Scale className="h-4 w-4" />{claim?.title}</DialogTitle>
+        </DialogHeader>
+        {claim && (
+          <div className="space-y-5">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className={cn("rounded-md border px-2 py-1 text-xs font-medium", statusTone[claim.status])}>{claimStatusLabels[claim.status] ?? claim.status}</span>
+              {claim.amount_claimed != null && <span className="rounded-md border border-border bg-muted/40 px-2 py-1 text-xs">Reclama {formatCurrency(claim.amount_claimed, 2)}</span>}
+            </div>
+
+            <section className="rounded-lg border border-border p-3">
+              <h3 className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Persona / empresa</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <DetailRow label="Nombre" value={claim.person_name} />
+                <DetailRow label="DNI / CIF" value={claim.person_dni} />
+                <DetailRow label="Teléfono" value={claim.person_phone} />
+                <DetailRow label="Email" value={claim.person_email} />
+                <DetailRow label="Dirección" value={claim.person_address} />
+                <DetailRow label="Vehículo" value={[claim.vehicle_model, claim.vehicle_plate].filter(Boolean).join(" · ")} />
+              </div>
+            </section>
+
+            <section className="rounded-lg border border-border p-3">
+              <h3 className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Reclamación</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="col-span-2"><DetailRow label="Asunto" value={claim.subject} /></div>
+                <div className="col-span-2"><DetailRow label="Solución pedida" value={claim.requested_solution} /></div>
+                <DetailRow label="Plazo de contestación" value={claim.response_deadline ? formatDate(claim.response_deadline) : ""} />
+                <DetailRow label="Abogado" value={claim.lawyer_name} />
+                <div className="col-span-2"><DetailRow label="Sentencia" value={claim.judgment_result} /></div>
+                <div className="col-span-2"><DetailRow label="Notas" value={claim.notes} /></div>
+              </div>
+            </section>
+
+            <section>
+              <h3 className="mb-3 text-xs font-semibold uppercase text-muted-foreground">Historial cronológico</h3>
+              {loading ? (
+                <p className="text-sm text-muted-foreground">Cargando…</p>
+              ) : (
+                <ol className="relative ml-3 border-l border-border">
+                  {timeline.map((it, i) => (
+                    <li key={i} className="mb-4 ml-5">
+                      <span className={cn("absolute -left-3 flex h-6 w-6 items-center justify-center rounded-full border", tone(it.kind))}>{icon(it.kind)}</span>
+                      <div className="text-[11px] text-muted-foreground">{formatDate(it.date)}</div>
+                      <div className="flex items-center gap-2 text-sm font-medium">
+                        {it.title}
+                        {it.doc && (
+                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openDoc(it.doc)} title="Abrir"><ExternalLink className="h-3.5 w-3.5" /></Button>
+                        )}
+                      </div>
+                      {it.notes && <p className="text-xs text-muted-foreground whitespace-pre-wrap">{it.notes}</p>}
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </section>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
