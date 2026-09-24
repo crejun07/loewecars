@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  Plus, Pencil, Trash2, Search, Scale, FileText, Upload, ExternalLink, Car, Phone, Mail, MapPin, IdCard,
+  Plus, Pencil, Trash2, Search, Scale, FileText, Upload, ExternalLink, Car, Phone, Mail, MapPin, IdCard, CalendarClock,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -70,6 +70,7 @@ export default function ClaimsPage() {
   const [form, setForm] = useState<any>(emptyForm);
   const [open, setOpen] = useState(false);
   const [docsFor, setDocsFor] = useState<any | null>(null);
+  const [eventsFor, setEventsFor] = useState<any | null>(null);
 
   const vehicleOptions = useMemo(
     () => (stock as any[]).map((v) => ({
@@ -199,6 +200,7 @@ export default function ClaimsPage() {
                     )}
                   </div>
                   <div className="flex shrink-0 items-center gap-1">
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEventsFor(c)} title="Eventos"><CalendarClock className="h-3.5 w-3.5" /></Button>
                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDocsFor(c)} title="Documentos"><FileText className="h-3.5 w-3.5" /></Button>
                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(c)}><Pencil className="h-3.5 w-3.5" /></Button>
                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => remove(c)}><Trash2 className="h-3.5 w-3.5 text-muted-foreground" /></Button>
@@ -351,6 +353,7 @@ export default function ClaimsPage() {
       </RecordDialog>
 
       <ClaimDocumentsDialog claim={docsFor} onClose={() => setDocsFor(null)} />
+      <ClaimEventsDialog claim={eventsFor} onClose={() => setEventsFor(null)} />
     </div>
   );
 }
@@ -465,6 +468,122 @@ function ClaimDocumentsDialog({ claim, onClose }: { claim: any | null; onClose: 
                 </div>
               </div>
             ))
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+const eventPresets = [
+  "Burofax enviado",
+  "Burofax recibido",
+  "Documentación enviada al abogado",
+  "Citación",
+  "Demanda",
+  "Sentencia",
+  "Llamada al cliente",
+];
+
+function ClaimEventsDialog({ claim, onClose }: { claim: any | null; onClose: () => void }) {
+  const [events, setEvents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [title, setTitle] = useState("");
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [notes, setNotes] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  async function load(id: string) {
+    setLoading(true);
+    const { data, error } = await (supabase as any)
+      .from("claim_events").select("*").eq("claim_id", id)
+      .order("event_date", { ascending: false }).order("created_at", { ascending: false });
+    if (error) toast.error(error.message);
+    setEvents(data ?? []);
+    setLoading(false);
+  }
+
+  useEffect(() => {
+    if (claim?.id) load(claim.id); else setEvents([]);
+    setTitle(""); setNotes(""); setDate(new Date().toISOString().slice(0, 10));
+  }, [claim?.id]);
+
+  async function add() {
+    if (!claim || !title.trim() || !date) return;
+    setSaving(true);
+    const { error } = await (supabase as any).from("claim_events").insert({
+      claim_id: claim.id, title: title.trim(), event_date: date, notes: notes.trim() || null,
+    });
+    setSaving(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Evento registrado");
+    setTitle(""); setNotes("");
+    load(claim.id);
+  }
+
+  async function removeEvent(ev: any) {
+    if (!confirm("¿Eliminar este evento?")) return;
+    const { error } = await (supabase as any).from("claim_events").delete().eq("id", ev.id);
+    if (error) { toast.error(error.message); return; }
+    load(ev.claim_id);
+  }
+
+  return (
+    <Dialog open={!!claim} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Eventos · {claim?.title}</DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-3 rounded-md border border-border p-3">
+          <div className="flex flex-wrap gap-1.5">
+            {eventPresets.map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => setTitle(p)}
+                className={cn(
+                  "rounded-full border px-2.5 py-1 text-xs transition-colors",
+                  title === p ? "border-primary bg-primary text-primary-foreground" : "border-border hover:bg-muted",
+                )}
+              >{p}</button>
+            ))}
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Evento"><Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Elige uno o escribe el tuyo" /></Field>
+            <Field label="Fecha"><Input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></Field>
+            <Field label="Notas" full><Textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} /></Field>
+          </div>
+          <div className="flex justify-end">
+            <Button size="sm" onClick={add} disabled={!title.trim() || !date || saving}>
+              <Plus className="mr-1 h-4 w-4" />{saving ? "Guardando…" : "Añadir evento"}
+            </Button>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          {loading ? (
+            <p className="text-sm text-muted-foreground">Cargando…</p>
+          ) : events.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Todavía no hay eventos registrados.</p>
+          ) : (
+            <ol className="relative ml-2 border-l border-border">
+              {events.map((ev) => (
+                <li key={ev.id} className="mb-3 ml-4">
+                  <span className="absolute -left-1.5 mt-1.5 h-3 w-3 rounded-full border-2 border-background bg-primary" />
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="text-xs text-muted-foreground">{formatDate(ev.event_date)}</div>
+                      <div className="text-sm font-medium">{ev.title}</div>
+                      {ev.notes && <p className="whitespace-pre-wrap text-xs text-muted-foreground">{ev.notes}</p>}
+                    </div>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => removeEvent(ev)}>
+                      <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
+                    </Button>
+                  </div>
+                </li>
+              ))}
+            </ol>
           )}
         </div>
       </DialogContent>
