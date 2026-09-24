@@ -13,6 +13,7 @@ import AppraisalsPage from "./pages/databases/Appraisals.tsx";
 import SalesPage from "./pages/databases/Sales.tsx";
 import WorkshopPage from "./pages/databases/Workshop.tsx";
 import SparePartsPage from "./pages/databases/SpareParts.tsx";
+import ClaimsPage from "./pages/databases/Claims.tsx";
 import ReportsPage from "./pages/databases/Reports.tsx";
 import SettingsPage from "./pages/Settings.tsx";
 import HistoryPage from "./pages/History.tsx";
@@ -62,6 +63,7 @@ const App = () => (
                         <Route path="/auctions" element={<PermissionGuard workspace="stock"><AuctionsPage /></PermissionGuard>} />
                         <Route path="/workshop" element={<PermissionGuard workspace="workshop"><WorkshopPage /></PermissionGuard>} />
                         <Route path="/spare-parts" element={<PermissionGuard workspace="spare-parts"><SparePartsPage /></PermissionGuard>} />
+                        <Route path="/claims" element={<PermissionGuard workspace="claims"><ClaimsPage /></PermissionGuard>} />
                         <Route path="/catalog" element={<CatalogPage />} />
                         <Route path="/agenda" element={<AgendaPage />} />
                         <Route path="/tasks" element={<TasksPage />} />
