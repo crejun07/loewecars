@@ -1,0 +1,1 @@
+ALTER TABLE public.claim_events ADD COLUMN IF NOT EXISTS deadline_date date, ADD COLUMN IF NOT EXISTS deadline_done boolean NOT NULL DEFAULT false;

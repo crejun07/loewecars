@@ -295,6 +295,8 @@ export type Database = {
           claim_id: string
           created_at: string
           created_by: string | null
+          deadline_date: string | null
+          deadline_done: boolean
           event_date: string
           id: string
           notes: string | null
@@ -305,6 +307,8 @@ export type Database = {
           claim_id: string
           created_at?: string
           created_by?: string | null
+          deadline_date?: string | null
+          deadline_done?: boolean
           event_date?: string
           id?: string
           notes?: string | null
@@ -315,6 +319,8 @@ export type Database = {
           claim_id?: string
           created_at?: string
           created_by?: string | null
+          deadline_date?: string | null
+          deadline_done?: boolean
           event_date?: string
           id?: string
           notes?: string | null

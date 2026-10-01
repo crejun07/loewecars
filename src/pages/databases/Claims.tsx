@@ -2,7 +2,26 @@ import { useEffect, useMemo, useState } from "react";
 import {
   Plus, Pencil, Trash2, Search, Scale, FileText, Upload, ExternalLink, Car, Phone, Mail, MapPin, IdCard, CalendarClock, Eye, Gavel, Flag,
 } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+
+function daysLeft(d: string) {
+  const t = new Date(); t.setHours(0, 0, 0, 0);
+  const x = new Date(d + "T00:00:00");
+  return Math.round((x.getTime() - t.getTime()) / 86400000);
+}
+function DeadlineBadge({ date, label }: { date: string; label: string }) {
+  const n = daysLeft(date);
+  const tone = n < 0 ? "border-destructive bg-destructive text-destructive-foreground"
+    : n <= 3 ? "border-status-red-fg/40 bg-status-red text-status-red-fg"
+    : n <= 7 ? "border-status-amber-fg/40 bg-status-amber text-status-amber-fg"
+    : "border-border bg-muted text-foreground";
+  const txt = n < 0 ? `vencido hace ${-n} día${n === -1 ? "" : "s"}` : n === 0 ? "vence HOY" : `quedan ${n} día${n === 1 ? "" : "s"}`;
+  return (
+    <span className={cn("inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs font-medium", tone)}>
+      <CalendarClock className="h-3 w-3" />{label}: <b>{txt}</b> ({formatDate(date)})
+    </span>
+  );
+}
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -29,13 +48,13 @@ export const claimStatusLabels: Record<string, string> = {
 };
 
 const statusTone: Record<string, string> = {
-  open: "bg-status-blue/15 text-status-blue border-status-blue/40",
-  burofax_sent: "bg-status-amber/15 text-status-amber border-status-amber/40",
-  with_lawyer: "bg-status-amber/15 text-status-amber border-status-amber/40",
-  citation: "bg-status-red/15 text-status-red border-status-red/40",
-  lawsuit: "bg-status-red/15 text-status-red border-status-red/40",
-  judgment: "bg-status-red/15 text-status-red border-status-red/40",
-  resolved: "bg-status-green/15 text-status-green border-status-green/40",
+  open: "bg-status-blue text-status-blue-fg border-status-blue-fg/40",
+  burofax_sent: "bg-status-amber text-status-amber-fg border-status-amber-fg/40",
+  with_lawyer: "bg-status-amber text-status-amber-fg border-status-amber-fg/40",
+  citation: "bg-status-red text-status-red-fg border-status-red-fg/40",
+  lawsuit: "bg-status-red text-status-red-fg border-status-red-fg/40",
+  judgment: "bg-status-red text-status-red-fg border-status-red-fg/40",
+  resolved: "bg-status-green text-status-green-fg border-status-green-fg/40",
   closed: "bg-muted text-muted-foreground border-border",
 };
 
@@ -72,6 +91,15 @@ export default function ClaimsPage() {
   const [docsFor, setDocsFor] = useState<any | null>(null);
   const [eventsFor, setEventsFor] = useState<any | null>(null);
   const [detailFor, setDetailFor] = useState<any | null>(null);
+  const { data: pendingDeadlines = [] } = useQuery({
+    queryKey: ["claim_event_deadlines"],
+    queryFn: async () => {
+      const { data } = await (supabase as any).from("claim_events")
+        .select("id, claim_id, title, deadline_date").not("deadline_date", "is", null).eq("deadline_done", false)
+        .order("deadline_date", { ascending: true });
+      return data ?? [];
+    },
+  });
 
   const vehicleOptions = useMemo(
     () => (stock as any[]).map((v) => ({
@@ -223,11 +251,10 @@ export default function ClaimsPage() {
                   {c.amount_claimed != null && (
                     <span className="rounded-md border border-border bg-muted/40 px-2 py-1 text-xs">Reclama {formatCurrency(c.amount_claimed, 2)}</span>
                   )}
-                  {c.response_deadline && (
-                    <span className="rounded-md border border-status-amber/40 bg-status-amber/10 px-2 py-1 text-xs text-status-amber">
-                      Contestar antes del {formatDate(c.response_deadline)}
-                    </span>
-                  )}
+                  {c.response_deadline && <DeadlineBadge date={c.response_deadline} label="Contestar" />}
+                  {(pendingDeadlines as any[]).filter((d) => d.claim_id === c.id).map((d) => (
+                    <DeadlineBadge key={d.id} date={d.deadline_date} label={d.title} />
+                  ))}
                 </div>
 
                 <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -240,7 +267,7 @@ export default function ClaimsPage() {
                         onClick={() => toggleMilestone(c, m)}
                         className={cn(
                           "rounded-md border px-2 py-1.5 text-left text-[11px] font-medium transition-colors",
-                          active ? "border-status-green/50 bg-status-green/15 text-status-green" : "border-border bg-muted/40 text-muted-foreground hover:bg-muted",
+                          active ? "border-status-green-fg/50 bg-status-green text-status-green-fg" : "border-border bg-muted/40 text-muted-foreground hover:bg-muted",
                         )}
                       >
                         <div>{m.label}</div>
@@ -329,7 +356,7 @@ export default function ClaimsPage() {
                   onClick={() => setForm({ ...form, [m.key]: !form[m.key], [m.date]: !form[m.key] ? (form[m.date] || new Date().toISOString().slice(0, 10)) : "" })}
                   className={cn(
                     "w-full rounded-md border px-2 py-1 text-xs font-medium",
-                    form[m.key] ? "border-status-green/50 bg-status-green/15 text-status-green" : "border-border bg-muted/40 text-muted-foreground",
+                    form[m.key] ? "border-status-green-fg/40 bg-status-green text-status-green-fg" : "border-border bg-muted/40 text-muted-foreground",
                   )}
                 >
                   {m.label}
@@ -494,7 +521,9 @@ function ClaimEventsDialog({ claim, onClose }: { claim: any | null; onClose: () 
   const [title, setTitle] = useState("");
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [notes, setNotes] = useState("");
+  const [deadline, setDeadline] = useState("");
   const [saving, setSaving] = useState(false);
+  const qc = useQueryClient();
 
   async function load(id: string) {
     setLoading(true);
@@ -515,20 +544,26 @@ function ClaimEventsDialog({ claim, onClose }: { claim: any | null; onClose: () 
     if (!claim || !title.trim() || !date) return;
     setSaving(true);
     const { error } = await (supabase as any).from("claim_events").insert({
-      claim_id: claim.id, title: title.trim(), event_date: date, notes: notes.trim() || null,
+      claim_id: claim.id, title: title.trim(), event_date: date, notes: notes.trim() || null, deadline_date: deadline || null,
     });
     setSaving(false);
     if (error) { toast.error(error.message); return; }
     toast.success("Evento registrado");
-    setTitle(""); setNotes("");
-    load(claim.id);
+    setTitle(""); setNotes(""); setDeadline("");
+    load(claim.id); qc.invalidateQueries({ queryKey: ["claim_event_deadlines"] });
   }
 
   async function removeEvent(ev: any) {
     if (!confirm("¿Eliminar este evento?")) return;
     const { error } = await (supabase as any).from("claim_events").delete().eq("id", ev.id);
     if (error) { toast.error(error.message); return; }
-    load(ev.claim_id);
+    load(ev.claim_id); qc.invalidateQueries({ queryKey: ["claim_event_deadlines"] });
+  }
+
+  async function toggleDone(ev: any) {
+    const { error } = await (supabase as any).from("claim_events").update({ deadline_done: !ev.deadline_done }).eq("id", ev.id);
+    if (error) { toast.error(error.message); return; }
+    load(ev.claim_id); qc.invalidateQueries({ queryKey: ["claim_event_deadlines"] });
   }
 
   return (
@@ -555,6 +590,7 @@ function ClaimEventsDialog({ claim, onClose }: { claim: any | null; onClose: () 
           <div className="grid grid-cols-2 gap-3">
             <Field label="Evento"><Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Elige uno o escribe el tuyo" /></Field>
             <Field label="Fecha"><Input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></Field>
+            <Field label="Fecha límite de contestación (opcional)"><Input type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)} /></Field>
             <Field label="Notas" full><Textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} /></Field>
           </div>
           <div className="flex justify-end">
@@ -579,6 +615,16 @@ function ClaimEventsDialog({ claim, onClose }: { claim: any | null; onClose: () 
                       <div className="text-xs text-muted-foreground">{formatDate(ev.event_date)}</div>
                       <div className="text-sm font-medium">{ev.title}</div>
                       {ev.notes && <p className="whitespace-pre-wrap text-xs text-muted-foreground">{ev.notes}</p>}
+                      {ev.deadline_date && (
+                        <div className="mt-1 flex flex-wrap items-center gap-2">
+                          {ev.deadline_done
+                            ? <span className="rounded-md border border-status-green-fg/40 bg-status-green px-2 py-1 text-xs text-status-green-fg">Contestado · límite {formatDate(ev.deadline_date)}</span>
+                            : <DeadlineBadge date={ev.deadline_date} label="Límite" />}
+                          <button type="button" onClick={() => toggleDone(ev)} className="text-xs underline text-muted-foreground hover:text-foreground">
+                            {ev.deadline_done ? "Marcar pendiente" : "Marcar contestado"}
+                          </button>
+                        </div>
+                      )}
                     </div>
                     <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => removeEvent(ev)}>
                       <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
@@ -644,7 +690,7 @@ function ClaimDetailDialog({ claim, onClose }: { claim: any | null; onClose: () 
   const icon = (k: string) =>
     k === "doc" ? <FileText className="h-3.5 w-3.5" /> : k === "milestone" ? <Gavel className="h-3.5 w-3.5" /> : k === "created" ? <Flag className="h-3.5 w-3.5" /> : <CalendarClock className="h-3.5 w-3.5" />;
   const tone = (k: string) =>
-    k === "doc" ? "bg-status-blue/15 text-status-blue border-status-blue/40" : k === "milestone" ? "bg-status-amber/15 text-status-amber border-status-amber/40" : k === "created" ? "bg-muted text-muted-foreground border-border" : "bg-status-green/15 text-status-green border-status-green/40";
+    k === "doc" ? "bg-status-blue text-status-blue-fg border-status-blue-fg/40" : k === "milestone" ? "bg-status-amber text-status-amber-fg border-status-amber-fg/40" : k === "created" ? "bg-muted text-muted-foreground border-border" : "bg-status-green text-status-green-fg border-status-green-fg/40";
 
   return (
     <Dialog open={!!claim} onOpenChange={(v) => !v && onClose()}>
