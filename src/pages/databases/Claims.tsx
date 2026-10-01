@@ -12,8 +12,8 @@ function daysLeft(d: string) {
 function DeadlineBadge({ date, label }: { date: string; label: string }) {
   const n = daysLeft(date);
   const tone = n < 0 ? "border-destructive bg-destructive text-destructive-foreground"
-    : n <= 3 ? "border-status-red/60 bg-status-red/15 text-foreground"
-    : n <= 7 ? "border-status-amber/60 bg-status-amber/20 text-foreground"
+    : n <= 3 ? "border-status-red-fg/40 bg-status-red text-status-red-fg"
+    : n <= 7 ? "border-status-amber-fg/40 bg-status-amber text-status-amber-fg"
     : "border-border bg-muted text-foreground";
   const txt = n < 0 ? `vencido hace ${-n} día${n === -1 ? "" : "s"}` : n === 0 ? "vence HOY" : `quedan ${n} día${n === 1 ? "" : "s"}`;
   return (
@@ -48,13 +48,13 @@ export const claimStatusLabels: Record<string, string> = {
 };
 
 const statusTone: Record<string, string> = {
-  open: "bg-status-blue/15 text-status-blue border-status-blue/40",
-  burofax_sent: "bg-status-amber/15 text-status-amber border-status-amber/40",
-  with_lawyer: "bg-status-amber/15 text-status-amber border-status-amber/40",
-  citation: "bg-status-red/15 text-status-red border-status-red/40",
-  lawsuit: "bg-status-red/15 text-status-red border-status-red/40",
-  judgment: "bg-status-red/15 text-status-red border-status-red/40",
-  resolved: "bg-status-green/15 text-status-green border-status-green/40",
+  open: "bg-status-blue text-status-blue-fg border-status-blue-fg/40",
+  burofax_sent: "bg-status-amber text-status-amber-fg border-status-amber-fg/40",
+  with_lawyer: "bg-status-amber text-status-amber-fg border-status-amber-fg/40",
+  citation: "bg-status-red text-status-red-fg border-status-red-fg/40",
+  lawsuit: "bg-status-red text-status-red-fg border-status-red-fg/40",
+  judgment: "bg-status-red text-status-red-fg border-status-red-fg/40",
+  resolved: "bg-status-green text-status-green-fg border-status-green-fg/40",
   closed: "bg-muted text-muted-foreground border-border",
 };
 
@@ -267,7 +267,7 @@ export default function ClaimsPage() {
                         onClick={() => toggleMilestone(c, m)}
                         className={cn(
                           "rounded-md border px-2 py-1.5 text-left text-[11px] font-medium transition-colors",
-                          active ? "border-status-green bg-status-green/25 text-foreground" : "border-border bg-muted/40 text-muted-foreground hover:bg-muted",
+                          active ? "border-status-green-fg/50 bg-status-green text-status-green-fg" : "border-border bg-muted/40 text-muted-foreground hover:bg-muted",
                         )}
                       >
                         <div>{m.label}</div>
@@ -356,7 +356,7 @@ export default function ClaimsPage() {
                   onClick={() => setForm({ ...form, [m.key]: !form[m.key], [m.date]: !form[m.key] ? (form[m.date] || new Date().toISOString().slice(0, 10)) : "" })}
                   className={cn(
                     "w-full rounded-md border px-2 py-1 text-xs font-medium",
-                    form[m.key] ? "border-status-green/50 bg-status-green/15 text-status-green" : "border-border bg-muted/40 text-muted-foreground",
+                    form[m.key] ? "border-status-green-fg/40 bg-status-green text-status-green-fg" : "border-border bg-muted/40 text-muted-foreground",
                   )}
                 >
                   {m.label}
@@ -671,7 +671,7 @@ function ClaimDetailDialog({ claim, onClose }: { claim: any | null; onClose: () 
   const icon = (k: string) =>
     k === "doc" ? <FileText className="h-3.5 w-3.5" /> : k === "milestone" ? <Gavel className="h-3.5 w-3.5" /> : k === "created" ? <Flag className="h-3.5 w-3.5" /> : <CalendarClock className="h-3.5 w-3.5" />;
   const tone = (k: string) =>
-    k === "doc" ? "bg-status-blue/15 text-status-blue border-status-blue/40" : k === "milestone" ? "bg-status-amber/15 text-status-amber border-status-amber/40" : k === "created" ? "bg-muted text-muted-foreground border-border" : "bg-status-green/15 text-status-green border-status-green/40";
+    k === "doc" ? "bg-status-blue text-status-blue-fg border-status-blue-fg/40" : k === "milestone" ? "bg-status-amber text-status-amber-fg border-status-amber-fg/40" : k === "created" ? "bg-muted text-muted-foreground border-border" : "bg-status-green text-status-green-fg border-status-green-fg/40";
 
   return (
     <Dialog open={!!claim} onOpenChange={(v) => !v && onClose()}>
