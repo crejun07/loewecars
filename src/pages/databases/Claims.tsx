@@ -2,7 +2,26 @@ import { useEffect, useMemo, useState } from "react";
 import {
   Plus, Pencil, Trash2, Search, Scale, FileText, Upload, ExternalLink, Car, Phone, Mail, MapPin, IdCard, CalendarClock, Eye, Gavel, Flag,
 } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+
+function daysLeft(d: string) {
+  const t = new Date(); t.setHours(0, 0, 0, 0);
+  const x = new Date(d + "T00:00:00");
+  return Math.round((x.getTime() - t.getTime()) / 86400000);
+}
+function DeadlineBadge({ date, label }: { date: string; label: string }) {
+  const n = daysLeft(date);
+  const tone = n < 0 ? "border-destructive bg-destructive text-destructive-foreground"
+    : n <= 3 ? "border-status-red/60 bg-status-red/15 text-foreground"
+    : n <= 7 ? "border-status-amber/60 bg-status-amber/20 text-foreground"
+    : "border-border bg-muted text-foreground";
+  const txt = n < 0 ? `vencido hace ${-n} día${n === -1 ? "" : "s"}` : n === 0 ? "vence HOY" : `quedan ${n} día${n === 1 ? "" : "s"}`;
+  return (
+    <span className={cn("inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs font-medium", tone)}>
+      <CalendarClock className="h-3 w-3" />{label}: <b>{txt}</b> ({formatDate(date)})
+    </span>
+  );
+}
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -72,6 +91,15 @@ export default function ClaimsPage() {
   const [docsFor, setDocsFor] = useState<any | null>(null);
   const [eventsFor, setEventsFor] = useState<any | null>(null);
   const [detailFor, setDetailFor] = useState<any | null>(null);
+  const { data: pendingDeadlines = [] } = useQuery({
+    queryKey: ["claim_event_deadlines"],
+    queryFn: async () => {
+      const { data } = await (supabase as any).from("claim_events")
+        .select("id, claim_id, title, deadline_date").not("deadline_date", "is", null).eq("deadline_done", false)
+        .order("deadline_date", { ascending: true });
+      return data ?? [];
+    },
+  });
 
   const vehicleOptions = useMemo(
     () => (stock as any[]).map((v) => ({
@@ -223,11 +251,10 @@ export default function ClaimsPage() {
                   {c.amount_claimed != null && (
                     <span className="rounded-md border border-border bg-muted/40 px-2 py-1 text-xs">Reclama {formatCurrency(c.amount_claimed, 2)}</span>
                   )}
-                  {c.response_deadline && (
-                    <span className="rounded-md border border-status-amber/40 bg-status-amber/10 px-2 py-1 text-xs text-status-amber">
-                      Contestar antes del {formatDate(c.response_deadline)}
-                    </span>
-                  )}
+                  {c.response_deadline && <DeadlineBadge date={c.response_deadline} label="Contestar" />}
+                  {(pendingDeadlines as any[]).filter((d) => d.claim_id === c.id).map((d) => (
+                    <DeadlineBadge key={d.id} date={d.deadline_date} label={d.title} />
+                  ))}
                 </div>
 
                 <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -240,7 +267,7 @@ export default function ClaimsPage() {
                         onClick={() => toggleMilestone(c, m)}
                         className={cn(
                           "rounded-md border px-2 py-1.5 text-left text-[11px] font-medium transition-colors",
-                          active ? "border-status-green/50 bg-status-green/15 text-status-green" : "border-border bg-muted/40 text-muted-foreground hover:bg-muted",
+                          active ? "border-status-green bg-status-green/25 text-foreground" : "border-border bg-muted/40 text-muted-foreground hover:bg-muted",
                         )}
                       >
                         <div>{m.label}</div>
