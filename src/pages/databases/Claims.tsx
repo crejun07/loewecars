@@ -708,6 +708,9 @@ function ClaimDetailDialog({ claim, onClose }: { claim: any | null; onClose: () 
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2"><Scale className="h-4 w-4" />{claim?.title}</DialogTitle>
+          <Button variant="outline" size="sm" onClick={printClaim} disabled={loading} className="w-fit gap-1.5">
+            <Printer className="h-4 w-4" /> Imprimir PDF
+          </Button>
         </DialogHeader>
         {claim && (
           <div className="space-y-5">
