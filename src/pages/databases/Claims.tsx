@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import {
-  Plus, Pencil, Trash2, Search, Scale, FileText, Upload, ExternalLink, Car, Phone, Mail, MapPin, IdCard, CalendarClock, Eye, Gavel, Flag,
+  Plus, Pencil, Trash2, Search, Scale, FileText, Upload, ExternalLink, Car, Phone, Mail, MapPin, IdCard, CalendarClock, Eye, Gavel, Flag, Printer,
 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -680,6 +681,16 @@ function ClaimDetailDialog({ claim, onClose }: { claim: any | null; onClose: () 
     if (claim.response_deadline) items.push({ date: claim.response_deadline, title: "Plazo de contestación", kind: "milestone" });
     return items.filter((i) => i.date).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [claim, events, docs]);
+
+  const printRoot = typeof document !== "undefined" ? document.getElementById("print-root") : null;
+  const [printing, setPrinting] = useState(false);
+  function printClaim() {
+    setPrinting(true);
+    setTimeout(() => {
+      window.print();
+      setTimeout(() => setPrinting(false), 500);
+    }, 150);
+  }
 
   async function openDoc(d: any) {
     const { data, error } = await supabase.storage.from("claim-documents").createSignedUrl(d.file_path, 600);
