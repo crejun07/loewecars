@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import {
-  Plus, Pencil, Trash2, Search, Scale, FileText, Upload, ExternalLink, Car, Phone, Mail, MapPin, IdCard, CalendarClock, Eye, Gavel, Flag,
+  Plus, Pencil, Trash2, Search, Scale, FileText, Upload, ExternalLink, Car, Phone, Mail, MapPin, IdCard, CalendarClock, Eye, Gavel, Flag, Printer,
 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -681,6 +682,16 @@ function ClaimDetailDialog({ claim, onClose }: { claim: any | null; onClose: () 
     return items.filter((i) => i.date).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [claim, events, docs]);
 
+  const printRoot = typeof document !== "undefined" ? document.getElementById("print-root") : null;
+  const [printing, setPrinting] = useState(false);
+  function printClaim() {
+    setPrinting(true);
+    setTimeout(() => {
+      window.print();
+      setTimeout(() => setPrinting(false), 500);
+    }, 150);
+  }
+
   async function openDoc(d: any) {
     const { data, error } = await supabase.storage.from("claim-documents").createSignedUrl(d.file_path, 600);
     if (error || !data) { toast.error("No se pudo abrir el documento"); return; }
@@ -697,6 +708,9 @@ function ClaimDetailDialog({ claim, onClose }: { claim: any | null; onClose: () 
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2"><Scale className="h-4 w-4" />{claim?.title}</DialogTitle>
+          <Button variant="outline" size="sm" onClick={printClaim} disabled={loading} className="w-fit gap-1.5">
+            <Printer className="h-4 w-4" /> Imprimir PDF
+          </Button>
         </DialogHeader>
         {claim && (
           <div className="space-y-5">
@@ -754,6 +768,95 @@ function ClaimDetailDialog({ claim, onClose }: { claim: any | null; onClose: () 
           </div>
         )}
       </DialogContent>
+      {claim && printing && printRoot &&
+        createPortal(<ClaimSheet claim={claim} timeline={timeline} />, printRoot)}
     </Dialog>
+  );
+}
+
+function PRow({ k, v }: { k: string; v: any }) {
+  if (v == null || v === "") return null;
+  return (
+    <tr>
+      <td style={{ padding: "3px 8px 3px 0", color: "#555", width: 150, verticalAlign: "top" }}>{k}</td>
+      <td style={{ padding: "3px 0", fontWeight: 500 }}>{v}</td>
+    </tr>
+  );
+}
+
+function ClaimSheet({ claim, timeline }: { claim: any; timeline: any[] }) {
+  const chronological = [...timeline].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  const kindLabel: Record<string, string> = { created: "Registro", milestone: "Hito", event: "Evento", doc: "Documento" };
+  return (
+    <div style={{ fontFamily: "system-ui, sans-serif", color: "#111", padding: "8mm", fontSize: 11, lineHeight: 1.35 }}>
+      <div style={{ borderBottom: "2px solid #222", paddingBottom: 8, marginBottom: 10, display: "flex", justifyContent: "space-between" }}>
+        <div>
+          <div style={{ fontSize: 18, fontWeight: 700 }}>Expediente de reclamación</div>
+          <div style={{ fontSize: 10, color: "#555" }}>Orlando Cars · www.orlandocars.es · 961 475 660</div>
+        </div>
+        <div style={{ textAlign: "right", fontSize: 10 }}>
+          <div><b>Fecha de emisión:</b> {new Date().toLocaleDateString("es-ES")}</div>
+          <div><b>Estado:</b> {claimStatusLabels[claim.status] ?? claim.status}</div>
+        </div>
+      </div>
+
+      <h3 style={{ fontSize: 14, margin: "6px 0" }}>{claim.title}</h3>
+
+      <h4 style={{ fontSize: 12, margin: "10px 0 4px", textTransform: "uppercase", color: "#444" }}>Persona / empresa</h4>
+      <table style={{ width: "100%", fontSize: 10, borderCollapse: "collapse" }}>
+        <tbody>
+          <PRow k="Nombre" v={claim.person_name} />
+          <PRow k="DNI / CIF" v={claim.person_dni} />
+          <PRow k="Teléfono" v={claim.person_phone} />
+          <PRow k="Email" v={claim.person_email} />
+          <PRow k="Dirección" v={claim.person_address} />
+          <PRow k="Vehículo implicado" v={[claim.vehicle_model, claim.vehicle_plate].filter(Boolean).join(" · ")} />
+        </tbody>
+      </table>
+
+      <h4 style={{ fontSize: 12, margin: "10px 0 4px", textTransform: "uppercase", color: "#444" }}>Reclamación</h4>
+      <table style={{ width: "100%", fontSize: 10, borderCollapse: "collapse" }}>
+        <tbody>
+          <PRow k="Asunto" v={claim.subject} />
+          <PRow k="Cantidad reclamada" v={claim.amount_claimed != null ? formatCurrency(claim.amount_claimed, 2) : null} />
+          <PRow k="Solución pedida" v={claim.requested_solution} />
+          <PRow k="Plazo de contestación" v={claim.response_deadline ? formatDate(claim.response_deadline) : null} />
+          <PRow k="Abogado" v={claim.lawyer_name} />
+          <PRow k="Sentencia" v={claim.judgment_result} />
+          <PRow k="Notas" v={claim.notes} />
+        </tbody>
+      </table>
+
+      <h4 style={{ fontSize: 12, margin: "14px 0 4px", textTransform: "uppercase", color: "#444" }}>Historial cronológico</h4>
+      {chronological.length === 0 ? (
+        <div style={{ fontSize: 10, color: "#666" }}>Sin eventos registrados.</div>
+      ) : (
+        <table style={{ width: "100%", fontSize: 10, borderCollapse: "collapse" }}>
+          <thead>
+            <tr style={{ borderBottom: "1px solid #999", textAlign: "left" }}>
+              <th style={{ padding: 3, width: 80 }}>Fecha</th>
+              <th style={{ padding: 3, width: 80 }}>Tipo</th>
+              <th style={{ padding: 3 }}>Descripción</th>
+            </tr>
+          </thead>
+          <tbody>
+            {chronological.map((it, i) => (
+              <tr key={i} style={{ borderBottom: "1px solid #ddd", verticalAlign: "top" }}>
+                <td style={{ padding: 3 }}>{formatDate(it.date)}</td>
+                <td style={{ padding: 3 }}>{kindLabel[it.kind] ?? it.kind}</td>
+                <td style={{ padding: 3 }}>
+                  <b>{it.title}</b>
+                  {it.notes && <div style={{ color: "#555", whiteSpace: "pre-wrap" }}>{it.notes}</div>}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      <div style={{ marginTop: 16, fontSize: 9, color: "#777", borderTop: "1px solid #ccc", paddingTop: 6 }}>
+        Documento generado por Orlando Cars — uso interno.
+      </div>
+    </div>
   );
 }
