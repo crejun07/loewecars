@@ -18,6 +18,7 @@ import ReportsPage from "./pages/databases/Reports.tsx";
 import SettingsPage from "./pages/Settings.tsx";
 import HistoryPage from "./pages/History.tsx";
 import AuthPage from "./pages/Auth.tsx";
+import ResetPasswordPage from "./pages/ResetPassword.tsx";
 import ChatPage from "./pages/Chat.tsx";
 import CatalogPage from "./pages/Catalog.tsx";
 import AgendaPage from "./pages/Agenda.tsx";
@@ -46,6 +47,7 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/auth" element={<AuthPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route
               path="*"
               element={
