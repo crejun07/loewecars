@@ -24,6 +24,7 @@ function DeadlineBadge({ date, label }: { date: string; label: string }) {
   );
 }
 import { supabase } from "@/integrations/supabase/client";
+import { PdfViewerHost, openStoredPdf } from "@/components/shared/PdfViewer";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -180,6 +181,7 @@ export default function ClaimsPage() {
 
   return (
     <div>
+      <PdfViewerHost />
       <PageHeader
         title="Reclamaciones"
         description={`${claims.length} reclamaciones registradas`}
@@ -443,9 +445,7 @@ function ClaimDocumentsDialog({ claim, onClose }: { claim: any | null; onClose: 
   }
 
   async function openDoc(d: any) {
-    const { data, error } = await supabase.storage.from("claim-documents").createSignedUrl(d.file_path, 600);
-    if (error || !data) { toast.error("No se pudo abrir el documento"); return; }
-    window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+    openStoredPdf("claim-documents", d.file_path, d.name || "Documento");
   }
 
   async function removeDoc(d: any) {
@@ -693,9 +693,7 @@ function ClaimDetailDialog({ claim, onClose }: { claim: any | null; onClose: () 
   }
 
   async function openDoc(d: any) {
-    const { data, error } = await supabase.storage.from("claim-documents").createSignedUrl(d.file_path, 600);
-    if (error || !data) { toast.error("No se pudo abrir el documento"); return; }
-    window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+    openStoredPdf("claim-documents", d.file_path, d.name || "Documento");
   }
 
   const icon = (k: string) =>
