@@ -52,7 +52,23 @@ export function PdfViewerHost() {
         </DialogHeader>
         <div className="flex-1 min-h-0 rounded-md border bg-muted">
           {loading && <div className="h-full flex items-center justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>}
-          {url && <iframe src={url} title={req?.name} className="w-full h-full rounded-md" />}
+          {url && (
+            <object data={url} type="application/pdf" className="w-full h-full rounded-md">
+              <div className="h-full flex flex-col items-center justify-center gap-3 p-6 text-center">
+                <p className="text-sm text-muted-foreground">
+                  Tu navegador ha bloqueado el visor integrado. Abre el documento en una pestaña nueva o descárgalo.
+                </p>
+                <div className="flex gap-2">
+                  <Button size="sm" asChild>
+                    <a href={url} target="_blank" rel="noreferrer"><ExternalLink className="h-4 w-4 mr-1" />Abrir en pestaña nueva</a>
+                  </Button>
+                  <Button size="sm" variant="outline" asChild>
+                    <a href={url} download={req?.name}><Download className="h-4 w-4 mr-1" />Descargar</a>
+                  </Button>
+                </div>
+              </div>
+            </object>
+          )}
         </div>
       </DialogContent>
     </Dialog>
