@@ -35,7 +35,7 @@ export default function StockPage() {
   const showSensitive = canViewSensitive("stock");
   const qc = useQueryClient();
   const [view, setView] = useState<"gallery" | "table" | "listings">("gallery");
-  const [onlyAvailable, setOnlyAvailable] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [group, setGroup] = useState<"active" | "sold">("active");
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<string>("entry_date_desc");
@@ -122,7 +122,11 @@ export default function StockPage() {
     const q = search.trim().toLowerCase();
     let filtered = stock.filter((s: any) => {
       if (group === "sold" ? s.status !== "sold" : s.status === "sold") return false;
-      if (onlyAvailable && s.status !== "available") return false;
+      const itvDays = daysUntil(s.next_itv_date);
+      if (statusFilter === "available" && s.status !== "available") return false;
+      if (statusFilter === "bate" && !s.bate_date) return false;
+      if (statusFilter === "no_itv" && itvDays !== null) return false;
+      if (statusFilter === "itv_expired" && !(itvDays !== null && itvDays < 0)) return false;
       if (q && !(
         (s.brand ?? "").toLowerCase().includes(q) ||
         (s.model ?? "").toLowerCase().includes(q) ||
@@ -161,7 +165,19 @@ export default function StockPage() {
       return ascending ? cmp : -cmp;
     });
     return filtered;
-  }, [stock, onlyAvailable, search, colFilters, sortBy, group]);
+  }, [stock, statusFilter, search, colFilters, sortBy, group]);
+
+  const filterCounts = useMemo(() => {
+    const inGroup = stock.filter((s: any) => (group === "sold" ? s.status === "sold" : s.status !== "sold"));
+    const itv = (s: any) => daysUntil(s.next_itv_date);
+    return {
+      all: inGroup.length,
+      available: inGroup.filter((s: any) => s.status === "available").length,
+      bate: inGroup.filter((s: any) => !!s.bate_date).length,
+      no_itv: inGroup.filter((s: any) => itv(s) === null).length,
+      itv_expired: inGroup.filter((s: any) => { const d = itv(s); return d !== null && d < 0; }).length,
+    };
+  }, [stock, group]);
 
   function openNew() { setEditing(null); setForm(emptyForm); setOpen(true); }
   function openEdit(s: any) {
@@ -307,9 +323,21 @@ export default function StockPage() {
               <Button size="sm" variant={group === "active" ? "secondary" : "ghost"} className="rounded-r-none" onClick={() => setGroup("active")}>En stock</Button>
               <Button size="sm" variant={group === "sold" ? "secondary" : "ghost"} className="rounded-l-none" onClick={() => setGroup("sold")}>Vendidos</Button>
             </div>
-            <Button size="sm" variant={onlyAvailable ? "secondary" : "ghost"} onClick={() => setOnlyAvailable((v) => !v)}>
-              <Filter className="mr-1 h-3.5 w-3.5" />Solo disponibles
-            </Button>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="h-8 w-[200px] text-xs" aria-label="Filtrar vehículos">
+                <span className="flex items-center gap-1">
+                  <Filter className="h-3.5 w-3.5 shrink-0" />
+                  <SelectValue placeholder="Filtrar" />
+                </span>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos ({filterCounts.all})</SelectItem>
+                <SelectItem value="available">Solo disponibles ({filterCounts.available})</SelectItem>
+                <SelectItem value="bate">En BATE ({filterCounts.bate})</SelectItem>
+                <SelectItem value="no_itv">Sin ITV ({filterCounts.no_itv})</SelectItem>
+                <SelectItem value="itv_expired">ITV vencida ({filterCounts.itv_expired})</SelectItem>
+              </SelectContent>
+            </Select>
             <div className="flex rounded-md border border-border">
               <Button size="sm" variant={view === "gallery" ? "secondary" : "ghost"} className="rounded-r-none" onClick={() => setView("gallery")}>
                 <LayoutGrid className="h-3.5 w-3.5" />
