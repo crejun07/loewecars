@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1792079757313,
+      "tag": "0000_vehicle_bate_date",
+      "breakpoints": true
+    }
+  ]
+}
