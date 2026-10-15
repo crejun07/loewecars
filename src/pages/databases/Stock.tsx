@@ -24,7 +24,7 @@ const emptyForm = {
   brand: "", model: "", license_plate: "", year: "" as any, mileage: "" as any, fuel_type: "gasoline", transmission: "manual",
   purchase_price: "" as any, selling_price: "" as any, status: "preparing",
   listing_status: "pending_listing", holder: "", vat_type: "rg",
-  entry_date: new Date().toISOString().slice(0, 10), next_itv_date: "", location: "", image_url: "", notes: "",
+  entry_date: new Date().toISOString().slice(0, 10), next_itv_date: "", bate_date: "", location: "", image_url: "", notes: "",
 };
 
 export default function StockPage() {
@@ -172,7 +172,7 @@ export default function StockPage() {
       purchase_price: s.purchase_price ?? 0, selling_price: s.selling_price ?? 0,
       status: s.status, listing_status: s.listing_status ?? "pending_listing", holder: s.holder ?? "",
       vat_type: s.vat_type ?? "rg",
-      entry_date: s.entry_date, next_itv_date: s.next_itv_date ?? "",
+      entry_date: s.entry_date, next_itv_date: s.next_itv_date ?? "", bate_date: s.bate_date ?? "",
       location: s.location ?? "", image_url: s.image_url ?? "", notes: s.notes ?? "",
     });
     setOpen(true);
@@ -199,6 +199,7 @@ export default function StockPage() {
       purchase_price: Number(form.purchase_price) || 0,
       selling_price: Number(form.selling_price) || 0,
       next_itv_date: form.next_itv_date || null,
+      bate_date: form.bate_date || null,
     };
     const { error } = editing
       ? await supabase.from("vehicle_stock").update(payload).eq("id", editing.id)
@@ -667,6 +668,7 @@ export default function StockPage() {
         <Field label="Precio de venta (€)"><Input type="number" step="0.01" value={form.selling_price} onChange={(e) => setForm({ ...form, selling_price: e.target.value })} /></Field>
         <Field label="Fecha de entrada"><Input type="date" value={form.entry_date} onChange={(e) => setForm({ ...form, entry_date: e.target.value })} /></Field>
         <Field label="Próxima ITV"><Input type="date" value={form.next_itv_date} onChange={(e) => setForm({ ...form, next_itv_date: e.target.value })} /></Field>
+        <Field label="Fecha BATE (baja temporal)"><Input type="date" value={form.bate_date} onChange={(e) => setForm({ ...form, bate_date: e.target.value })} /></Field>
         <Field label="Ubicación" full><Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} /></Field>
         <Field label="Imagen del vehículo" full>
           <div
@@ -744,6 +746,7 @@ export default function StockPage() {
                 <Detail label="Margen" value={showSensitive ? formatCurrency(viewing.profit_margin) : "—"} />
                 <Detail label="Fecha entrada" value={formatDate(viewing.entry_date)} />
                 <Detail label="Próxima ITV" value={formatDate(viewing.next_itv_date)} />
+                <Detail label="Fecha BATE" value={formatDate(viewing.bate_date)} />
               </div>
               {viewing.notes && (
                 <div>
