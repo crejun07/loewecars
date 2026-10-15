@@ -1052,6 +1052,7 @@ export type Database = {
       }
       vehicle_stock: {
         Row: {
+          bate_date: string | null
           brand: string
           created_at: string
           entry_date: string
@@ -1076,6 +1077,7 @@ export type Database = {
           year: number | null
         }
         Insert: {
+          bate_date?: string | null
           brand: string
           created_at?: string
           entry_date?: string
@@ -1100,6 +1102,7 @@ export type Database = {
           year?: number | null
         }
         Update: {
+          bate_date?: string | null
           brand?: string
           created_at?: string
           entry_date?: string
