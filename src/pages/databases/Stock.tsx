@@ -19,9 +19,11 @@ import {
 } from "@/lib/labels";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { Checkbox } from "@/components/ui/checkbox";
+import { VehicleDocuments } from "@/components/shared/VehicleDocuments";
 
 const emptyForm = {
-  brand: "", model: "", license_plate: "", year: "" as any, mileage: "" as any, fuel_type: "gasoline", transmission: "manual",
+  brand: "", model: "", license_plate: "", vin: "", horsepower: "", first_registration_date: "", insured: false, mileage: "" as any, fuel_type: "gasoline", transmission: "manual",
   purchase_price: "" as any, selling_price: "" as any, status: "preparing",
   listing_status: "pending_listing", holder: "", vat_type: "rg",
   entry_date: new Date().toISOString().slice(0, 10), next_itv_date: "", bate_date: "", location: "", image_url: "", notes: "",
@@ -132,8 +134,8 @@ export default function StockPage() {
         (s.model ?? "").toLowerCase().includes(q) ||
         (s.license_plate ?? "").toLowerCase().includes(q)
       )) return false;
-      if (colFilters.yearMin && (!s.year || s.year < Number(colFilters.yearMin))) return false;
-      if (colFilters.yearMax && (!s.year || s.year > Number(colFilters.yearMax))) return false;
+      if (colFilters.yearMin && (!s.first_registration_date || s.first_registration_date < colFilters.yearMin)) return false;
+      if (colFilters.yearMax && (!s.first_registration_date || s.first_registration_date > colFilters.yearMax)) return false;
       if (colFilters.kmMax && (!s.mileage || s.mileage > Number(colFilters.kmMax))) return false;
       if (colFilters.fuel !== "all" && s.fuel_type !== colFilters.fuel) return false;
       if (colFilters.transmission !== "all" && s.transmission !== colFilters.transmission) return false;
@@ -183,7 +185,8 @@ export default function StockPage() {
   function openEdit(s: any) {
     setEditing(s);
     setForm({
-      brand: s.brand, model: s.model, license_plate: s.license_plate ?? "", year: s.year ?? "", mileage: s.mileage ?? "",
+      brand: s.brand, model: s.model, license_plate: s.license_plate ?? "", mileage: s.mileage ?? "",
+      vin: s.vin ?? "", horsepower: s.horsepower ?? "", first_registration_date: s.first_registration_date ?? "", insured: s.insured ?? false,
       fuel_type: s.fuel_type ?? "gasoline", transmission: s.transmission ?? "manual",
       purchase_price: s.purchase_price ?? 0, selling_price: s.selling_price ?? 0,
       status: s.status, listing_status: s.listing_status ?? "pending_listing", holder: s.holder ?? "",
@@ -210,7 +213,11 @@ export default function StockPage() {
       ...form,
       license_plate: plate || null,
       holder: form.holder || null,
-      year: form.year ? Number(form.year) : null,
+      vin: form.vin.trim().toUpperCase() || null,
+      horsepower: form.horsepower !== "" ? Number(form.horsepower) : null,
+      first_registration_date: form.first_registration_date || null,
+      insured: form.insured,
+      year: form.first_registration_date ? Number(form.first_registration_date.slice(0, 4)) : editing?.year ?? null,
       mileage: form.mileage ? Number(form.mileage) : null,
       purchase_price: Number(form.purchase_price) || 0,
       selling_price: Number(form.selling_price) || 0,
@@ -247,6 +254,8 @@ export default function StockPage() {
       brand: a.brand, model: a.model,
       license_plate: plate || null,
       year: a.year ?? null, mileage: a.mileage ?? null,
+      first_registration_date: a.first_registration_date ?? null,
+      horsepower: a.horsepower ?? null,
       fuel_type: a.fuel_type ?? null, transmission: a.transmission ?? null,
       purchase_price: Number(a.offered_price ?? a.appraisal_value ?? 0) || 0,
       selling_price: Number(a.estimated_price ?? 0) || 0,
@@ -453,7 +462,7 @@ export default function StockPage() {
                           {s.license_plate && <span className="ml-1 font-mono text-xs text-muted-foreground">· {s.license_plate}</span>}
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          {s.year ?? "—"} · {s.mileage ? `${Number(s.mileage).toLocaleString()} km` : "—"}
+                          {formatDate(s.first_registration_date)} · {s.mileage ? `${Number(s.mileage).toLocaleString()} km` : "—"}
                           {s.transmission ? ` · ${transmissionLabels[s.transmission]}` : ""}
                           {s.fuel_type ? ` · ${fuelTypeLabels[s.fuel_type]}` : ""}
                         </div>
@@ -500,7 +509,7 @@ export default function StockPage() {
           <div className="overflow-hidden rounded-lg border border-border bg-card">
             <table className="w-full text-sm">
               <thead><tr className="border-b border-border bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
-                <th className="px-4 py-2.5 font-medium">Vehículo</th><th className="px-4 py-2.5 font-medium">Año</th><th className="px-4 py-2.5 font-medium">Km</th>
+                <th className="px-4 py-2.5 font-medium">Vehículo</th><th className="px-4 py-2.5 font-medium">Matriculación</th><th className="px-4 py-2.5 font-medium">Km</th>
                 <th className="px-4 py-2.5 font-medium">Combustible</th><th className="px-4 py-2.5 font-medium">Cambio</th>
                 <th className="px-4 py-2.5 font-medium">Compra</th><th className="px-4 py-2.5 font-medium">Venta</th><th className="px-4 py-2.5 font-medium">Margen</th>
                 <th className="px-4 py-2.5 font-medium">ITV</th><th className="px-4 py-2.5 font-medium">Estado</th><th className="px-4 py-2.5 font-medium">Web</th><th></th>
@@ -509,8 +518,8 @@ export default function StockPage() {
                 <th className="px-2 py-2"></th>
                 <th className="px-2 py-2">
                   <div className="flex gap-1">
-                    <Input type="number" placeholder="Desde" value={colFilters.yearMin} onChange={(e) => setColFilters({ ...colFilters, yearMin: e.target.value })} className="h-7 w-20 text-xs" />
-                    <Input type="number" placeholder="Hasta" value={colFilters.yearMax} onChange={(e) => setColFilters({ ...colFilters, yearMax: e.target.value })} className="h-7 w-20 text-xs" />
+                    <Input type="date" aria-label="Matriculación desde" value={colFilters.yearMin} onChange={(e) => setColFilters({ ...colFilters, yearMin: e.target.value })} className="h-7 w-32 text-xs" />
+                    <Input type="date" aria-label="Matriculación hasta" value={colFilters.yearMax} onChange={(e) => setColFilters({ ...colFilters, yearMax: e.target.value })} className="h-7 w-32 text-xs" />
                   </div>
                 </th>
                 <th className="px-2 py-2">
@@ -565,7 +574,7 @@ export default function StockPage() {
                       {s.brand} {s.model}
                       {s.license_plate && <span className="ml-1 font-mono text-xs text-muted-foreground">· {s.license_plate}</span>}
                     </td>
-                    <td className="px-4 py-2.5 text-muted-foreground">{s.year ?? "—"}</td>
+                    <td className="px-4 py-2.5 text-muted-foreground">{formatDate(s.first_registration_date)}</td>
                     <td className="px-4 py-2.5 text-muted-foreground">{s.mileage ? Number(s.mileage).toLocaleString() : "—"}</td>
                     <td className="px-4 py-2.5 text-muted-foreground">{s.fuel_type ? fuelTypeLabels[s.fuel_type] : "—"}</td>
                     <td className="px-4 py-2.5 text-muted-foreground">{s.transmission ? transmissionLabels[s.transmission] : "—"}</td>
@@ -609,7 +618,7 @@ export default function StockPage() {
                               {s.license_plate && <span className="ml-1 font-mono text-[11px] text-muted-foreground">· {s.license_plate}</span>}
                             </div>
                             <div className="truncate text-xs text-muted-foreground">
-                              {s.year ?? "—"}{s.mileage ? ` · ${Number(s.mileage).toLocaleString()} km` : ""}
+                              {formatDate(s.first_registration_date)}{s.mileage ? ` · ${Number(s.mileage).toLocaleString()} km` : ""}
                             </div>
                           </div>
                           <StatusBadge label={stockStatusLabels[s.status]} tone={stockStatusTone[s.status]} />
@@ -646,7 +655,10 @@ export default function StockPage() {
         <Field label="Marca"><Input required value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} /></Field>
         <Field label="Modelo"><Input required value={form.model} onChange={(e) => setForm({ ...form, model: e.target.value })} /></Field>
         <Field label="Matrícula" full><Input value={form.license_plate} onChange={(e) => setForm({ ...form, license_plate: e.target.value.toUpperCase() })} placeholder="2354LHB" maxLength={10} /></Field>
-        <Field label="Año"><Input type="number" value={form.year} onChange={(e) => setForm({ ...form, year: e.target.value })} /></Field>
+        <Field label="Bastidor" full><Input aria-label="Bastidor" value={form.vin} maxLength={17} onChange={(e) => setForm({ ...form, vin: e.target.value.toUpperCase() })} /></Field>
+        <Field label="Fecha de matriculación"><Input aria-label="Fecha de matriculación" type="date" value={form.first_registration_date} onChange={(e) => setForm({ ...form, first_registration_date: e.target.value })} /></Field>
+        <Field label="Potencia (CV)"><Input aria-label="Potencia (CV)" type="number" min="0" step="1" value={form.horsepower} onChange={(e) => setForm({ ...form, horsepower: e.target.value })} /></Field>
+        <Field label="Seguro"><Checkbox aria-label="Seguro" checked={form.insured} onCheckedChange={(checked) => setForm({ ...form, insured: checked === true })} /></Field>
         <Field label="Kilómetros"><Input type="number" value={form.mileage} onChange={(e) => setForm({ ...form, mileage: e.target.value })} /></Field>
         <Field label="Combustible">
           <Select value={form.fuel_type} onValueChange={(v) => setForm({ ...form, fuel_type: v })}>
@@ -749,6 +761,7 @@ export default function StockPage() {
           </div>
         </Field>
         <Field label="Notas" full><Textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></Field>
+        <VehicleDocuments key={editing?.id ?? "new"} vehicleId={editing?.id ?? null} />
       </RecordDialog>
 
       <Dialog open={!!viewing} onOpenChange={(o) => !o && setViewing(null)}>
@@ -760,7 +773,10 @@ export default function StockPage() {
             <div className="space-y-3 text-sm">
               {viewing.image_url && <img src={viewing.image_url} alt="" className="w-full rounded-md border border-border object-cover" />}
               <div className="grid grid-cols-2 gap-2">
-                <Detail label="Año" value={viewing.year ?? "—"} />
+                <Detail label="Fecha de matriculación" value={formatDate(viewing.first_registration_date)} />
+                <Detail label="Bastidor" value={viewing.vin || "—"} />
+                <Detail label="Potencia (CV)" value={viewing.horsepower ?? "—"} />
+                <Detail label="Seguro" value={viewing.insured ? "Sí" : "No"} />
                 <Detail label="Kilómetros" value={viewing.mileage ? Number(viewing.mileage).toLocaleString() : "—"} />
                 <Detail label="Combustible" value={viewing.fuel_type ? fuelTypeLabels[viewing.fuel_type] : "—"} />
                 <Detail label="Transmisión" value={viewing.transmission ? transmissionLabels[viewing.transmission] : "—"} />
@@ -782,6 +798,7 @@ export default function StockPage() {
                   <div className="whitespace-pre-wrap rounded-md border border-border bg-muted/30 p-2 text-sm">{viewing.notes}</div>
                 </div>
               )}
+              <VehicleDocuments key={viewing.id} vehicleId={viewing.id} />
             </div>
           )}
         </DialogContent>

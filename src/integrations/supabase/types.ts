@@ -1050,16 +1050,57 @@ export type Database = {
           },
         ]
       }
+      vehicle_documents: {
+        Row: {
+          content_type: string
+          created_at: string
+          file_name: string
+          file_path: string
+          id: string
+          name: string
+          vehicle_id: string
+        }
+        Insert: {
+          content_type?: string
+          created_at?: string
+          file_name: string
+          file_path: string
+          id?: string
+          name: string
+          vehicle_id: string
+        }
+        Update: {
+          content_type?: string
+          created_at?: string
+          file_name?: string
+          file_path?: string
+          id?: string
+          name?: string
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_documents_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicle_stock"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vehicle_stock: {
         Row: {
           bate_date: string | null
           brand: string
           created_at: string
           entry_date: string
+          first_registration_date: string | null
           fuel_type: Database["public"]["Enums"]["fuel_type"] | null
           holder: string | null
+          horsepower: number | null
           id: string
           image_url: string | null
+          insured: boolean
           license_plate: string | null
           listing_status: Database["public"]["Enums"]["listing_status"]
           location: string | null
@@ -1074,6 +1115,7 @@ export type Database = {
           transmission: Database["public"]["Enums"]["transmission_type"] | null
           updated_at: string
           vat_type: string | null
+          vin: string | null
           year: number | null
         }
         Insert: {
@@ -1081,10 +1123,13 @@ export type Database = {
           brand: string
           created_at?: string
           entry_date?: string
+          first_registration_date?: string | null
           fuel_type?: Database["public"]["Enums"]["fuel_type"] | null
           holder?: string | null
+          horsepower?: number | null
           id?: string
           image_url?: string | null
+          insured?: boolean
           license_plate?: string | null
           listing_status?: Database["public"]["Enums"]["listing_status"]
           location?: string | null
@@ -1099,6 +1144,7 @@ export type Database = {
           transmission?: Database["public"]["Enums"]["transmission_type"] | null
           updated_at?: string
           vat_type?: string | null
+          vin?: string | null
           year?: number | null
         }
         Update: {
@@ -1106,10 +1152,13 @@ export type Database = {
           brand?: string
           created_at?: string
           entry_date?: string
+          first_registration_date?: string | null
           fuel_type?: Database["public"]["Enums"]["fuel_type"] | null
           holder?: string | null
+          horsepower?: number | null
           id?: string
           image_url?: string | null
+          insured?: boolean
           license_plate?: string | null
           listing_status?: Database["public"]["Enums"]["listing_status"]
           location?: string | null
@@ -1124,6 +1173,7 @@ export type Database = {
           transmission?: Database["public"]["Enums"]["transmission_type"] | null
           updated_at?: string
           vat_type?: string | null
+          vin?: string | null
           year?: number | null
         }
         Relationships: []

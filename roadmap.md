@@ -1,0 +1,3 @@
+- [x] Añadir bastidor, CV, matriculación y seguro a Stock.
+- [x] Añadir documentación privada por vehículo con subida y visualización.
+- [x] Verificar guardado, persistencia al recargar, visualización PDF y eliminación desde una sesión real; retirar los datos de prueba.
