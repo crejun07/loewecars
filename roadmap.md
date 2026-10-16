@@ -1,0 +1,3 @@
+- [ ] Añadir bastidor, CV, matriculación y seguro a Stock.
+- [ ] Añadir documentación privada por vehículo con subida y visualización.
+- [ ] Verificar guardado y documentos desde una sesión real.
