@@ -18,6 +18,10 @@ const tableLabels: Record<string, string> = {
   sales: "Ventas",
   workshop: "Taller",
   spare_parts: "Recambios",
+  vehicle_documents: "Documentación de vehículos",
+  auctions: "Subastas",
+  claim_events: "Eventos de reclamaciones",
+  claim_documents: "Documentos de reclamaciones",
 };
 
 function actionIcon(action: string) {
