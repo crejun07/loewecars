@@ -20,7 +20,6 @@ const tableLabels: Record<string, string> = {
   spare_parts: "Recambios",
   vehicle_documents: "Documentación de vehículos",
   auctions: "Subastas",
-  claims: "Reclamaciones",
   claim_events: "Eventos de reclamaciones",
   claim_documents: "Documentos de reclamaciones",
 };
