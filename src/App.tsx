@@ -23,6 +23,7 @@ import ChatPage from "./pages/Chat.tsx";
 import CatalogPage from "./pages/Catalog.tsx";
 import AgendaPage from "./pages/Agenda.tsx";
 import TasksPage from "./pages/Tasks.tsx";
+import HelpPage from "./pages/Help.tsx";
 import { AppLayout } from "./components/layout/AppLayout.tsx";
 import { AuthProvider } from "./hooks/useAuth";
 import { ProtectedRoute } from "./components/ProtectedRoute";
@@ -73,6 +74,7 @@ const App = () => (
                         <Route path="/history" element={<PermissionGuard workspace="history"><HistoryPage /></PermissionGuard>} />
                         <Route path="/settings" element={<PermissionGuard workspace="settings"><SettingsPage /></PermissionGuard>} />
                         <Route path="/chat" element={<ChatPage />} />
+                        <Route path="/help" element={<HelpPage />} />
                         <Route path="*" element={<NotFound />} />
                       </Routes>
                     </AppLayout>
