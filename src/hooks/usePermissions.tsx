@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -43,7 +43,10 @@ interface PermissionsContextValue {
   refresh: () => Promise<void>;
 }
 
-const PermissionsContext = createContext<PermissionsContextValue | undefined>(undefined);
+// Keep a single context instance across hot reloads so the provider and consumers never diverge.
+const gp = globalThis as unknown as { __permissionsContext?: React.Context<PermissionsContextValue | undefined> };
+const PermissionsContext =
+  gp.__permissionsContext ?? (gp.__permissionsContext = createContext<PermissionsContextValue | undefined>(undefined));
 
 export function PermissionsProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
