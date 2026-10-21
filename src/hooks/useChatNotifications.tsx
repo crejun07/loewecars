@@ -13,7 +13,8 @@ interface Ctx {
   refresh: () => Promise<void>;
 }
 
-const ChatNotifCtx = createContext<Ctx | undefined>(undefined);
+const gc = globalThis as unknown as { __chatNotifCtx?: ReturnType<typeof createContext<Ctx | undefined>> };
+const ChatNotifCtx = gc.__chatNotifCtx ?? (gc.__chatNotifCtx = createContext<Ctx | undefined>(undefined));
 
 function convKey(msg: { sender_id: string; recipient_id: string | null }, me: string) {
   if (!msg.recipient_id) return "group";
