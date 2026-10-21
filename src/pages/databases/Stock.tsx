@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Field, RecordDialog } from "@/components/shared/RecordDialog";
+import { WhatsAppShare } from "@/components/shared/WhatsAppShare";
 import { useStock, useStockRequests, useAuctionStockRequests } from "@/hooks/data/useDealership";
 import { usePermissions } from "@/hooks/usePermissions";
 import {
@@ -798,6 +799,7 @@ export default function StockPage() {
                   <div className="whitespace-pre-wrap rounded-md border border-border bg-muted/30 p-2 text-sm">{viewing.notes}</div>
                 </div>
               )}
+              <WhatsAppShare vehicle={viewing} />
               <VehicleDocuments key={viewing.id} vehicleId={viewing.id} />
             </div>
           )}
