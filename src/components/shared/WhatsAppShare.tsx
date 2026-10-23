@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 import { useEffect, useMemo, useState } from "react";
 import { MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useClients } from "@/hooks/data/useDealership";
-import { buildVehicleMessage, defaultHighlights, normalizePhone, vehicleHighlights, whatsappUrl } from "@/lib/whatsapp";
+import { buildVehicleMessage, defaultHighlights, normalizePhone, vehicleHighlights, whatsappOpenUrl } from "@/lib/whatsapp";
 
 export function WhatsAppShare({ vehicle }: { vehicle: any }) {
   const [open, setOpen] = useState(false);
@@ -87,8 +88,12 @@ export function WhatsAppShare({ vehicle }: { vehicle: any }) {
               <Textarea aria-label="Mensaje" rows={12} value={text} onChange={(e) => setText(e.target.value)} />
             </div>
             <Button type="button" disabled={!valid} className="w-full gap-2"
-              onClick={() => window.open(whatsappUrl(phone, text), "_blank", "noopener")}>
+              onClick={() => { const a = document.createElement("a"); a.href = whatsappOpenUrl(phone, text); a.target = "_blank"; a.rel = "noopener noreferrer"; document.body.appendChild(a); a.click(); a.remove(); }}>
               <MessageCircle className="h-4 w-4" /> Abrir WhatsApp
+            </Button>
+            <Button type="button" variant="outline" className="w-full"
+              onClick={async () => { await navigator.clipboard.writeText(text); toast.success("Mensaje copiado"); }}>
+              Copiar mensaje
             </Button>
           </div>
         </DialogContent>
