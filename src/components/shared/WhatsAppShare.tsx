@@ -91,6 +91,10 @@ export function WhatsAppShare({ vehicle }: { vehicle: any }) {
               onClick={() => { const w = window.open(whatsappOpenUrl(phone, text), "_blank", "noopener,noreferrer"); if (!w) { try { window.top!.location.href = whatsappOpenUrl(phone, text); } catch { window.location.href = whatsappOpenUrl(phone, text); } } }}>
               <MessageCircle className="h-4 w-4" /> Abrir WhatsApp
             </Button>
+            <Button type="button" variant="outline" className="w-full" disabled={!valid}
+              onClick={async () => { await navigator.clipboard.writeText(whatsappOpenUrl(phone, text)); toast.success("Enlace copiado: pégalo en una pestaña nueva del navegador"); }}>
+              Copiar enlace de WhatsApp
+            </Button>
             <Button type="button" variant="outline" className="w-full"
               onClick={async () => { await navigator.clipboard.writeText(text); toast.success("Mensaje copiado"); }}>
               Copiar mensaje
