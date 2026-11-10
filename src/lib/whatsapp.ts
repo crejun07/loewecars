@@ -52,5 +52,5 @@ export function whatsappUrl(phone: string, text: string): string {
 
 /** En ordenador abre WhatsApp Web directamente (evita la página api.whatsapp.com, que algunos bloqueadores impiden); en móvil abre la app. */
 export function whatsappOpenUrl(phone: string, text: string): string {
-  return `https://api.whatsapp.com/send?phone=${normalizePhone(phone)}&text=${encodeURIComponent(text)}`;
+  return whatsappUrl(phone, text);
 }
