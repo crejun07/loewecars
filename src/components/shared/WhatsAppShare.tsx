@@ -87,14 +87,13 @@ export function WhatsAppShare({ vehicle }: { vehicle: any }) {
               <Label>Mensaje (puedes editarlo)</Label>
               <Textarea aria-label="Mensaje" rows={12} value={text} onChange={(e) => setText(e.target.value)} />
             </div>
-            <Button type="button" disabled={!valid} className="w-full gap-2"
-              onClick={() => { const w = window.open(whatsappOpenUrl(phone, text), "_blank", "noopener,noreferrer"); if (!w) { try { window.top!.location.href = whatsappOpenUrl(phone, text); } catch { window.location.href = whatsappOpenUrl(phone, text); } } }}>
-              <MessageCircle className="h-4 w-4" /> Abrir WhatsApp
-            </Button>
-            <Button type="button" variant="outline" className="w-full" disabled={!valid}
+            <Button type="button" className="w-full" disabled={!valid}
               onClick={async () => { await navigator.clipboard.writeText(whatsappOpenUrl(phone, text)); toast.success("Enlace copiado: pégalo en una pestaña nueva del navegador"); }}>
               Copiar enlace de WhatsApp
             </Button>
+            <p className="text-xs text-muted-foreground">
+              Copia el enlace, ábrelo en una pestaña nueva del navegador y se abrirá el chat con ese número y el mensaje ya escrito.
+            </p>
             <Button type="button" variant="outline" className="w-full"
               onClick={async () => { await navigator.clipboard.writeText(text); toast.success("Mensaje copiado"); }}>
               Copiar mensaje

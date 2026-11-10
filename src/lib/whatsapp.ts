@@ -32,17 +32,17 @@ export function defaultHighlights(v: any): string[] {
 
 export function buildVehicleMessage(v: any, highlights: string[]): string {
   const year = v.first_registration_date ? new Date(v.first_registration_date).getFullYear() : v.year;
-  const lines = [`🚗 *${v.brand} ${v.model}*${year ? ` (${year})` : ""}`, ""];
-  if (v.mileage) lines.push(`📍 Kilómetros: ${Number(v.mileage).toLocaleString("es-ES")} km`);
-  if (v.fuel_type) lines.push(`⛽ Combustible: ${fuelTypeLabels[v.fuel_type] ?? v.fuel_type}`);
-  if (v.transmission) lines.push(`⚙️ Cambio: ${transmissionLabels[v.transmission] ?? v.transmission}`);
-  if (v.horsepower) lines.push(`🐎 Potencia: ${v.horsepower} CV`);
-  if (v.selling_price) lines.push(`💶 Precio: ${formatCurrency(v.selling_price)}`);
+  const lines = [`✦ ${v.brand} ${v.model}${year ? ` (${year})` : ""}`, ""];
+  if (v.mileage) lines.push(`➤ Kilómetros: ${Number(v.mileage).toLocaleString("es-ES")} km`);
+  if (v.fuel_type) lines.push(`➤ Combustible: ${fuelTypeLabels[v.fuel_type] ?? v.fuel_type}`);
+  if (v.transmission) lines.push(`➤ Cambio: ${transmissionLabels[v.transmission] ?? v.transmission}`);
+  if (v.horsepower) lines.push(`➤ Potencia: ${v.horsepower} CV`);
+  if (v.selling_price) lines.push(`➤ Precio: ${formatCurrency(v.selling_price)}`);
   if (highlights.length) {
-    lines.push("");
-    highlights.forEach((h) => lines.push(`✅ ${h}`));
+    lines.push("", "Lo que destacamos de este coche:", "");
+    highlights.forEach((h) => lines.push(`✓ ${h}`));
   }
-  lines.push("", "Para más información o para verlo, responde a este mensaje. — Orlando Cars");
+  lines.push("", "➥ Para más información o para verlo, responde a este mensaje.", "", "♥ Orlando Cars");
   return lines.join("\n");
 }
 
