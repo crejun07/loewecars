@@ -4,9 +4,9 @@
   "description": "Sistema interno para concesionarios: clientes, tasaciones, ventas, stock y taller.",
   "lang": "es",
   "dir": "ltr",
-  "id": "/",
-  "start_url": "/",
-  "scope": "/",
+  "id": "/loewecars/",
+  "start_url": "/loewecars/",
+  "scope": "/loewecars/",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],
   "orientation": "any",
@@ -14,8 +14,8 @@
   "theme_color": "#131d34",
   "categories": ["business", "productivity"],
   "icons": [
-    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    { "src": "/loewecars/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/loewecars/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/loewecars/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }

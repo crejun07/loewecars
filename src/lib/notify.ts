@@ -184,11 +184,13 @@ export function showSystemNotification(opts: SystemNotificationOptions): Notific
       (typeof document.hasFocus !== "function" || document.hasFocus());
     if (focused && !opts.whenFocused) return null;
 
+    const base =
+      (typeof import.meta !== "undefined" && (import.meta as any).env?.BASE_URL) || "/";
     const n = new Notification(opts.title, {
       body: opts.body,
       tag: opts.tag,
-      icon: "/favicon.ico",
-      badge: "/favicon.ico",
+      icon: `${base}favicon.ico`,
+      badge: `${base}favicon.ico`,
       silent: true, // we play our own chime via playChime()
     });
     n.onclick = () => {

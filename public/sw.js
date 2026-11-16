@@ -1,14 +1,15 @@
 // LoeweCars service worker — enables installability (PWA) and a basic offline
 // app shell. It never touches cross-origin requests (Supabase, APIs) or
 // non-GET requests, so live data always goes straight to the network.
-const CACHE = "loewe-shell-v1";
+const CACHE = "loewe-shell-v2";
+const BASE = "/loewecars/";
 const SHELL = [
-  "/",
-  "/manifest.webmanifest",
-  "/favicon.ico",
-  "/icon-192.png",
-  "/icon-512.png",
-  "/apple-touch-icon.png",
+  BASE,
+  BASE + "manifest.webmanifest",
+  BASE + "favicon.ico",
+  BASE + "icon-192.png",
+  BASE + "icon-512.png",
+  BASE + "apple-touch-icon.png",
 ];
 
 self.addEventListener("install", (event) => {
@@ -44,10 +45,10 @@ self.addEventListener("fetch", (event) => {
       fetch(req)
         .then((res) => {
           const copy = res.clone();
-          caches.open(CACHE).then((c) => c.put("/", copy)).catch(() => {});
+          caches.open(CACHE).then((c) => c.put(BASE, copy)).catch(() => {});
           return res;
         })
-        .catch(() => caches.match(req).then((r) => r || caches.match("/"))),
+        .catch(() => caches.match(req).then((r) => r || caches.match(BASE))),
     );
     return;
   }
