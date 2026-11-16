@@ -16,6 +16,7 @@ import { SearchableSelect } from "@/components/shared/SearchableSelect";
 import { AppraisalPhotos } from "@/components/shared/AppraisalPhotos";
 import { OnlineAppraisals } from "@/components/appraisals/OnlineAppraisals";
 import { useAppraisals, useClients } from "@/hooks/data/useDealership";
+import { WhatsAppButton, hasValidPhone } from "@/components/shared/WhatsAppButton";
 import { appraisalStatusLabels, appraisalStatusOrder, appraisalStatusTone, employees, formatCurrency, formatDate, fuelTypeLabels, transmissionLabels } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -401,6 +402,19 @@ export default function AppraisalsPage() {
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
+                {hasValidPhone(a.contact_phone || a.client?.phone) && (
+                  <span
+                    className="absolute right-8 top-1.5"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <WhatsAppButton
+                      phone={a.contact_phone || a.client?.phone}
+                      name={a.contact_name || a.client?.full_name}
+                      message={`Hola${(a.contact_name || a.client?.full_name) ? ` ${String(a.contact_name || a.client?.full_name).split(" ")[0]}` : ""}, le escribimos sobre la tasación de su ${a.brand ?? ""} ${a.model ?? ""}.`.replace(/\s+/g, " ").trim() + " "}
+                      className="h-6 w-6"
+                    />
+                  </span>
+                )}
                 </div>
               ))
             }

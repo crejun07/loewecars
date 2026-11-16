@@ -1,9 +1,12 @@
-import { LayoutDashboard, Users, ClipboardList, ShoppingCart, Car, Wrench, Package, FileText, LogOut, Settings, History, MessageSquare, BookOpen, Calendar as CalendarIcon, CheckSquare, Gavel, Scale, HelpCircle } from "lucide-react";
+import { LayoutDashboard, Users, ClipboardList, ShoppingCart, Car, Wrench, Package, FileText, LogOut, Settings, History, MessageSquare, BookOpen, Calendar as CalendarIcon, CheckSquare, Gavel, Scale, HelpCircle, Download, Sparkles } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
+import logoMark from "@/assets/logo-mark.png";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { usePermissions, type Workspace } from "@/hooks/usePermissions";
 import { useChatNotifications } from "@/hooks/useChatNotifications";
+import { NotificationSettings } from "@/components/layout/NotificationSettings";
+import { useInstallPrompt } from "@/hooks/useInstallPrompt";
 import {
   Sidebar,
   SidebarContent,
@@ -43,14 +46,15 @@ export function AppSidebar() {
   const { user, signOut } = useAuth();
   const { canView } = usePermissions();
   const { unreadTotal } = useChatNotifications();
+  const { canInstall, promptInstall } = useInstallPrompt();
   const visibleItems = items.filter((it) => it.ws === "dashboard" || canView(it.ws));
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
       <SidebarHeader className="px-3 py-4">
         <div className="flex items-center gap-2 px-1">
-          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
-            <Car className="h-4 w-4" />
+          <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-md bg-primary p-1 shadow-sm">
+            <img src={logoMark} alt="LoeweCars" className="h-full w-full object-contain" />
           </div>
           {!collapsed && (
             <div className="flex flex-col leading-tight">
@@ -117,6 +121,18 @@ export function AppSidebar() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={location.pathname.startsWith("/assistant")}>
+                  <NavLink
+                    to="/assistant"
+                    className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-sidebar-accent"
+                    activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                  >
+                    <Sparkles className="h-4 w-4 shrink-0" />
+                    {!collapsed && <span>Asistente IA</span>}
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={location.pathname.startsWith("/help")}>
                   <NavLink
                     to="/help"
@@ -134,7 +150,20 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border p-2">
+        <NotificationSettings collapsed={collapsed} />
         <SidebarMenu>
+          {canInstall && (
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                onClick={() => promptInstall()}
+                title="Instalar la app en este dispositivo"
+                className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium text-primary hover:bg-sidebar-accent"
+              >
+                <Download className="h-4 w-4 shrink-0" />
+                {!collapsed && <span>Instalar app</span>}
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          )}
           {!collapsed && user?.email && (
             <div className="truncate px-2 py-1 text-[11px] text-muted-foreground" title={user.email}>
               {user.email}
