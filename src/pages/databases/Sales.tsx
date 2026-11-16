@@ -12,6 +12,7 @@ import { Field, RecordDialog } from "@/components/shared/RecordDialog";
 import { KanbanBoard } from "@/components/shared/KanbanBoard";
 import { QuickStatusToggle } from "@/components/shared/QuickStatusToggle";
 import { useClients, useSales, useStock, useEmployees } from "@/hooks/data/useDealership";
+import { WhatsAppButton, hasValidPhone } from "@/components/shared/WhatsAppButton";
 import { formatCurrency, formatDate, saleStatusLabels, saleStatusOrder, saleStatusTone } from "@/lib/labels";
 import { toast } from "sonner";
 
@@ -110,7 +111,8 @@ export default function SalesPage() {
             columns={saleStatusOrder.map((s) => ({ id: s, title: saleStatusLabels[s], count: sales.filter((x: any) => x.sale_status === s).length }))}
             renderCards={(col) =>
               sales.filter((s: any) => s.sale_status === col).map((s: any) => (
-                <button key={s.id} onClick={() => openEdit(s)} className="rounded-md border border-border bg-card p-3 text-left hover:border-foreground/20">
+                <div key={s.id} className="group relative">
+                <button onClick={() => openEdit(s)} className="w-full rounded-md border border-border bg-card p-3 text-left hover:border-foreground/20">
                   <div className="text-sm font-medium">{s.vehicle ? `${s.vehicle.brand} ${s.vehicle.model}` : "Vehículo sin asignar"}</div>
                   <div className="text-xs text-muted-foreground">{s.client?.full_name ?? "—"}</div>
                   {s.assigned_to && <div className="mt-1 text-[11px] text-muted-foreground">Asignado: {s.assigned_to}</div>}
@@ -129,6 +131,20 @@ export default function SalesPage() {
                     />
                   </div>
                 </button>
+                {hasValidPhone(s.client?.phone) && (
+                  <span
+                    className="absolute right-1.5 top-1.5 opacity-0 transition group-hover:opacity-100"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <WhatsAppButton
+                      phone={s.client?.phone}
+                      name={s.client?.full_name}
+                      message={`Hola${s.client?.full_name ? ` ${String(s.client.full_name).split(" ")[0]}` : ""}, le escribimos desde el concesionario${s.vehicle ? ` sobre el ${s.vehicle.brand} ${s.vehicle.model}` : ""}.`.replace(/\s+/g, " ").trim() + " "}
+                      className="h-6 w-6"
+                    />
+                  </span>
+                )}
+                </div>
               ))
             }
           />

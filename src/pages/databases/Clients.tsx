@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Field, RecordDialog } from "@/components/shared/RecordDialog";
+import { WhatsAppButton, hasValidPhone } from "@/components/shared/WhatsAppButton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useClients, useEmployees } from "@/hooks/data/useDealership";
 import { clientStatusLabels, clientStatusTone, clientTypeLabels, formatDate } from "@/lib/labels";
@@ -188,6 +189,7 @@ export default function ClientsPage() {
                   <td className="px-4 py-2.5 text-muted-foreground">{employeeName(c.managed_by)}</td>
                   <td className="px-4 py-2.5 text-muted-foreground">{formatDate(c.last_contact_date)}</td>
                   <td className="px-4 py-2.5 text-right">
+                    <WhatsAppButton phone={c.phone} name={c.full_name} className="h-7 w-7" hideWhenEmpty />
                     <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setViewing(c)} title="Ver detalles"><Eye className="h-3.5 w-3.5" /></Button>
                     <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEdit(c)}><Pencil className="h-3.5 w-3.5" /></Button>
                     <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => remove(c.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
@@ -258,6 +260,15 @@ export default function ClientsPage() {
                 </div>
               )}
             </div>
+          )}
+          {viewing && hasValidPhone(viewing.phone) && (
+            <WhatsAppButton
+              phone={viewing.phone}
+              name={viewing.full_name}
+              label="Contactar por WhatsApp"
+              variant="outline"
+              className="mt-2 w-full justify-center"
+            />
           )}
         </DialogContent>
       </Dialog>

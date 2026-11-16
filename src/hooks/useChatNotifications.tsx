@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useEmployees } from "@/hooks/data/useDealership";
-import { playChime } from "@/lib/notify";
+import { playChime, showSystemNotification, autoRequestNotificationPermission } from "@/lib/notify";
 
 interface Ctx {
   unreadTotal: number;
@@ -57,6 +57,12 @@ export function ChatNotificationsProvider({ children }: { children: ReactNode })
 
   useEffect(() => { refresh(); }, [refresh]);
 
+  // Ask the browser for desktop-notification permission once, on first gesture.
+  useEffect(() => {
+    if (!user) return;
+    autoRequestNotificationPermission();
+  }, [user]);
+
   useEffect(() => {
     if (!user) return;
     const channel = supabase
@@ -72,15 +78,37 @@ export function ChatNotificationsProvider({ children }: { children: ReactNode })
           if (!isDM && !isGroup) return;
           const key = convKey(m, user.id);
           setUnreadByConv((prev) => ({ ...prev, [key]: (prev[key] ?? 0) + 1 }));
-          // Notify when not viewing chat
-          if (!location.pathname.startsWith("/chat")) {
-            const sender = (employees as any[]).find((e) => e.id === m.sender_id);
-            const senderName = sender?.full_name || sender?.username || "Alguien";
+
+          const sender = (employees as any[]).find((e) => e.id === m.sender_id);
+          const senderName = sender?.full_name || sender?.username || "Alguien";
+          const channelLabel = isGroup ? "Chat del equipo" : "Mensaje directo";
+          const preview = typeof m.content === "string" ? m.content : "";
+
+          const onChatPage = location.pathname.startsWith("/chat");
+          const appHidden = typeof document !== "undefined" && document.visibilityState !== "visible";
+
+          // Native OS notification — fires only when the app window is not
+          // focused (handled inside showSystemNotification), so it reaches the
+          // user even with the app minimized or in another tab/space.
+          showSystemNotification({
+            title: isGroup ? `${senderName} · Chat del equipo` : `Nuevo mensaje de ${senderName}`,
+            body: preview || channelLabel,
+            tag: `chat-${key}`,
+            onClick: () => navigate("/chat"),
+          });
+
+          // In-app toast when not already on the chat page.
+          if (!onChatPage) {
             toast(`Has recibido un nuevo mensaje de ${senderName}`, {
-              description: isGroup ? "Chat del equipo" : "Mensaje directo",
+              description: channelLabel,
               action: { label: "Ver", onClick: () => navigate("/chat") },
               position: "bottom-right",
             });
+          }
+
+          // Chime whenever a new message arrives and the user is not actively
+          // reading the chat (another page, or the app in the background).
+          if (!onChatPage || appHidden) {
             playChime();
           }
         },

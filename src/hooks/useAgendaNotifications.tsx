@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { playChime } from "@/lib/notify";
+import { playChime, showSystemNotification } from "@/lib/notify";
 
 /**
  * On app open (per session), shows a summary of today's pending events for the
@@ -70,6 +70,12 @@ export function useAgendaNotifications() {
           toast(`Nuevo evento: ${e.title}`, {
             description: when,
             action: { label: "Ver", onClick: () => navigate("/agenda") },
+          });
+          showSystemNotification({
+            title: `Nuevo evento: ${e.title}`,
+            body: when,
+            tag: `agenda-${e.id}`,
+            onClick: () => navigate("/agenda"),
           });
           playChime();
         },

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
-import { Car, Loader2, ArrowLeft, KeyRound, MailCheck } from "lucide-react";
+import { Loader2, ArrowLeft, KeyRound, MailCheck } from "lucide-react";
+import logoMark from "@/assets/logo-mark.png";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -135,12 +136,13 @@ export default function AuthPage() {
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background p-4">
       <div className="w-full max-w-md">
         {/* Banner */}
-        <div className="mb-8 overflow-hidden rounded-xl border border-border bg-gradient-to-r from-primary/90 via-primary to-primary/90 px-8 py-10 text-center shadow-lg">
-          <div className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-full bg-primary-foreground/15 backdrop-blur-sm">
-            <Car className="h-6 w-6 text-primary-foreground" />
-          </div>
-          <h1 className="text-3xl font-bold tracking-tight text-primary-foreground">Loewe Cars</h1>
-          <p className="mt-1 text-sm text-primary-foreground/80">Sistema de gestión interna</p>
+        <div className="mb-8 overflow-hidden rounded-xl border border-border bg-gradient-to-r from-primary/90 via-primary to-primary/90 px-8 py-8 text-center shadow-lg">
+          <img
+            src={logoMark}
+            alt="LoeweCars — Coches que definen tu estilo"
+            className="mx-auto h-28 w-28 object-contain drop-shadow-lg"
+          />
+          <p className="mt-3 text-sm text-primary-foreground/80">Sistema de gestión interna</p>
         </div>
 
         <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
