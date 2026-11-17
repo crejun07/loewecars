@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Plus, LayoutGrid, Table as TableIcon, Pencil, Trash2, Car, Filter, Globe, Upload, X, Loader2, Eye, Search, ArrowUpDown } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,6 +36,7 @@ export default function StockPage() {
   const { data: stockRequests = [] } = useStockRequests();
   const { data: auctionRequests = [] } = useAuctionStockRequests();
   const { canViewSensitive } = usePermissions();
+  const navigate = useNavigate();
   const showSensitive = canViewSensitive("stock");
   const qc = useQueryClient();
   const [view, setView] = useState<"gallery" | "table" | "listings">("gallery");
@@ -359,6 +361,7 @@ export default function StockPage() {
                 <Globe className="h-3.5 w-3.5" />
               </Button>
             </div>
+            <Button size="sm" variant="outline" onClick={() => navigate("/stock/import")}><Upload className="mr-1 h-4 w-4" />Importar</Button>
             <Button size="sm" onClick={openNew}><Plus className="mr-1 h-4 w-4" />Añadir vehículo</Button>
           </>
         }

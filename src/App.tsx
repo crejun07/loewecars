@@ -8,6 +8,7 @@ import NotFound from "./pages/NotFound.tsx";
 import Dashboard from "./pages/Dashboard.tsx";
 import ClientsPage from "./pages/databases/Clients.tsx";
 import StockPage from "./pages/databases/Stock.tsx";
+import StockImportPage from "./pages/databases/StockImport.tsx";
 import AuctionsPage from "./pages/databases/Auctions.tsx";
 import AppraisalsPage from "./pages/databases/Appraisals.tsx";
 import SalesPage from "./pages/databases/Sales.tsx";
@@ -64,6 +65,7 @@ const App = () => (
                         <Route path="/appraisals" element={<PermissionGuard workspace="appraisals"><AppraisalsPage /></PermissionGuard>} />
                         <Route path="/sales" element={<PermissionGuard workspace="sales"><SalesPage /></PermissionGuard>} />
                         <Route path="/stock" element={<PermissionGuard workspace="stock"><StockPage /></PermissionGuard>} />
+                        <Route path="/stock/import" element={<PermissionGuard workspace="stock"><StockImportPage /></PermissionGuard>} />
                         <Route path="/auctions" element={<PermissionGuard workspace="stock"><AuctionsPage /></PermissionGuard>} />
                         <Route path="/workshop" element={<PermissionGuard workspace="workshop"><WorkshopPage /></PermissionGuard>} />
                         <Route path="/spare-parts" element={<PermissionGuard workspace="spare-parts"><SparePartsPage /></PermissionGuard>} />
