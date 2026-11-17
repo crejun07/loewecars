@@ -8,3 +8,12 @@ verify_jwt = true
 
 [functions.ai-assistant]
 verify_jwt = true
+
+[functions.email-connect]
+verify_jwt = true
+
+[functions.email-sync]
+verify_jwt = true
+
+[functions.email-triage]
+verify_jwt = true

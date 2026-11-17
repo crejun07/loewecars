@@ -10,6 +10,8 @@
 - **PWA instalable** (Mac/Windows/móvil).
 - **WhatsApp (wa.me):** botón de contacto en Clientes, Tasaciones y Ventas.
 - **Asistente IA (Claude):** página de chat + Edge Function `ai-assistant`. **Pendiente de activar** con el secreto `ANTHROPIC_API_KEY` (`supabase functions deploy ai-assistant` + `supabase secrets set ANTHROPIC_API_KEY=...`).
+- **Importar coches (CSV) con control de duplicados:** HECHO y probado en vivo. `/stock/import` (botón "Importar" en Stock). Mapeo automático de columnas, dedup por matrícula normalizada + VIN, vista previa nuevos/duplicados, omitir o actualizar.
+- **Módulo Correo (IMAP app-password):** CÓDIGO LISTO, pendiente de activar en Supabase (ver sección 3). Página `/correo` (solo rol informatica), tablas + edge functions `email-connect`/`email-sync`/`email-triage`.
 
 ## Pendiente — por orden acordado
 
@@ -27,7 +29,16 @@
 - **Fotos:** preferible **descargar de WordPress y subir a Supabase Storage** (independiente de WP). Hoy `vehicle_stock.image_url` guarda **una** foto principal → si en WP hay **galería**, ampliar el modelo para varias fotos.
 - Campos destino (`vehicle_stock`): brand, model, year, first_registration_date, mileage, fuel_type, transmission, horsepower, license_plate, vin, holder, purchase_price, selling_price, status, location, next_itv_date, vat_type, notes, image_url.
 
-### 3. Módulo "Correo" + IA que tría y avisa
+### 3. Módulo "Correo" + IA que tría y avisa  — CÓDIGO LISTO, falta activar
+Enfoque elegido: **IMAP con contraseña de aplicación** (sin OAuth). Vale para Gmail, Outlook, Hotmail y hosting propio.
+Flujo: añadir cuenta → queda "pendiente" → "Conectar" metiendo la contraseña de aplicación → prueba IMAP y pasa a "conectada". La clave se guarda en una tabla aparte (`email_account_secrets`) que solo leen las edge functions, nunca el navegador.
+
+**Para activarlo en Supabase (una vez):**
+1. Aplicar migración `supabase/migrations/20261117090000_email_module.sql` (SQL Editor o `supabase db push`).
+2. Desplegar funciones: `supabase functions deploy email-connect email-sync email-triage`.
+3. (Opcional, para el triaje IA) secreto `ANTHROPIC_API_KEY`.
+4. Generar en cada cuenta su "contraseña de aplicación" (Google / Microsoft) o datos IMAP del hosting, y conectarla desde `/correo`.
+
 - **Nuevo módulo "Correo / Bandeja"** en el CRM.
 - **Multi-proveedor y poder AÑADIR varias cuentas de correo:** Gmail / Google Workspace, Outlook / Microsoft 365, Hotmail, y **correo de hosting propio (IMAP/SMTP)**. Debe haber opción de "**Añadir correo**".
   - Gmail/Workspace y Outlook/365: conexión por cuenta (OAuth / app password).

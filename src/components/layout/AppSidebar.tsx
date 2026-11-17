@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, ClipboardList, ShoppingCart, Car, Wrench, Package, FileText, LogOut, Settings, History, MessageSquare, BookOpen, Calendar as CalendarIcon, CheckSquare, Gavel, Scale, HelpCircle, Download, Sparkles } from "lucide-react";
+import { LayoutDashboard, Users, ClipboardList, ShoppingCart, Car, Wrench, Package, FileText, LogOut, Settings, History, MessageSquare, BookOpen, Calendar as CalendarIcon, CheckSquare, Gavel, Scale, HelpCircle, Download, Sparkles, Mail } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import logoMark from "@/assets/logo-mark.png";
 import { useLocation } from "react-router-dom";
@@ -44,7 +44,7 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const location = useLocation();
   const { user, signOut } = useAuth();
-  const { canView } = usePermissions();
+  const { canView, isInformatica } = usePermissions();
   const { unreadTotal } = useChatNotifications();
   const { canInstall, promptInstall } = useInstallPrompt();
   const visibleItems = items.filter((it) => it.ws === "dashboard" || canView(it.ws));
@@ -132,6 +132,20 @@ export function AppSidebar() {
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              {isInformatica && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={location.pathname.startsWith("/email")}>
+                    <NavLink
+                      to="/email"
+                      className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-sidebar-accent"
+                      activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                    >
+                      <Mail className="h-4 w-4 shrink-0" />
+                      {!collapsed && <span>Correo</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
               <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={location.pathname.startsWith("/help")}>
                   <NavLink

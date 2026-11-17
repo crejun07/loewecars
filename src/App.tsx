@@ -22,6 +22,7 @@ import AuthPage from "./pages/Auth.tsx";
 import ResetPasswordPage from "./pages/ResetPassword.tsx";
 import ChatPage from "./pages/Chat.tsx";
 import AssistantPage from "./pages/Assistant.tsx";
+import EmailPage from "./pages/Email.tsx";
 import CatalogPage from "./pages/Catalog.tsx";
 import AgendaPage from "./pages/Agenda.tsx";
 import TasksPage from "./pages/Tasks.tsx";
@@ -78,6 +79,7 @@ const App = () => (
                         <Route path="/settings" element={<PermissionGuard workspace="settings"><SettingsPage /></PermissionGuard>} />
                         <Route path="/chat" element={<ChatPage />} />
                         <Route path="/assistant" element={<AssistantPage />} />
+                        <Route path="/email" element={<EmailPage />} />
                         <Route path="/help" element={<HelpPage />} />
                         <Route path="*" element={<NotFound />} />
                       </Routes>
