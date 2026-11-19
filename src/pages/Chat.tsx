@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Send, Users, Search, Trash2 } from "lucide-react";
+import { Send, Users, Search, Trash2, Paperclip, Download, X, Loader2, File as FileIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useEmployees } from "@/hooks/data/useDealership";
@@ -16,9 +16,20 @@ type Msg = {
   recipient_id: string | null;
   content: string;
   created_at: string;
+  attachment_path: string | null;
+  attachment_name: string | null;
+  attachment_type: string | null;
+  attachment_size: number | null;
 };
 
 const GROUP = "group";
+const MAX_FILE_SIZE = 25 * 1024 * 1024;
+
+function formatFileSize(bytes: number | null) {
+  if (!bytes) return "";
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
 
 export default function ChatPage() {
   const { user } = useAuth();
@@ -28,7 +39,10 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [text, setText] = useState("");
   const [search, setSearch] = useState("");
+  const [files, setFiles] = useState<File[]>([]);
+  const [sending, setSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const contacts = useMemo(
     () => (employees as any[]).filter((e) => e.id !== user?.id),
@@ -82,27 +96,106 @@ export default function ChatPage() {
   }, [active, user, markRead]);
 
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+    const viewport = scrollRef.current?.querySelector<HTMLElement>("[data-radix-scroll-area-viewport]");
+    viewport?.scrollTo({ top: viewport.scrollHeight, behavior: "smooth" });
   }, [messages]);
 
   async function send() {
     const content = text.trim();
-    if (!content || !user) return;
-    setText("");
-    const payload = {
-      sender_id: user.id,
-      recipient_id: active === GROUP ? null : active,
-      content,
-    };
-    const { error } = await supabase.from("chat_messages").insert(payload);
-    if (error) { toast.error(error.message); setText(content); }
+    if ((!content && files.length === 0) || !user || sending) return;
+    const oversized = files.find((file) => file.size > MAX_FILE_SIZE);
+    if (oversized) {
+      toast.error(`«${oversized.name}» supera el límite de 25 MB`);
+      return;
+    }
+
+    setSending(true);
+    const pendingFiles = [...files];
+    let sent = 0;
+    try {
+      if (pendingFiles.length === 0) {
+        const { error } = await supabase.from("chat_messages").insert({
+          sender_id: user.id,
+          recipient_id: active === GROUP ? null : active,
+          content,
+        });
+        if (error) throw error;
+        sent = 1;
+      } else {
+        for (let index = 0; index < pendingFiles.length; index += 1) {
+          const file = pendingFiles[index];
+          const extension = file.name.includes(".")
+            ? `.${file.name.split(".").pop()?.replace(/[^a-zA-Z0-9]/g, "") || "bin"}`
+            : "";
+          const path = `${user.id}/${active}/${crypto.randomUUID()}${extension}`;
+          const { error: uploadError } = await supabase.storage
+            .from("chat-attachments")
+            .upload(path, file, { contentType: file.type || "application/octet-stream" });
+          if (uploadError) throw uploadError;
+
+          const { error: messageError } = await supabase.from("chat_messages").insert({
+            sender_id: user.id,
+            recipient_id: active === GROUP ? null : active,
+            content: index === 0 ? content : "",
+            attachment_path: path,
+            attachment_name: file.name,
+            attachment_type: file.type || "application/octet-stream",
+            attachment_size: file.size,
+          });
+          if (messageError) {
+            await supabase.storage.from("chat-attachments").remove([path]);
+            throw messageError;
+          }
+          sent += 1;
+        }
+      }
+      setText("");
+      setFiles([]);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      if (pendingFiles.length > 0) {
+        toast.success(pendingFiles.length === 1 ? "Archivo enviado" : `${pendingFiles.length} archivos enviados`);
+      }
+      await loadMessages();
+    } catch {
+      if (sent > 0) {
+        setText("");
+        setFiles(pendingFiles.slice(sent));
+        toast.error(`Se enviaron ${sent} de ${pendingFiles.length} archivos. Revisa los pendientes y vuelve a intentarlo.`);
+      } else {
+        toast.error("No se pudo enviar. Vuelve a intentarlo.");
+      }
+      await loadMessages();
+    } finally {
+      setSending(false);
+    }
   }
 
-  async function remove(id: string) {
+  async function downloadAttachment(message: Msg) {
+    if (!message.attachment_path) return;
+    const { data, error } = await supabase.storage.from("chat-attachments").download(message.attachment_path);
+    if (error || !data) {
+      toast.error("No se pudo descargar el archivo");
+      return;
+    }
+    const url = URL.createObjectURL(data);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = message.attachment_name || "archivo";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  async function remove(message: Msg) {
     if (!confirm("¿Eliminar mensaje?")) return;
-    const { error } = await supabase.from("chat_messages").delete().eq("id", id);
+    const { error } = await supabase.from("chat_messages").delete().eq("id", message.id);
     if (error) { toast.error(error.message); return; }
-    setMessages((prev) => prev.filter((m) => m.id !== id));
+    setMessages((prev) => prev.filter((m) => m.id !== message.id));
+    if (message.attachment_path) {
+      const { error: storageError } = await supabase.storage.from("chat-attachments").remove([message.attachment_path]);
+      if (storageError) toast.error("Mensaje eliminado; no se pudo borrar el archivo almacenado");
+    }
   }
 
   const q = search.trim().toLowerCase();
@@ -191,8 +284,8 @@ export default function ChatPage() {
               {active === GROUP ? "Mensajes visibles para todos los usuarios" : "Mensaje directo"}
             </div>
           </div>
-          <ScrollArea className="flex-1">
-            <div ref={scrollRef} className="flex flex-col gap-2 p-4">
+          <ScrollArea ref={scrollRef} className="flex-1">
+            <div className="flex flex-col gap-2 p-4">
               {messages.length === 0 && (
                 <div className="text-center text-xs text-muted-foreground py-10">
                   Aún no hay mensajes. Escribe el primero 👋
@@ -206,12 +299,27 @@ export default function ChatPage() {
                       {!mine && active === GROUP && (
                         <div className="text-[10px] font-medium opacity-70 mb-0.5">{nameOf(m.sender_id)}</div>
                       )}
-                      <div className="whitespace-pre-wrap break-words">{m.content}</div>
+                      {m.content && <div className="whitespace-pre-wrap break-words">{m.content}</div>}
+                      {m.attachment_path && (
+                        <button
+                          type="button"
+                          onClick={() => downloadAttachment(m)}
+                          className={`mt-1 flex w-full min-w-0 items-center gap-2 rounded-md border px-2.5 py-2 text-left transition-colors ${mine ? "border-primary-foreground/20 bg-primary-foreground/10 hover:bg-primary-foreground/20" : "border-border bg-background hover:bg-background/70"}`}
+                          title={`Descargar ${m.attachment_name || "archivo"}`}
+                        >
+                          <FileIcon className="h-4 w-4 shrink-0" />
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-xs font-medium">{m.attachment_name || "Archivo adjunto"}</span>
+                            {m.attachment_size && <span className="block text-[10px] opacity-70">{formatFileSize(m.attachment_size)}</span>}
+                          </span>
+                          <Download className="h-3.5 w-3.5 shrink-0" />
+                        </button>
+                      )}
                       <div className="mt-1 flex items-center justify-end gap-2 text-[10px] opacity-60">
                         <span>{new Date(m.created_at).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}</span>
                         {mine && (
                           <button
-                            onClick={() => remove(m.id)}
+                            onClick={() => remove(m)}
                             className="opacity-0 group-hover:opacity-100 transition-opacity"
                             title="Eliminar"
                           >
@@ -227,17 +335,64 @@ export default function ChatPage() {
           </ScrollArea>
           <form
             onSubmit={(e) => { e.preventDefault(); send(); }}
-            className="border-t border-border p-3 flex items-center gap-2"
+            className="border-t border-border p-3"
           >
-            <Input
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              placeholder="Escribe un mensaje…"
-              className="flex-1"
-            />
-            <Button type="submit" size="sm" disabled={!text.trim()}>
-              <Send className="h-3.5 w-3.5 mr-1" />Enviar
-            </Button>
+            {files.length > 0 && (
+              <div className="mb-2 flex flex-wrap gap-2">
+                {files.map((file, index) => (
+                  <div key={`${file.name}-${file.lastModified}-${index}`} className="flex max-w-full items-center gap-2 rounded-md border border-border bg-muted px-2.5 py-1.5 text-xs">
+                    <Paperclip className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    <span className="max-w-52 truncate" title={file.name}>{file.name}</span>
+                    <span className="shrink-0 text-muted-foreground">{formatFileSize(file.size)}</span>
+                    <button
+                      type="button"
+                      aria-label={`Quitar ${file.name}`}
+                      disabled={sending}
+                      onClick={() => setFiles((current) => current.filter((_, i) => i !== index))}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="flex items-center gap-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                className="hidden"
+                aria-label="Seleccionar archivos del ordenador"
+                onChange={(event) => {
+                  const selected = Array.from(event.target.files ?? []);
+                  setFiles((current) => [...current, ...selected]);
+                  event.target.value = "";
+                }}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                disabled={sending}
+                onClick={() => fileInputRef.current?.click()}
+                title="Adjuntar archivos desde el ordenador"
+                aria-label="Adjuntar archivos desde el ordenador"
+              >
+                <Paperclip className="h-4 w-4" />
+              </Button>
+              <Input
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                placeholder={files.length > 0 ? "Añade un mensaje (opcional)…" : "Escribe un mensaje…"}
+                className="flex-1"
+                disabled={sending}
+              />
+              <Button type="submit" size="sm" disabled={sending || (!text.trim() && files.length === 0)}>
+                {sending ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Send className="h-3.5 w-3.5 mr-1" />}
+                {sending ? "Enviando…" : "Enviar"}
+              </Button>
+            </div>
           </form>
         </section>
       </div>

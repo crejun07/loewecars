@@ -29,6 +29,13 @@
       "when": 1792135146806,
       "tag": "0003_audit_detailed_changes",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1795083162300,
+      "tag": "0004_chat_file_attachments",
+      "breakpoints": true
     }
   ]
 }

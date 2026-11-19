@@ -123,6 +123,7 @@ const sections: Section[] = [
     id: "chat", title: "Chat", intro: "Mensajes entre compañeros.",
     steps: [
       { q: "Enviar mensajes", a: ["Elige un compañero para hablar en privado o el grupo general.", "Los mensajes nuevos suenan y aparece un número en el menú."] },
+      { q: "Enviar archivos", a: ["Pulsa el icono del clip y selecciona uno o varios archivos de tu ordenador, de hasta 25 MB cada uno.", "Puedes añadir un mensaje opcional y pulsar «Enviar».", "Para guardar un archivo recibido, pulsa sobre su nombre y el icono de descarga."] },
     ],
   },
   {
