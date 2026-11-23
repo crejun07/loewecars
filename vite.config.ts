@@ -5,9 +5,9 @@ import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  // Served from https://<user>.github.io/loewecars/ in production (GitHub Pages
-  // project site); root in local dev.
-  base: mode === "production" ? "/loewecars/" : "/",
+  // Lovable serves the app at the domain root. GitHub Pages sets
+  // VITE_BASE_PATH=/loewecars/ in its deployment workflow.
+  base: process.env.VITE_BASE_PATH || "/",
   server: {
     host: "::",
     port: 8080,

@@ -1,8 +1,9 @@
 // LoeweCars service worker — enables installability (PWA) and a basic offline
 // app shell. It never touches cross-origin requests (Supabase, APIs) or
 // non-GET requests, so live data always goes straight to the network.
-const CACHE = "loewe-shell-v2";
-const BASE = "/loewecars/";
+const CACHE = "loewe-shell-v3";
+// Works both at Lovable's domain root and under GitHub Pages' /loewecars/.
+const BASE = self.registration.scope;
 const SHELL = [
   BASE,
   BASE + "manifest.webmanifest",
