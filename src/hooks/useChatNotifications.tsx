@@ -95,6 +95,7 @@ export function ChatNotificationsProvider({ children }: { children: ReactNode })
             body: preview || channelLabel,
             tag: `chat-${key}`,
             onClick: () => navigate("/chat"),
+            path: "/chat",
           });
 
           // In-app toast when not already on the chat page.

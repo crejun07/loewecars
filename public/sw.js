@@ -70,3 +70,21 @@ self.addEventListener("fetch", (event) => {
     }),
   );
 });
+
+// Desktop notifications: clicking one focuses the CRM (or opens it) at the
+// right section.
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const path = (event.notification.data && event.notification.data.path) || "";
+  const target = new URL(path.replace(/^\//, ""), BASE).href;
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((list) => {
+      for (const c of list) {
+        if (c.url.startsWith(BASE)) {
+          return c.focus().then((w) => (w && "navigate" in w ? w.navigate(target) : w));
+        }
+      }
+      return self.clients.openWindow(target);
+    }),
+  );
+});

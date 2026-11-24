@@ -165,6 +165,8 @@ export interface SystemNotificationOptions {
   /** Show even when the app window is focused. Default: false (only when hidden). */
   whenFocused?: boolean;
   onClick?: () => void;
+  /** In-app path opened when the notification is clicked (service worker). */
+  path?: string;
 }
 
 /**
@@ -186,23 +188,39 @@ export function showSystemNotification(opts: SystemNotificationOptions): Notific
 
     const base =
       (typeof import.meta !== "undefined" && (import.meta as any).env?.BASE_URL) || "/";
-    const n = new Notification(opts.title, {
+    const options: NotificationOptions & { renotify?: boolean; requireInteraction?: boolean } = {
       body: opts.body,
       tag: opts.tag,
-      icon: `${base}favicon.ico`,
-      badge: `${base}favicon.ico`,
-      silent: true, // we play our own chime via playChime()
-    });
-    n.onclick = () => {
-      try {
-        window.focus();
-      } catch {
-        /* ignore */
-      }
-      opts.onClick?.();
-      n.close();
+      icon: `${base}icon-192.png`,
+      badge: `${base}icon-192.png`,
+      silent: false,
+      renotify: !!opts.tag,
+      requireInteraction: true,
+      data: { path: opts.path ?? null },
     };
-    return n;
+    // Prefer the service worker: its notifications go to the OS notification
+    // center and still show with the window minimized or in the background.
+    if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.ready
+        .then((reg) => reg.showNotification(opts.title, options))
+        .catch(() => fallback());
+      return null;
+    }
+    return fallback();
+
+    function fallback(): Notification | null {
+      try {
+        const n = new Notification(opts.title, options);
+        n.onclick = () => {
+          try { window.focus(); } catch { /* ignore */ }
+          opts.onClick?.();
+          n.close();
+        };
+        return n;
+      } catch {
+        return null;
+      }
+    }
   } catch {
     return null;
   }

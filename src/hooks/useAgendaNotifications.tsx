@@ -76,6 +76,7 @@ export function useAgendaNotifications() {
             body: when,
             tag: `agenda-${e.id}`,
             onClick: () => navigate("/agenda"),
+            path: "/agenda",
           });
           playChime();
         },
