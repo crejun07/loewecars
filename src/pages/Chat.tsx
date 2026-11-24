@@ -205,9 +205,9 @@ export default function ChatPage() {
   });
 
   return (
-    <div className="flex flex-col h-[calc(100vh-3rem)]">
+    <div className="flex flex-col h-full">
       <PageHeader title="Chat de trabajo" description="Comunicación interna del equipo" />
-      <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-0 flex-1 min-h-0 border-t border-border">
+      <div className="grid grid-cols-1 grid-rows-[180px_minmax(0,1fr)] md:grid-cols-[280px_1fr] md:grid-rows-1 gap-0 flex-1 min-h-0 border-t border-border">
         {/* Sidebar */}
         <aside className="border-r border-border bg-card flex flex-col">
           <div className="p-3 border-b border-border">
@@ -275,7 +275,7 @@ export default function ChatPage() {
         </aside>
 
         {/* Chat panel */}
-        <section className="flex flex-col min-w-0 bg-background">
+        <section className="flex flex-col min-w-0 min-h-0 bg-background">
           <div className="border-b border-border px-4 py-3">
             <div className="text-sm font-medium">
               {active === GROUP ? "Chat del equipo" : nameOf(active)}
