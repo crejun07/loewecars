@@ -220,11 +220,11 @@ export default function ChatPage() {
   });
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full min-h-0 overflow-hidden">
       <PageHeader title="Chat de trabajo" description="Comunicación interna del equipo" />
       <div className="grid grid-cols-1 grid-rows-[180px_minmax(0,1fr)] md:grid-cols-[280px_1fr] md:grid-rows-1 gap-0 flex-1 min-h-0 border-t border-border">
         {/* Sidebar */}
-        <aside className="border-r border-border bg-card flex flex-col">
+        <aside className="border-r border-border bg-card flex flex-col min-h-0">
           <div className="p-3 border-b border-border">
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
@@ -236,7 +236,7 @@ export default function ChatPage() {
               />
             </div>
           </div>
-          <ScrollArea className="flex-1">
+          <ScrollArea className="flex-1 min-h-0">
             <button
               onClick={() => setActive(GROUP)}
               className={`flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left text-sm hover:bg-muted/50 ${active === GROUP ? "bg-muted" : ""}`}
@@ -299,7 +299,7 @@ export default function ChatPage() {
               {active === GROUP ? "Mensajes visibles para todos los usuarios" : "Mensaje directo"}
             </div>
           </div>
-          <ScrollArea ref={scrollRef} className="flex-1">
+          <ScrollArea ref={scrollRef} className="flex-1 min-h-0">
             <div className="flex flex-col gap-2 p-4">
               {messages.length === 0 && (
                 <div className="text-center text-xs text-muted-foreground py-10">
