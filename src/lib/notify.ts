@@ -89,6 +89,42 @@ export function initNotificationSound() {
   window.addEventListener("touchstart", handler, { once: false });
 }
 
+function playTone(
+  ctx: AudioContext,
+  freq: number,
+  startTime: number,
+  duration: number,
+  peakGain: number,
+) {
+  // Fundamental (warm sine) + soft octave overtone for a Teams-like marimba/bell chime
+  const osc1 = ctx.createOscillator();
+  const osc2 = ctx.createOscillator();
+  const gain = ctx.createGain();
+
+  osc1.type = "sine";
+  osc1.frequency.setValueAtTime(freq, startTime);
+
+  osc2.type = "triangle";
+  osc2.frequency.setValueAtTime(freq * 2, startTime);
+
+  const overtoneGain = ctx.createGain();
+  overtoneGain.gain.setValueAtTime(0.18, startTime);
+
+  gain.gain.setValueAtTime(0.0001, startTime);
+  gain.gain.exponentialRampToValueAtTime(peakGain, startTime + 0.01);
+  gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+
+  osc1.connect(gain);
+  osc2.connect(overtoneGain);
+  overtoneGain.connect(gain);
+  gain.connect(ctx.destination);
+
+  osc1.start(startTime);
+  osc2.start(startTime);
+  osc1.stop(startTime + duration + 0.02);
+  osc2.stop(startTime + duration + 0.02);
+}
+
 export function playChime() {
   try {
     if (!getNotifPrefs().sound) return;
@@ -96,19 +132,12 @@ export function playChime() {
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume().catch(() => {});
     if (!unlocked && ctx.state !== "running") return; // will play on next chime after gesture
-    const now = ctx.currentTime;
-    const o = ctx.createOscillator();
-    const g = ctx.createGain();
-    o.type = "sine";
-    o.frequency.setValueAtTime(880, now);
-    o.frequency.setValueAtTime(1320, now + 0.08);
-    g.gain.setValueAtTime(0.0001, now);
-    g.gain.exponentialRampToValueAtTime(0.22, now + 0.01);
-    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.3);
-    o.connect(g);
-    g.connect(ctx.destination);
-    o.start(now);
-    o.stop(now + 0.32);
+
+    const now = ctx.currentTime + 0.01;
+    // Microsoft Teams-style warm 3-note ascending chime (D5 -> F#5 -> A5)
+    playTone(ctx, 587.33, now, 0.22, 0.16);
+    playTone(ctx, 739.99, now + 0.085, 0.24, 0.18);
+    playTone(ctx, 880.0, now + 0.17, 0.38, 0.2);
   } catch {
     /* ignore */
   }

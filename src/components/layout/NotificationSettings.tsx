@@ -8,6 +8,7 @@ import {
   notificationsSupported,
   notificationPermission,
   requestNotificationPermission,
+  playChime,
   type NotifPrefs,
   type NotifPermission,
 } from "@/lib/notify";
@@ -24,7 +25,11 @@ export function NotificationSettings({ collapsed }: { collapsed?: boolean }) {
 
   useEffect(() => onNotifPrefsChange(setPrefs), []);
 
-  const toggleSound = () => setPrefs(setNotifPrefs({ sound: !prefs.sound }));
+  const toggleSound = () => {
+    const next = setNotifPrefs({ sound: !prefs.sound });
+    setPrefs(next);
+    if (next.sound) playChime();
+  };
 
   const toggleDesktop = async () => {
     // Turning it ON: make sure we have browser permission first.

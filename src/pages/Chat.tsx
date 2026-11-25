@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Send, Users, Search, Trash2, Paperclip, Download, X, Loader2, File as FileIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -34,8 +35,22 @@ function formatFileSize(bytes: number | null) {
 export default function ChatPage() {
   const { user } = useAuth();
   const { data: employees = [] } = useEmployees();
-  const { unreadByConv, markRead } = useChatNotifications();
-  const [active, setActive] = useState<string>(GROUP);
+  const { unreadByConv, markRead, setActiveConv } = useChatNotifications();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const convParam = searchParams.get("conv");
+  const [active, setActive] = useState<string>(() => convParam || GROUP);
+
+  useEffect(() => {
+    if (convParam && convParam !== active) {
+      setActive(convParam);
+      setSearchParams({}, { replace: true });
+    }
+  }, [convParam, active, setSearchParams]);
+
+  useEffect(() => {
+    setActiveConv(active);
+    return () => setActiveConv(null);
+  }, [active, setActiveConv]);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [text, setText] = useState("");
   const [search, setSearch] = useState("");
