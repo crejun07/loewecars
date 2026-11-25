@@ -11,11 +11,18 @@ let unlocked = false;
 // ---------------------------------------------------------------------------
 // Preferences (per device, persisted in localStorage)
 // ---------------------------------------------------------------------------
-export type NotifPrefs = { sound: boolean; desktop: boolean };
+export type NotifPrefs = {
+  sound: boolean;
+  desktop: boolean;
+  /** 0.0 to 1.0 */
+  volume: number;
+  /** Corner toast duration in seconds */
+  durationSec: number;
+};
 
 const PREFS_KEY = "loewe:notif-prefs";
 const PREFS_EVENT = "loewe:notif-prefs";
-const defaultPrefs: NotifPrefs = { sound: true, desktop: true };
+const defaultPrefs: NotifPrefs = { sound: true, desktop: true, volume: 0.75, durationSec: 8 };
 
 export function getNotifPrefs(): NotifPrefs {
   try {
@@ -127,17 +134,19 @@ function playTone(
 
 export function playChime() {
   try {
-    if (!getNotifPrefs().sound) return;
+    const prefs = getNotifPrefs();
+    if (!prefs.sound || prefs.volume <= 0) return;
     const ctx = getCtx();
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume().catch(() => {});
     if (!unlocked && ctx.state !== "running") return; // will play on next chime after gesture
 
+    const vol = Math.max(0, Math.min(1, prefs.volume));
     const now = ctx.currentTime + 0.01;
     // Microsoft Teams-style warm 3-note ascending chime (D5 -> F#5 -> A5)
-    playTone(ctx, 587.33, now, 0.22, 0.16);
-    playTone(ctx, 739.99, now + 0.085, 0.24, 0.18);
-    playTone(ctx, 880.0, now + 0.17, 0.38, 0.2);
+    playTone(ctx, 587.33, now, 0.22, 0.18 * vol);
+    playTone(ctx, 739.99, now + 0.085, 0.24, 0.21 * vol);
+    playTone(ctx, 880.0, now + 0.17, 0.38, 0.24 * vol);
   } catch {
     /* ignore */
   }

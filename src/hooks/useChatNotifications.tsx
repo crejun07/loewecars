@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { useLocation, useNavigate } from "react-router-dom";
 import { MessageSquare, X } from "lucide-react";
 import { useEmployees } from "@/hooks/data/useDealership";
-import { playChime, showSystemNotification, autoRequestNotificationPermission } from "@/lib/notify";
+import { playChime, showSystemNotification, autoRequestNotificationPermission, getNotifPrefs } from "@/lib/notify";
 
 interface Ctx {
   unreadTotal: number;
@@ -162,7 +162,7 @@ export function ChatNotificationsProvider({ children }: { children: ReactNode })
                   </button>
                 </div>
               ),
-              { position: "bottom-right", duration: 8000 },
+              { position: "bottom-right", duration: Math.max(2, getNotifPrefs().durationSec) * 1000 },
             );
           }
 
