@@ -1,11 +1,21 @@
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { toast } from "sonner";
 import { useLocation, useNavigate } from "react-router-dom";
 import { MessageSquare, X } from "lucide-react";
 import { useEmployees } from "@/hooks/data/useDealership";
 import { playChime, showSystemNotification, autoRequestNotificationPermission, getNotifPrefs } from "@/lib/notify";
+
+interface CornerBubble {
+  id: string;
+  convKey: string;
+  senderName: string;
+  initials: string;
+  channelLabel: string;
+  body: string;
+  durationMs: number;
+}
 
 interface Ctx {
   unreadTotal: number;
@@ -13,6 +23,7 @@ interface Ctx {
   markRead: (conversationKey: string) => Promise<void>;
   refresh: () => Promise<void>;
   setActiveConv: (conversationKey: string | null) => void;
+  triggerTestNotification: () => void;
 }
 
 const gc = globalThis as unknown as { __chatNotifCtx?: ReturnType<typeof createContext<Ctx | undefined>> };
@@ -30,10 +41,53 @@ export function ChatNotificationsProvider({ children }: { children: ReactNode })
   const { data: employees = [] } = useEmployees();
   const [unreadByConv, setUnreadByConv] = useState<Record<string, number>>({});
   const [reads, setReads] = useState<Record<string, string>>({});
+  const [bubbles, setBubbles] = useState<CornerBubble[]>([]);
   const activeConvRef = useRef<string | null>(null);
   const setActiveConv = useCallback((conversationKey: string | null) => {
     activeConvRef.current = conversationKey;
   }, []);
+
+  const dismissBubble = useCallback((id: string) => {
+    setBubbles((prev) => prev.filter((b) => b.id !== id));
+  }, []);
+
+  const pushBubble = useCallback((bubble: Omit<CornerBubble, "id">) => {
+    const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    setBubbles((prev) => [...prev.slice(-3), { ...bubble, id }]);
+  }, []);
+
+  const triggerTestNotification = useCallback(() => {
+    const durationMs = Math.max(2, getNotifPrefs().durationSec) * 1000;
+    pushBubble({
+      convKey: "group",
+      senderName: "LoeweCars",
+      initials: "LC",
+      channelLabel: "Chat del equipo",
+      body: "Mensaje de prueba: así verán los comerciales los avisos en esquina.",
+      durationMs,
+    });
+  }, [pushBubble]);
+
+  // Auto-dismiss bubbles only while the tab is visible so messages received
+  // while the user is in another tab stay on screen until they switch back.
+  useEffect(() => {
+    if (bubbles.length === 0) return;
+    let timers: number[] = [];
+    const schedule = () => {
+      timers.forEach((t) => window.clearTimeout(t));
+      timers = [];
+      if (document.visibilityState !== "visible") return;
+      timers = bubbles.map((b) =>
+        window.setTimeout(() => dismissBubble(b.id), b.durationMs),
+      );
+    };
+    schedule();
+    document.addEventListener("visibilitychange", schedule);
+    return () => {
+      timers.forEach((t) => window.clearTimeout(t));
+      document.removeEventListener("visibilitychange", schedule);
+    };
+  }, [bubbles, dismissBubble]);
 
   const refresh = useCallback(async () => {
     if (!user) return;
@@ -116,54 +170,14 @@ export function ChatNotificationsProvider({ children }: { children: ReactNode })
           // Corner floating bubble (Teams-style) whenever the user is not
           // actively reading that exact conversation.
           if (!isViewingThisConv) {
-            toast.custom(
-              (toastId) => (
-                <div
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => {
-                    toast.dismiss(toastId);
-                    navigate(`/chat?conv=${encodeURIComponent(key)}`);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      toast.dismiss(toastId);
-                      navigate(`/chat?conv=${encodeURIComponent(key)}`);
-                    }
-                  }}
-                  className="group pointer-events-auto flex w-[340px] max-w-[calc(100vw-2rem)] cursor-pointer items-start gap-3 rounded-xl border border-border bg-background/95 p-3.5 text-foreground shadow-xl backdrop-blur transition hover:border-primary/50"
-                >
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/15 text-sm font-semibold text-primary">
-                    {initials}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="truncate text-sm font-semibold">{senderName}</span>
-                      <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                        <MessageSquare className="h-2.5 w-2.5" />
-                        {channelLabel}
-                      </span>
-                    </div>
-                    <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
-                      {messageBody}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    aria-label="Cerrar notificación"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toast.dismiss(toastId);
-                    }}
-                    className="rounded-md p-1 text-muted-foreground opacity-70 transition hover:bg-muted hover:opacity-100"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              ),
-              { position: "bottom-right", duration: Math.max(2, getNotifPrefs().durationSec) * 1000 },
-            );
+            pushBubble({
+              convKey: key,
+              senderName,
+              initials,
+              channelLabel,
+              body: messageBody,
+              durationMs: Math.max(2, getNotifPrefs().durationSec) * 1000,
+            });
           }
 
           // Teams-style chime whenever a new message arrives and the user is not
@@ -175,7 +189,7 @@ export function ChatNotificationsProvider({ children }: { children: ReactNode })
       )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [user, location.pathname, navigate, employees]);
+  }, [user, location.pathname, navigate, employees, pushBubble]);
 
   const markRead = useCallback(async (conversationKey: string) => {
     if (!user) return;
@@ -192,8 +206,61 @@ export function ChatNotificationsProvider({ children }: { children: ReactNode })
   const unreadTotal = Object.values(unreadByConv).reduce((a, b) => a + b, 0);
 
   return (
-    <ChatNotifCtx.Provider value={{ unreadTotal, unreadByConv, markRead, refresh, setActiveConv }}>
+    <ChatNotifCtx.Provider value={{ unreadTotal, unreadByConv, markRead, refresh, setActiveConv, triggerTestNotification }}>
       {children}
+      {typeof document !== "undefined" &&
+        bubbles.length > 0 &&
+        createPortal(
+          <div className="pointer-events-none fixed bottom-5 right-5 z-[9999] flex flex-col gap-2.5">
+            {bubbles.map((b) => (
+              <div
+                key={b.id}
+                role="button"
+                tabIndex={0}
+                onClick={() => {
+                  dismissBubble(b.id);
+                  navigate(`/chat?conv=${encodeURIComponent(b.convKey)}`);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    dismissBubble(b.id);
+                    navigate(`/chat?conv=${encodeURIComponent(b.convKey)}`);
+                  }
+                }}
+                className="pointer-events-auto flex w-[340px] max-w-[calc(100vw-2rem)] cursor-pointer items-start gap-3 rounded-xl border border-border bg-background/95 p-3.5 text-foreground shadow-2xl ring-1 ring-black/5 backdrop-blur transition hover:border-primary/50 animate-in fade-in slide-in-from-bottom-4 duration-200"
+              >
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
+                  {b.initials}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="truncate text-sm font-semibold">{b.senderName}</span>
+                    <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                      <MessageSquare className="h-2.5 w-2.5" />
+                      {b.channelLabel}
+                    </span>
+                  </div>
+                  <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+                    {b.body}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  aria-label="Cerrar notificación"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    dismissBubble(b.id);
+                  }}
+                  className="rounded-md p-1 text-muted-foreground opacity-70 transition hover:bg-muted hover:opacity-100"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>,
+          document.body,
+        )}
     </ChatNotifCtx.Provider>
   );
 }

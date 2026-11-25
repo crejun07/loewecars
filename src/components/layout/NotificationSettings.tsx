@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
+import { useChatNotifications } from "@/hooks/useChatNotifications";
 import {
   getNotifPrefs,
   setNotifPrefs,
@@ -27,6 +28,7 @@ const DURATION_OPTIONS = [4, 8, 12, 20, 30];
 export function NotificationSettings({ collapsed }: { collapsed?: boolean }) {
   const [prefs, setPrefs] = useState<NotifPrefs>(() => getNotifPrefs());
   const [perm, setPerm] = useState<NotifPermission>(() => notificationPermission());
+  const { triggerTestNotification } = useChatNotifications();
 
   useEffect(() => onNotifPrefsChange(setPrefs), []);
 
@@ -140,9 +142,10 @@ export function NotificationSettings({ collapsed }: { collapsed?: boolean }) {
                     setPrefs(setNotifPrefs({ sound: true }));
                   }
                   playChime();
+                  triggerTestNotification();
                 }}
               >
-                Probar tono Teams
+                Probar aviso y tono
               </Button>
             </div>
             <div className="space-y-2">

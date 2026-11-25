@@ -143,10 +143,9 @@ export function playChime() {
 
     const vol = Math.max(0, Math.min(1, prefs.volume));
     const now = ctx.currentTime + 0.01;
-    // Microsoft Teams-style warm 3-note ascending chime (D5 -> F#5 -> A5)
-    playTone(ctx, 587.33, now, 0.22, 0.18 * vol);
-    playTone(ctx, 739.99, now + 0.085, 0.24, 0.21 * vol);
-    playTone(ctx, 880.0, now + 0.17, 0.38, 0.24 * vol);
+    // Crisp 2-note Microsoft Teams-style bell/marimba chime (E5 -> B5)
+    playTone(ctx, 659.25, now, 0.14, 0.22 * vol);
+    playTone(ctx, 987.77, now + 0.085, 0.36, 0.26 * vol);
   } catch {
     /* ignore */
   }
